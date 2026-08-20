@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 
 type Backend = "postgresql" | "mysql" | "duckdb";
-type Page = "analysis" | "database" | "knowledge" | "runs";
+type Page = "analysis" | "database" | "knowledge" | "model" | "runs";
 type Model = "deepseek-v4-pro" | "deepseek-v4-flash";
 type Profile = { id: string; label: string; description: string; backend: Backend; host: string; port: number; username: string; database: string; password?: string; password_saved?: boolean; duckdb_path: string; knowledge_root: string };
 type KnowledgeSummary = { path: string; card_count?: number; types?: Record<string, number>; error?: string };
@@ -15,7 +15,7 @@ type RunEvent = { run_id: string; created_at: string; thread_id: string; model: 
 type Notice = { tone: "success" | "error" | "info"; text: string };
 
 const emptyProfile = (): Profile => ({ id: `profile-${Date.now()}`, label: "新配置方案", description: "", backend: "postgresql", host: "", port: 5432, username: "", database: "", password: "", duckdb_path: "", knowledge_root: "" });
-const pageNames: Record<Page, string> = { analysis: "数据分析", database: "数据源", knowledge: "Knowledge", runs: "运行记录" };
+const pageNames: Record<Page, string> = { analysis: "数据分析", database: "数据源", knowledge: "Knowledge", model: "模型设置", runs: "运行记录" };
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...(options?.headers || {}) } });
@@ -88,6 +88,7 @@ export default function Home() {
   const [state, setState] = useState<ApiState | null>(null);
   const [form, setForm] = useState<Profile>(emptyProfile());
   const [model, setModel] = useState<Model>("deepseek-v4-pro");
+  const [modelApiKey, setModelApiKey] = useState("");
   const [threadId, setThreadId] = useState(() => crypto.randomUUID());
   const [messages, setMessages] = useState<ChatItem[]>([]);
   const [question, setQuestion] = useState("");
@@ -132,6 +133,7 @@ export default function Home() {
 
   const newConversation = () => { setThreadId(crypto.randomUUID()); setMessages([]); setQuestion(""); };
   const saveAndApply = async () => { const result = await runAction("save", () => api("/api/save-and-apply", { method: "POST", body: JSON.stringify(form) })); if (result) await loadState(form.id); };
+  const saveModelSettings = async () => { const result = await runAction("model", () => api("/api/model-settings", { method: "POST", body: JSON.stringify({ model, api_key: modelApiKey }) })); if (result) { setModelApiKey(""); await loadState(form.id); } };
   const uploadKnowledge = async (file?: File) => {
     if (!file) return;
     setBusy("upload");
@@ -151,6 +153,7 @@ export default function Home() {
       <button className={page === "analysis" ? "active" : ""} onClick={() => setPage("analysis")}><span>⌁</span>分析</button>
       <button className={page === "database" ? "active" : ""} onClick={() => setPage("database")}><span>▤</span>数据源</button>
       <button className={page === "knowledge" ? "active" : ""} onClick={() => setPage("knowledge")}><span>◇</span>Knowledge</button>
+      <button className={page === "model" ? "active" : ""} onClick={() => setPage("model")}><span>◉</span>模型</button>
       <button className={page === "runs" ? "active" : ""} onClick={() => setPage("runs")}><span>≡</span>运行</button>
     </nav><div className={`nav-status ${state.model_configured ? "" : "warning"}`}><span />{state.model_configured ? "服务已连接" : "模型密钥未配置"}</div></aside>
 
@@ -170,7 +173,7 @@ export default function Home() {
       <div className="settings-panel"><div className="panel-heading"><div><h2>{selectedProfile ? "编辑数据源" : "新数据源"}</h2><p>账号应只具备读取权限。</p></div><span className="restart-note">保存后重启生效</span></div><div className="form-grid">
         <label><span>方案名称</span><input value={form.label} onChange={(event) => update("label", event.target.value)} /></label><label><span>方案 ID</span><input disabled={Boolean(selectedProfile)} value={form.id} onChange={(event) => update("id", event.target.value.toLowerCase())} /></label>
         <label className="wide"><span>数据库类型</span><select value={form.backend} onChange={(event) => { const backend = event.target.value as Backend; setForm((current) => ({ ...current, backend, port: backend === "mysql" ? 3306 : backend === "postgresql" ? 5432 : 0 })); }}><option value="postgresql">PostgreSQL</option><option value="mysql">MySQL</option><option value="duckdb">DuckDB</option></select></label>
-        {form.backend === "duckdb" ? <label className="wide"><span>DuckDB 文件</span><input value={form.duckdb_path} onChange={(event) => update("duckdb_path", event.target.value)} /></label> : <><label><span>Host</span><input value={form.host} onChange={(event) => update("host", event.target.value)} placeholder="host.docker.internal" /></label><label><span>Port</span><input type="number" value={form.port || ""} onChange={(event) => update("port", Number(event.target.value))} /></label><label><span>只读用户名</span><input value={form.username} onChange={(event) => update("username", event.target.value)} /></label><label><span>密码 {form.password_saved ? "（已保存）" : ""}</span><input type="password" value={form.password || ""} onChange={(event) => update("password", event.target.value)} placeholder={form.password_saved ? "留空继续使用" : ""} /></label><label className="wide"><span>Database</span><input value={form.database} onChange={(event) => update("database", event.target.value)} /></label></>}
+        {form.backend === "duckdb" ? <label className="wide"><span>DuckDB 文件</span><input value={form.duckdb_path} onChange={(event) => update("duckdb_path", event.target.value)} /></label> : <><label><span>Host</span><input value={form.host} onChange={(event) => update("host", event.target.value)} placeholder="host.docker.internal" /></label><label><span>Port</span><input type="number" value={form.port || ""} onChange={(event) => update("port", Number(event.target.value))} /></label><label><span>只读用户名</span><input value={form.username} onChange={(event) => update("username", event.target.value)} /></label><label><span>密码 {form.password_saved ? "（已保存）" : ""}</span><input type="password" value={form.password || ""} onChange={(event) => update("password", event.target.value)} placeholder={form.password_saved ? "留空继续使用" : ""} /></label><label className="wide"><span>数据库名称</span><input value={form.database} onChange={(event) => update("database", event.target.value)} placeholder="例如：cold_chain_pharma_compliance" /><small>填写 PostgreSQL 或 MySQL 中实际存在的数据库名称。</small></label></>}
       </div><div className="form-actions"><button className="button secondary" disabled={Boolean(busy)} onClick={() => runAction("test", () => api("/api/test-database", { method: "POST", body: JSON.stringify(form) }))}>测试连接</button><button className="button primary" disabled={Boolean(busy)} onClick={saveAndApply}>保存并应用</button></div></div>
     </section>}
 
@@ -178,6 +181,11 @@ export default function Home() {
       <div className="settings-panel"><div className="panel-heading"><div><h2>导入 Knowledge</h2><p>上传符合 KnowledgeCard 结构的 ZIP 包。</p></div></div><input ref={fileInput} type="file" accept=".zip,application/zip" hidden onChange={(event) => uploadKnowledge(event.target.files?.[0])} /><button className="upload-area" disabled={busy === "upload"} onClick={() => fileInput.current?.click()}><strong>{busy === "upload" ? "正在校验…" : "选择 ZIP 文件"}</strong><span>导入后先校验，不会立即替换当前配置</span></button></div>
       <div className="settings-panel"><div className="panel-heading"><div><h2>Knowledge 路径</h2><p>本地运行时也可以直接指定目录。</p></div></div><label><span>目录</span><input value={form.knowledge_root} onChange={(event) => update("knowledge_root", event.target.value)} /></label><div className="form-actions"><button className="button secondary" disabled={Boolean(busy)} onClick={() => runAction("validate", () => api("/api/validate-knowledge", { method: "POST", body: JSON.stringify({ knowledge_root: form.knowledge_root }) }))}>验证</button><button className="button primary" disabled={Boolean(busy)} onClick={saveAndApply}>保存并应用</button></div></div>
     </div>{state.knowledge.types && <div className="type-list">{Object.entries(state.knowledge.types).map(([type, count]) => <div key={type}><span>{type}</span><strong>{count}</strong></div>)}</div>}</section>}
+
+    {page === "model" && <section className="content-page model-page"><div className="settings-panel"><div className="panel-heading"><div><h2>DeepSeek 模型</h2><p>当前仅支持 DeepSeek V4 Pro 与 DeepSeek V4 Flash。</p></div><span className={`config-status ${state.model_configured ? "configured" : ""}`}>{state.model_configured ? "API Key 已配置" : "API Key 未配置"}</span></div><div className="form-grid">
+      <label className="wide"><span>模型</span><select value={model} onChange={(event) => setModel(event.target.value as Model)}>{state.models.map((item) => <option key={item} value={item}>{modelName(item)}</option>)}</select></label>
+      <label className="wide"><span>模型 API Key</span><input type="password" autoComplete="new-password" value={modelApiKey} onChange={(event) => setModelApiKey(event.target.value)} placeholder={state.model_configured ? "留空继续使用已保存的 API Key" : "输入 DeepSeek API Key"} /><small>密钥只保存在本机，页面不会读取或回显完整内容。</small></label>
+    </div><div className="form-actions"><button className="button primary" disabled={Boolean(busy)} onClick={saveModelSettings}>保存模型配置</button></div></div></section>}
 
     {page === "runs" && <section className="content-page runs-page"><div className="panel-heading"><div><h2>最近 50 次运行</h2><p>仅保留当前服务进程中的精简指标，不保存问题或答案。</p></div><button className="button secondary" onClick={loadRuns}>刷新</button></div>{runs.length ? <div className="table-scroll"><table><thead><tr><th>时间</th><th>模型</th><th>状态</th><th>耗时</th><th>SQL</th><th>Thread</th></tr></thead><tbody>{runs.map((run) => <tr key={run.run_id}><td>{new Date(run.created_at).toLocaleString("zh-CN")}</td><td>{modelName(run.model)}</td><td><span className={`run-status ${run.status}`}>{run.status === "success" ? "完成" : "未完成"}</span></td><td>{(run.latency_ms / 1000).toFixed(1)}s</td><td>{run.sql_count}</td><td className="mono">{run.thread_id.slice(0, 8)}</td></tr>)}</tbody></table></div> : <div className="empty-list">当前还没有运行记录。</div>}</section>}
     {notice && <div className={`toast ${notice.tone}`}><span>{notice.text}</span><button onClick={() => setNotice(null)}>×</button></div>}

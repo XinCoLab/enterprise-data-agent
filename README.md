@@ -22,21 +22,7 @@ docker compose up --build -d
 
 Open [http://localhost:8080](http://localhost:8080). On Windows, `start.cmd` runs the same command.
 
-The first start creates ignored mutable files under `runtime/`. Add the DeepSeek key to:
-
-```text
-runtime/config/secrets.env
-```
-
-```text
-DEEPSEEK_API_KEY=your-key
-```
-
-Then restart once:
-
-```powershell
-docker compose restart
-```
+The first start creates ignored mutable files under `runtime/`. Open **Model settings** in the Web page, select DeepSeek V4 Pro or DeepSeek V4 Flash, enter the API key, and save it. The full key is never returned to the browser or committed to Git. Restart the service only when replacing a key after the Agent has already handled requests.
 
 Useful commands:
 
@@ -79,6 +65,10 @@ The configuration page supports:
 It tests the connection with a read-only transaction and stores passwords only in ignored local runtime files. When DataAgent runs in Docker and the database runs on the host machine, use `host.docker.internal` instead of `127.0.0.1`.
 
 Database and Knowledge changes take effect after a service restart. This keeps the proven Agent Runtime import path unchanged rather than introducing a second hot-reload system.
+
+### Model settings
+
+Select DeepSeek V4 Pro or DeepSeek V4 Flash and save the API key directly in the Web page. The backend stores the key only in the ignored local secrets file; the API exposes only whether a key is configured.
 
 ### Knowledge
 

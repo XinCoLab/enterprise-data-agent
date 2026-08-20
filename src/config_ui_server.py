@@ -76,6 +76,11 @@ class ChatRequest(BaseModel):
     model: Literal["deepseek-v4-pro", "deepseek-v4-flash"] = "deepseek-v4-pro"
 
 
+class ModelSettingsPayload(BaseModel):
+    model: Literal["deepseek-v4-pro", "deepseek-v4-flash"]
+    api_key: str = Field(default="", max_length=4096)
+
+
 app = FastAPI(title="DataAgent", docs_url=None, redoc_url=None)
 
 
@@ -166,6 +171,13 @@ def _safe_error_text(error: Exception) -> str:
         text,
     )
     return text[:800]
+
+
+def _model_api_key() -> str:
+    return (
+        os.getenv("DEEPSEEK_API_KEY", "").strip()
+        or _read_env(SECRETS_PATH).get("DEEPSEEK_API_KEY", "").strip()
+    )
 
 
 def _turn_messages(messages: list) -> list:
@@ -545,10 +557,7 @@ def get_state():
         "model": model,
         "models": list(ALLOWED_MODELS),
         "knowledge": knowledge,
-        "model_configured": bool(
-            os.getenv("DEEPSEEK_API_KEY")
-            or _read_env(SECRETS_PATH).get("DEEPSEEK_API_KEY")
-        ),
+        "model_configured": bool(_model_api_key()),
     }
 
 
@@ -564,6 +573,11 @@ def recent_runs():
 
 @app.post("/api/chat")
 def chat(request: ChatRequest):
+    if not _model_api_key():
+        raise HTTPException(
+            status_code=400,
+            detail="尚未配置模型 API Key，请先前往模型设置完成配置。",
+        )
     try:
         return _run_agent(request)
     except HTTPException:
@@ -573,6 +587,26 @@ def chat(request: ChatRequest):
             status_code=500,
             detail=f"分析执行失败：{_safe_error_text(error)}",
         ) from error
+
+
+@app.post("/api/model-settings")
+def save_model_settings(payload: ModelSettingsPayload):
+    api_key = payload.api_key.strip()
+    if not api_key and not _model_api_key():
+        raise HTTPException(status_code=400, detail="请输入 DeepSeek API Key。")
+
+    _update_env(SETTINGS_PATH, {"DATA_AGENT_MODEL": payload.model})
+    os.environ["DATA_AGENT_MODEL"] = payload.model
+    if api_key:
+        _update_env(SECRETS_PATH, {"DEEPSEEK_API_KEY": api_key})
+        os.environ["DEEPSEEK_API_KEY"] = api_key
+
+    return {
+        "status": "success",
+        "message": "模型配置已保存。若 Agent 已执行过分析，请重启服务后使用新配置。",
+        "model": payload.model,
+        "model_configured": True,
+    }
 
 
 @app.post("/api/test-database")

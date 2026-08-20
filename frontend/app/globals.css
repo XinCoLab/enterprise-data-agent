@@ -89,8 +89,12 @@ th { background:#f7f8fa; color:#596476; font-weight:600; }
 .restart-note { color:var(--amber); font-size:11px; }
 .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .form-grid label,.settings-panel>label { display:grid; gap:6px; color:#465166; font-size:12px; font-weight:600; }
+.form-grid small,.settings-panel>label small { color:var(--muted); font-size:11px; font-weight:400; }
 .form-grid .wide { grid-column:1/-1; }
 .form-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:20px; }
+.model-page { max-width:760px; }
+.config-status { color:var(--amber); font-size:11px; }
+.config-status.configured { color:var(--green); }
 .knowledge-page { max-width:1050px; }
 .summary-card { display:flex; align-items:center; justify-content:space-between; padding:18px 20px; }
 .summary-card h2 { margin:0; font-size:16px; }

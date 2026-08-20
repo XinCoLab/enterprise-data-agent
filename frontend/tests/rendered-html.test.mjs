@@ -36,6 +36,8 @@ test("keeps database configuration domain-neutral", async () => {
 
   assert.match(source, /<option value="mysql">MySQL<\/option>/);
   assert.match(source, /database: ""/);
+  assert.match(source, />数据库名称</);
+  assert.match(source, /填写 PostgreSQL 或 MySQL 中实际存在的数据库名称/);
 });
 
 test("exposes analysis, knowledge and model controls", async () => {
@@ -43,6 +45,8 @@ test("exposes analysis, knowledge and model controls", async () => {
 
   assert.match(source, /deepseek-v4-pro/);
   assert.match(source, /deepseek-v4-flash/);
+  assert.match(source, />模型</);
+  assert.match(source, /模型 API Key/);
   assert.match(source, />Knowledge</);
   assert.match(source, />运行</);
 });

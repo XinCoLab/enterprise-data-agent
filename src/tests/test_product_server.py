@@ -27,6 +27,46 @@ def test_chat_rejects_unknown_model_before_agent_execution():
     assert response.status_code == 422
 
 
+def test_chat_reports_missing_model_key_without_exposing_internal_name(
+    tmp_path: Path,
+    monkeypatch,
+):
+    monkeypatch.setattr(server, "SECRETS_PATH", tmp_path / "secrets.env")
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+
+    response = client.post(
+        "/api/chat",
+        json={"question": "count records", "model": "deepseek-v4-pro"},
+    )
+
+    assert response.status_code == 400
+    detail = response.json()["detail"]
+    assert "模型设置" in detail
+    assert "DEEPSEEK_API_KEY" not in detail
+
+
+def test_model_settings_store_key_without_returning_it(tmp_path: Path, monkeypatch):
+    settings_path = tmp_path / "settings.env"
+    secrets_path = tmp_path / "secrets.env"
+    monkeypatch.setattr(server, "SETTINGS_PATH", settings_path)
+    monkeypatch.setattr(server, "SECRETS_PATH", secrets_path)
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    secret = "test-secret-not-for-output"
+
+    response = client.post(
+        "/api/model-settings",
+        json={"model": "deepseek-v4-flash", "api_key": secret},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["model"] == "deepseek-v4-flash"
+    assert secret not in response.text
+    assert "DATA_AGENT_MODEL=deepseek-v4-flash" in settings_path.read_text(
+        encoding="utf-8"
+    )
+    assert f"DEEPSEEK_API_KEY={secret}" in secrets_path.read_text(encoding="utf-8")
+
+
 def test_turn_result_links_sql_to_its_real_tool_result():
     messages = [
         HumanMessage(content="Count rows"),
