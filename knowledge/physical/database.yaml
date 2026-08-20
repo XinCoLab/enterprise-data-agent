@@ -1,0 +1,71 @@
+knowledge_id: database.cold_chain_pharma_compliance
+knowledge_type: database
+database_id: cold_chain_pharma_compliance
+title: Cold Chain Pharma Compliance
+summary: Public LiveSQLBench database describing pharmaceutical cold-chain shipments, monitoring, quality, risk,
+  and review records.
+payload:
+  business_context: Pharmaceutical cold-chain compliance data declared by the public Schema, Column Meaning, and
+    HKB sources.
+  schema_names:
+  - public
+  table_ids:
+  - table.cold_chain_pharma_compliance.carriers
+  - table.cold_chain_pharma_compliance.environmentalmonitoring
+  - table.cold_chain_pharma_compliance.incidentandriskmanagement
+  - table.cold_chain_pharma_compliance.insuranceclaims
+  - table.cold_chain_pharma_compliance.monitoringdevices
+  - table.cold_chain_pharma_compliance.productbatches
+  - table.cold_chain_pharma_compliance.products
+  - table.cold_chain_pharma_compliance.qualitycompliance
+  - table.cold_chain_pharma_compliance.reviewsandimprovements
+  - table.cold_chain_pharma_compliance.shipments
+  - table.cold_chain_pharma_compliance.shipsensorlink
+  - table.cold_chain_pharma_compliance.vehicles
+discovery:
+  keywords:
+  - cold_chain_pharma_compliance
+  - cold chain
+  - pharmaceutical
+  - compliance
+  - database
+  aliases:
+  - cold chain pharma compliance
+  related_knowledge_ids:
+  - table.cold_chain_pharma_compliance.carriers
+  - table.cold_chain_pharma_compliance.environmentalmonitoring
+  - table.cold_chain_pharma_compliance.incidentandriskmanagement
+  - table.cold_chain_pharma_compliance.insuranceclaims
+  - table.cold_chain_pharma_compliance.monitoringdevices
+  - table.cold_chain_pharma_compliance.productbatches
+  - table.cold_chain_pharma_compliance.products
+  - table.cold_chain_pharma_compliance.qualitycompliance
+  - table.cold_chain_pharma_compliance.reviewsandimprovements
+  - table.cold_chain_pharma_compliance.shipments
+  - table.cold_chain_pharma_compliance.shipsensorlink
+  - table.cold_chain_pharma_compliance.vehicles
+evidence_refs:
+- evidence_id: evidence.database_cold_chain_pharma_compliance_schema
+  evidence_type: declared
+  source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+  locator: complete public Schema
+  snapshot_id: null
+  validation_id: null
+  result_summary: Declares 12 physical tables and their keys.
+- evidence_id: evidence.database_cold_chain_pharma_compliance_column_meaning
+  evidence_type: declared
+  source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+  locator: complete public Column Meaning document
+  snapshot_id: null
+  validation_id: null
+  result_summary: Explains all 74 physical columns, including nested JSONB fields.
+- evidence_id: evidence.database_cold_chain_pharma_compliance_hkb
+  evidence_type: declared
+  source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+  locator: complete public HKB JSONL
+  snapshot_id: null
+  validation_id: null
+  result_summary: Defines 60 calculation, domain, and value-illustration records.
+status: VALIDATED
+revision: 1
+updated_at: '2026-08-13T17:52:17+08:00'

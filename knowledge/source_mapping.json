@@ -1,0 +1,2189 @@
+{
+  "database_id": "cold_chain_pharma_compliance",
+  "mapping_version": "0.1.0",
+  "mappings": [
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.carriers.carriercert",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:carriers.carriercert",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Carriers|CarrierCert",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.carriers.carriertag",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:carriers.carriertag",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Carriers|CarrierTag",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.environmentalmonitoring.devlink",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:environmentalmonitoring.devlink",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|EnvironmentalMonitoring|DevLink",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.environmentalmonitoring.env_metrics",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:environmentalmonitoring.env_metrics",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|EnvironmentalMonitoring|env_metrics",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.environmentalmonitoring.reckeylink",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:environmentalmonitoring.reckeylink",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|EnvironmentalMonitoring|RecKeyLink",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.incidentandriskmanagement.incident_risk_record",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:incidentandriskmanagement.incident_risk_record",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|IncidentAndRiskManagement|incident_risk_record",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.incidentandriskmanagement.reckeyrisk",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:incidentandriskmanagement.reckeyrisk",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|IncidentAndRiskManagement|RecKeyRisk",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.insuranceclaims.claimneed",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:insuranceclaims.claimneed",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|InsuranceClaims|ClaimNeed",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.insuranceclaims.claimstat",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:insuranceclaims.claimstat",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|InsuranceClaims|ClaimStat",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.insuranceclaims.claimusd",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:insuranceclaims.claimusd",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|InsuranceClaims|ClaimUSD",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.insuranceclaims.costimpactusd",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:insuranceclaims.costimpactusd",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|InsuranceClaims|CostImpactUSD",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.insuranceclaims.reckeyclaim",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:insuranceclaims.reckeyclaim",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|InsuranceClaims|RecKeyClaim",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.insuranceclaims.respparty",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:insuranceclaims.respparty",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|InsuranceClaims|RespParty",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.monitoringdevices.calibts",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:monitoringdevices.calibts",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|MonitoringDevices|CalibTS",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.monitoringdevices.devacc",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:monitoringdevices.devacc",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|MonitoringDevices|DevAcc",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.monitoringdevices.mondevref",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:monitoringdevices.mondevref",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|MonitoringDevices|MonDevRef",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.monitoringdevices.recintmin",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:monitoringdevices.recintmin",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|MonitoringDevices|RecIntMin",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.monitoringdevices.temppts",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:monitoringdevices.temppts",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|MonitoringDevices|TempPts",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.productbatches.batchtag",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:productbatches.batchtag",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ProductBatches|BatchTag",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.productbatches.exp_ts",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:productbatches.exp_ts",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ProductBatches|EXP_TS",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.productbatches.insusd",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:productbatches.insusd",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ProductBatches|InsUSD",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.productbatches.mfg_ts",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:productbatches.mfg_ts",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ProductBatches|MFG_TS",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.productbatches.pack_cnt",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:productbatches.pack_cnt",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ProductBatches|PACK_CNT",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.productbatches.pack_type",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:productbatches.pack_type",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ProductBatches|pack_type",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.productbatches.prodlink",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:productbatches.prodlink",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ProductBatches|ProdLink",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.productbatches.store_cond",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:productbatches.store_cond",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ProductBatches|store_cond",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.productbatches.tempmax",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:productbatches.tempmax",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ProductBatches|TempMax",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.productbatches.tempmin",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:productbatches.tempmin",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ProductBatches|TempMin",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.productbatches.tempsense",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:productbatches.tempsense",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ProductBatches|TempSense",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.productbatches.valusd",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:productbatches.valusd",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ProductBatches|ValUSD",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.products.maker",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:products.maker",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Products|Maker",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.products.prodcat",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:products.prodcat",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Products|ProdCat",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.products.prodcode",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:products.prodcode",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Products|ProdCode",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.products.prodlabel",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:products.prodlabel",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Products|ProdLabel",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.qualitycompliance.qc_checklist",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:qualitycompliance.qc_checklist",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|QualityCompliance|qc_checklist",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.qualitycompliance.reckeyqc",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:qualitycompliance.reckeyqc",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|QualityCompliance|RecKeyQC",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.archivestat",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.archivestat",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|ArchiveStat",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.audittrailcomplete",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.audittrailcomplete",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|AuditTrailComplete",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.carbonkg",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.carbonkg",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|CarbonKG",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.closestat",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.closestat",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|CloseStat",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.costoptpot",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.costoptpot",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|CostOptPot",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.databackupstat",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.databackupstat",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|DataBackupStat",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.dataintegrity",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.dataintegrity",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|DataIntegrity",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.distlist",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.distlist",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|DistList",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.docformat",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.docformat",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|DocFormat",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.e_sigstat",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.e_sigstat",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|E_SigStat",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.energyscore",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.energyscore",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|EnergyScore",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.lanequalstat",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.lanequalstat",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|LaneQualStat",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.monfreqchg",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.monfreqchg",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|MonFreqChg",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.nextrevts",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.nextrevts",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|NextRevTS",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.nextshipchg",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.nextshipchg",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|NextShipChg",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.packspecrev",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.packspecrev",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|PackSpecRev",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.procimprove",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.procimprove",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|ProcImprove",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.reckeyrev",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.reckeyrev",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|RecKeyRev",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.reportgenstat",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.reportgenstat",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|ReportGenStat",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.reviewnotes",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.reviewnotes",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|ReviewNotes",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.routeriskreassess",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.routeriskreassess",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|RouteRiskReassess",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.sop_update",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.sop_update",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|SOP_Update",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.sustainimpact",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.sustainimpact",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|SustainImpact",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.sysaccessctrl",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.sysaccessctrl",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|SysAccessCtrl",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.techupgrade",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.techupgrade",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|TechUpgrade",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.trainneeds",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.trainneeds",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|TrainNeeds",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.reviewsandimprovements.vendorimpact",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:reviewsandimprovements.vendorimpact",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ReviewsAndImprovements|VendorImpact",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.shipments.log_ts",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:shipments.log_ts",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Shipments|LOG_TS",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.shipments.reckey",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:shipments.reckey",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Shipments|RecKey",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.shipments.shipment_overview",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:shipments.shipment_overview",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Shipments|shipment_overview",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.shipments.shiptok",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:shipments.shiptok",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Shipments|ShipTok",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.shipsensorlink.devnode",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:shipsensorlink.devnode",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ShipSensorLink|DevNode",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.shipsensorlink.shpnode",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:shipsensorlink.shpnode",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|ShipSensorLink|ShpNode",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.vehicles.carrierbond",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:vehicles.carrierbond",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Vehicles|CarrierBond",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.vehicles.temp_mon_sys",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:vehicles.temp_mon_sys",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Vehicles|TEMP_MON_SYS",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.vehicles.veh_qual",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:vehicles.veh_qual",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Vehicles|veh_qual",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.vehicles.vehref",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:vehicles.vehref",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Vehicles|VehRef",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "column.cold_chain_pharma_compliance.vehicles.vehtype",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "column:vehicles.vehtype",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "cold_chain_pharma_compliance|Vehicles|VehType",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "database.cold_chain_pharma_compliance",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "complete file",
+          "derived": false
+        },
+        {
+          "source_type": "column_meaning",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json",
+          "source_record_id": "complete document",
+          "derived": false
+        },
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "complete JSONL",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.acceptable_temperature_deviation_limits",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:49",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.batch_release_critical_path_elements",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:51",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.cold_chain_vehicle_qualification_status",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:24",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.critical_monitoring_failure",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:11",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.critical_temperature_exposure",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:2",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.data_integrity_components",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:59",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.delivery_performance_classification",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:13",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.electronic_monitoring_system_tiers",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:52",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.gdp_certification_status",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:4",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.gdp_corrective_action_categories",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:56",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.high_risk_shipping_origin_destination_pairs",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:17",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.humidity_sensitivity_categories",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:28",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.last_mile_delivery_metrics",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:50",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.last_mile_delivery_risk",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:38",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.location_tracking_states",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:18",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.major_pharmaceutical_markets",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:16",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.monitoring_device_calibration_status",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:55",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.package_integrity_monitoring_systems",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:33",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.package_thermal_efficiency_rating",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:43",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.pharmaceutical_stability_budget",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:31",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.premium_transport_container_types",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:29",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.primary_cold_chain_monitoring_authorities",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:42",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.product_release_decision_framework",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:34",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.product_storage_classifications",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:9",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.qualification_status_of_temperature_monitoring_devices",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:35",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.quality_agreement_status",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:14",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.quality_management_system_maturity_model",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:46",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.quality_risk_zones",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:27",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.regulatory_compliance_status_definitions",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:21",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.risk_based_monitoring_intensity",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:44",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.route_risk_classification",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:3",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.security_incident_severity_scale",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:39",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.serialization_maturity_model",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:54",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.shock_event_significance_levels",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:23",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.storage_temperature_requirements_for_biologics",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:37",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.temperature_monitoring_gap",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:8",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.temperature_profile_categorization",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:40",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.temperature_sensitive_product_categories",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:22",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.temperature_sensitivity_tiers",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:6",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.thermodynamic_stability_class",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:47",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.tier_1_cold_chain_products",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:7",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.validation_documentation_requirements",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:53",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "glossary_term.cold_chain_pharma_compliance.vehicle_temperature_monitoring_types",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:58",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.carrier_performance_index_cpi",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:15",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.cold_chain_compliance_rate_cccr",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:5",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.cold_chain_cost_efficiency_ratio_ccer",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:45",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.cold_chain_monitoring_compliance_score_ccmcs",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:10",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.data_logger_reliability_score_dlrs",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:48",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.excursion_impact_assessment_eia",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:41",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.lane_risk_potential_lrp",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:36",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.mean_kinetic_temperature_mkt",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:26",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.on_time_delivery_performance_otdp",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:12",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.packing_integrity_risk_factor_pirf",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:19",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.shipment_risk_score_srs",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:20",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.stability_budget_consumption_rate_sbcr",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:32",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.supply_chain_resilience_score_scrs",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:30",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.temperature_accuracy_impact_factor_taif",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:57",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:0",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.temperature_excursion_severity_index_tesi",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:1",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "metric.cold_chain_pharma_compliance.time_in_range_percentage_tirp",
+      "sources": [
+        {
+          "source_type": "hkb",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl",
+          "source_record_id": "id:25",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "relationship.cold_chain_pharma_compliance.environmentalmonitoring_devlink__monitoringdevices_mondevref",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "foreign_key:environmentalmonitoring(devlink)->monitoringdevices(mondevref)",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "relationship.cold_chain_pharma_compliance.environmentalmonitoring_reckeylink__shipments_reckey",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "foreign_key:environmentalmonitoring(reckeylink)->shipments(reckey)",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "relationship.cold_chain_pharma_compliance.incidentandriskmanagement_reckeyrisk__shipments_reckey",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "foreign_key:incidentandriskmanagement(reckeyrisk)->shipments(reckey)",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "relationship.cold_chain_pharma_compliance.insuranceclaims_reckeyclaim__shipments_reckey",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "foreign_key:insuranceclaims(reckeyclaim)->shipments(reckey)",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "relationship.cold_chain_pharma_compliance.productbatches_prodlink__products_prodcode",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "foreign_key:productbatches(prodlink)->products(prodcode)",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "relationship.cold_chain_pharma_compliance.qualitycompliance_reckeyqc__shipments_reckey",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "foreign_key:qualitycompliance(reckeyqc)->shipments(reckey)",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "relationship.cold_chain_pharma_compliance.reviewsandimprovements_reckeyrev__shipments_reckey",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "foreign_key:reviewsandimprovements(reckeyrev)->shipments(reckey)",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "relationship.cold_chain_pharma_compliance.shipsensorlink_devnode__monitoringdevices_mondevref",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "foreign_key:shipsensorlink(devnode)->monitoringdevices(mondevref)",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "relationship.cold_chain_pharma_compliance.shipsensorlink_shpnode__shipments_reckey",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "foreign_key:shipsensorlink(shpnode)->shipments(reckey)",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "relationship.cold_chain_pharma_compliance.vehicles_carrierbond__carriers_carriertag",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "foreign_key:vehicles(carrierbond)->carriers(carriertag)",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "table.cold_chain_pharma_compliance.carriers",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "table:carriers",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "table.cold_chain_pharma_compliance.environmentalmonitoring",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "table:environmentalmonitoring",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "table.cold_chain_pharma_compliance.incidentandriskmanagement",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "table:incidentandriskmanagement",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "table.cold_chain_pharma_compliance.insuranceclaims",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "table:insuranceclaims",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "table.cold_chain_pharma_compliance.monitoringdevices",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "table:monitoringdevices",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "table.cold_chain_pharma_compliance.productbatches",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "table:productbatches",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "table.cold_chain_pharma_compliance.products",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "table:products",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "table.cold_chain_pharma_compliance.qualitycompliance",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "table:qualitycompliance",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "table.cold_chain_pharma_compliance.reviewsandimprovements",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "table:reviewsandimprovements",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "table.cold_chain_pharma_compliance.shipments",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "table:shipments",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "table.cold_chain_pharma_compliance.shipsensorlink",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "table:shipsensorlink",
+          "derived": false
+        }
+      ]
+    },
+    {
+      "knowledge_id": "table.cold_chain_pharma_compliance.vehicles",
+      "sources": [
+        {
+          "source_type": "schema",
+          "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+          "source_record_id": "table:vehicles",
+          "derived": false
+        }
+      ]
+    }
+  ]
+}

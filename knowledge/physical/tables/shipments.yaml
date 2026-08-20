@@ -1,0 +1,296 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+table_knowledge:
+  knowledge_id: table.cold_chain_pharma_compliance.shipments
+  knowledge_type: table
+  database_id: cold_chain_pharma_compliance
+  title: Shipments
+  summary: Physical public-schema table with 4 columns and declared primary key (reckey).
+  payload:
+    physical_name: shipments
+    business_definition: Physical public-schema table with 4 columns and declared primary key (reckey).
+    grain: 'One row per declared primary-key combination: reckey'
+    table_role: unknown
+    logical_primary_key:
+    - reckey
+    usage_warnings:
+    - Table role is left unknown unless the public key structure directly identifies a bridge table.
+  discovery:
+    keywords:
+    - shipments
+    - table
+    - reckey
+    - log_ts
+    - shiptok
+    - shipment_overview
+    aliases:
+    - Shipments
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.shipments.log_ts
+    - column.cold_chain_pharma_compliance.shipments.reckey
+    - column.cold_chain_pharma_compliance.shipments.shipment_overview
+    - column.cold_chain_pharma_compliance.shipments.shiptok
+    - relationship.cold_chain_pharma_compliance.environmentalmonitoring_reckeylink__shipments_reckey
+    - relationship.cold_chain_pharma_compliance.incidentandriskmanagement_reckeyrisk__shipments_reckey
+    - relationship.cold_chain_pharma_compliance.insuranceclaims_reckeyclaim__shipments_reckey
+    - relationship.cold_chain_pharma_compliance.qualitycompliance_reckeyqc__shipments_reckey
+    - relationship.cold_chain_pharma_compliance.reviewsandimprovements_reckeyrev__shipments_reckey
+    - relationship.cold_chain_pharma_compliance.shipsensorlink_shpnode__shipments_reckey
+  evidence_refs:
+  - evidence_id: evidence.table_cold_chain_pharma_compliance_shipments_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: CREATE TABLE shipments at line 1
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares the table, physical columns, nullability, primary key, and foreign keys.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+columns:
+- knowledge_id: column.cold_chain_pharma_compliance.shipments.reckey
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Shipments: Reckey'
+  summary: text. Unique shipment record key. PK
+  payload:
+    table_id: table.cold_chain_pharma_compliance.shipments
+    physical_name: reckey
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: 'text. Unique shipment record key. PK. Example: CC381686.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - reckey
+    - shipments
+    - text
+    - identifier
+    aliases:
+    - Reckey
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.environmentalmonitoring_reckeylink__shipments_reckey
+    - relationship.cold_chain_pharma_compliance.incidentandriskmanagement_reckeyrisk__shipments_reckey
+    - relationship.cold_chain_pharma_compliance.insuranceclaims_reckeyclaim__shipments_reckey
+    - relationship.cold_chain_pharma_compliance.qualitycompliance_reckeyqc__shipments_reckey
+    - relationship.cold_chain_pharma_compliance.reviewsandimprovements_reckeyrev__shipments_reckey
+    - relationship.cold_chain_pharma_compliance.shipsensorlink_shpnode__shipments_reckey
+    - table.cold_chain_pharma_compliance.shipments
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_shipments_reckey_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:shipments; column:reckey
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_shipments_reckey_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Shipments|RecKey'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.shipments.log_ts
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Shipments: Log Ts'
+  summary: timestamp. Log-creation timestamp for this record. **NULL means record creation time not captured.**
+  payload:
+    table_id: table.cold_chain_pharma_compliance.shipments
+    physical_name: log_ts
+    physical_type: timestamp without time zone
+    business_type: timestamp
+    column_role: date
+    nullable: true
+    business_definition: 'timestamp. Log-creation timestamp for this record. **NULL means record creation time not
+      captured.**. Example: 2025-01-29T16:01:15.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means record creation time not captured.
+  discovery:
+    keywords:
+    - log_ts
+    - Log Ts
+    - shipments
+    - timestamp without time zone
+    - date
+    aliases:
+    - Log Ts
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.shipments
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_shipments_log_ts_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:shipments; column:log_ts
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_shipments_log_ts_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Shipments|LOG_TS'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.shipments.shiptok
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Shipments: Shiptok'
+  summary: text. Human-friendly shipment token (unique within system)
+  payload:
+    table_id: table.cold_chain_pharma_compliance.shipments
+    physical_name: shiptok
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Human-friendly shipment token (unique within system). Example: SH88875.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - shiptok
+    - shipments
+    - text
+    aliases:
+    - Shiptok
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.shipments
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_shipments_shiptok_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:shipments; column:shiptok
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_shipments_shiptok_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Shipments|ShipTok'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.shipments.shipment_overview
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Shipments: Shipment Overview'
+  summary: JSONB column. Groups routing, timing and risk-performance metadata of a single cold-chain shipment so
+    that dashboards can fetch a complete lane summary from one JSONB field.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.shipments
+    physical_name: shipment_overview
+    physical_type: jsonb
+    business_type: jsonb
+    column_role: unknown
+    nullable: true
+    business_definition: 'JSONB column. Groups routing, timing and risk-performance metadata of a single cold-chain
+      shipment so that dashboards can fetch a complete lane summary from one JSONB field.
+
+      Nested public field meanings:
+
+      - route.origin.hub: text. Code of the originating logistics hub. Example: Gonzales-Lopez Facility.
+
+      - route.origin.address: text. Street-level origin address. Example: 0131 Johnson Station
+
+      New Tinatown, FL 65757.
+
+      - route.origin.nation: text. ISO country code of origin. **NULL means country not provided.**. Example: Fiji.
+
+      - route.destination.hub: text. Code of the destination logistics hub. Example: Williams-Aguilar Hospital.
+
+      - route.destination.address: text. Street-level destination address. Example: 7209 West Flats
+
+      East Tonya, OR 13658.
+
+      - route.destination.nation: text. ISO country code of destination. **NULL means country not provided.**. Example:
+      Bouvet Island (Bouvetoya).
+
+      - route.route_string: text. Encoded string of planned route waypoints. Example: Fiji -> Bouvet Island (Bouvetoya).
+
+      - route.risk_note: text. Qualitative notes on route-specific risks. Possible values: High, Low, Medium.
+
+      - timing_performance.go_time_ts: timestamp. Planned departure timestamp. Example: 2025/2/17 19:29.
+
+      - timing_performance.planned_eta_hrs: bigint. Estimated transit time in hours. Example: 27.6.
+
+      - timing_performance.actual_duration_hrs: bigint. Actual transit time in hours. **NULL means actual hours
+      not yet recorded.**. Example: 10.2.
+
+      - timing_performance.end_time_ts: timestamp. Actual arrival timestamp. Possible values: 2025/2/19 08:29.
+
+      - timing_performance.distance_km: bigint. Total kilometres travelled for the shipment. Example: 2608.'
+    unit: hours
+    default_aggregation: null
+    usage_warnings:
+    - NULL means country not provided.
+    - NULL means actual hours not yet recorded.
+  discovery:
+    keywords:
+    - shipment_overview
+    - Shipment Overview
+    - shipments
+    - jsonb
+    - unknown
+    - route.origin.hub
+    - hub
+    - route.origin.address
+    - address
+    - route.origin.nation
+    - nation
+    - route.destination.hub
+    - route.destination.address
+    - route.destination.nation
+    - route.route_string
+    - route_string
+    - route.risk_note
+    - risk_note
+    - timing_performance.go_time_ts
+    - go_time_ts
+    - timing_performance.planned_eta_hrs
+    - planned_eta_hrs
+    - timing_performance.actual_duration_hrs
+    - actual_duration_hrs
+    - timing_performance.end_time_ts
+    - end_time_ts
+    - timing_performance.distance_km
+    - distance_km
+    aliases:
+    - Shipment Overview
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.shipments
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_shipments_shipment_overview_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:shipments; column:shipment_overview
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_shipments_shipment_overview_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Shipments|shipment_overview'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

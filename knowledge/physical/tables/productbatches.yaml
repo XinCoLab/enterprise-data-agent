@@ -1,0 +1,596 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+table_knowledge:
+  knowledge_id: table.cold_chain_pharma_compliance.productbatches
+  knowledge_type: table
+  database_id: cold_chain_pharma_compliance
+  title: Productbatches
+  summary: Physical public-schema table with 12 columns and declared primary key (batchtag).
+  payload:
+    physical_name: productbatches
+    business_definition: Physical public-schema table with 12 columns and declared primary key (batchtag).
+    grain: 'One row per declared primary-key combination: batchtag'
+    table_role: unknown
+    logical_primary_key:
+    - batchtag
+    usage_warnings:
+    - Table role is left unknown unless the public key structure directly identifies a bridge table.
+  discovery:
+    keywords:
+    - productbatches
+    - table
+    - batchtag
+    - prodlink
+    - mfg_ts
+    - exp_ts
+    - store_cond
+    - tempmin
+    - tempmax
+    - tempsense
+    - pack_type
+    - pack_cnt
+    - valusd
+    - insusd
+    aliases:
+    - Productbatches
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.productbatches.batchtag
+    - column.cold_chain_pharma_compliance.productbatches.exp_ts
+    - column.cold_chain_pharma_compliance.productbatches.insusd
+    - column.cold_chain_pharma_compliance.productbatches.mfg_ts
+    - column.cold_chain_pharma_compliance.productbatches.pack_cnt
+    - column.cold_chain_pharma_compliance.productbatches.pack_type
+    - column.cold_chain_pharma_compliance.productbatches.prodlink
+    - column.cold_chain_pharma_compliance.productbatches.store_cond
+    - column.cold_chain_pharma_compliance.productbatches.tempmax
+    - column.cold_chain_pharma_compliance.productbatches.tempmin
+    - column.cold_chain_pharma_compliance.productbatches.tempsense
+    - column.cold_chain_pharma_compliance.productbatches.valusd
+    - relationship.cold_chain_pharma_compliance.productbatches_prodlink__products_prodcode
+  evidence_refs:
+  - evidence_id: evidence.table_cold_chain_pharma_compliance_productbatches_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: CREATE TABLE productbatches at line 51
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares the table, physical columns, nullability, primary key, and foreign keys.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+columns:
+- knowledge_id: column.cold_chain_pharma_compliance.productbatches.batchtag
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Productbatches: Batchtag'
+  summary: text. Unique production batch identifier. PK
+  payload:
+    table_id: table.cold_chain_pharma_compliance.productbatches
+    physical_name: batchtag
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: 'text. Unique production batch identifier. PK. Example: BT909380.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - batchtag
+    - productbatches
+    - text
+    - identifier
+    aliases:
+    - Batchtag
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.productbatches
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_batchtag_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; column:batchtag
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_batchtag_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ProductBatches|BatchTag'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.productbatches.prodlink
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Productbatches: Prodlink'
+  summary: text. Product code this batch belongs to. FK to Products.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.productbatches
+    physical_name: prodlink
+    physical_type: text
+    business_type: text
+    column_role: foreign_key
+    nullable: true
+    business_definition: text. Product code this batch belongs to. FK to Products.
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - prodlink
+    - productbatches
+    - text
+    - foreign_key
+    aliases:
+    - Prodlink
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.productbatches_prodlink__products_prodcode
+    - table.cold_chain_pharma_compliance.productbatches
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_prodlink_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; column:prodlink
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_prodlink_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ProductBatches|ProdLink'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.productbatches.mfg_ts
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Productbatches: Mfg Ts'
+  summary: timestamp. Manufacturing timestamp for the batch
+  payload:
+    table_id: table.cold_chain_pharma_compliance.productbatches
+    physical_name: mfg_ts
+    physical_type: timestamp without time zone
+    business_type: timestamp
+    column_role: date
+    nullable: true
+    business_definition: 'timestamp. Manufacturing timestamp for the batch. Example: 2-Aug-24.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - mfg_ts
+    - Mfg Ts
+    - productbatches
+    - timestamp without time zone
+    - date
+    aliases:
+    - Mfg Ts
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.productbatches
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_mfg_ts_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; column:mfg_ts
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_mfg_ts_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ProductBatches|MFG_TS'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.productbatches.exp_ts
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Productbatches: Exp Ts'
+  summary: timestamp. Expiry timestamp for the batch
+  payload:
+    table_id: table.cold_chain_pharma_compliance.productbatches
+    physical_name: exp_ts
+    physical_type: timestamp without time zone
+    business_type: timestamp
+    column_role: date
+    nullable: true
+    business_definition: 'timestamp. Expiry timestamp for the batch. Example: 09/30/2026.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - exp_ts
+    - Exp Ts
+    - productbatches
+    - timestamp without time zone
+    - date
+    aliases:
+    - Exp Ts
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.productbatches
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_exp_ts_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; column:exp_ts
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_exp_ts_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ProductBatches|EXP_TS'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.productbatches.store_cond
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Productbatches: Store Cond'
+  summary: 'text. Textual description of required storage conditions. Possible values: -20°C, -70°C, 15-25°C, 2-8°C.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.productbatches
+    physical_name: store_cond
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Textual description of required storage conditions. Possible values: -20°C, -70°C,
+      15-25°C, 2-8°C.'
+    unit: degrees Celsius
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - store_cond
+    - Store Cond
+    - productbatches
+    - text
+    aliases:
+    - Store Cond
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.productbatches
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_store_cond_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; column:store_cond
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_store_cond_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ProductBatches|store_cond'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.productbatches.tempmin
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Productbatches: Tempmin'
+  summary: 'real. Minimum allowable temperature (°C). Possible values: -70, -20, 2, 15.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.productbatches
+    physical_name: tempmin
+    physical_type: real
+    business_type: real
+    column_role: measure
+    nullable: true
+    business_definition: 'real. Minimum allowable temperature (°C). Possible values: -70, -20, 2, 15.'
+    unit: degrees Celsius
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - tempmin
+    - productbatches
+    - real
+    - measure
+    aliases:
+    - Tempmin
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.productbatches
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_tempmin_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; column:tempmin
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_tempmin_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ProductBatches|TempMin'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.productbatches.tempmax
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Productbatches: Tempmax'
+  summary: real. Maximum allowable temperature (°C)
+  payload:
+    table_id: table.cold_chain_pharma_compliance.productbatches
+    physical_name: tempmax
+    physical_type: real
+    business_type: real
+    column_role: measure
+    nullable: true
+    business_definition: 'real. Maximum allowable temperature (°C). Example: 12.'
+    unit: degrees Celsius
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - tempmax
+    - productbatches
+    - real
+    - measure
+    aliases:
+    - Tempmax
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.productbatches
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_tempmax_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; column:tempmax
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_tempmax_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ProductBatches|TempMax'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.productbatches.tempsense
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Productbatches: Tempsense'
+  summary: 'text. Temperature-sensing method or device type. Possible values: High, Low, Medium.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.productbatches
+    physical_name: tempsense
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Temperature-sensing method or device type. Possible values: High, Low, Medium.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - tempsense
+    - productbatches
+    - text
+    aliases:
+    - Tempsense
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.productbatches
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_tempsense_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; column:tempsense
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_tempsense_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ProductBatches|TempSense'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.productbatches.pack_type
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Productbatches: Pack Type'
+  summary: 'text. Packaging type for the shipment units. Possible values: Ampoule, Container, Syringe, Vial.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.productbatches
+    physical_name: pack_type
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Packaging type for the shipment units. Possible values: Ampoule, Container, Syringe,
+      Vial.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - pack_type
+    - Pack Type
+    - productbatches
+    - text
+    aliases:
+    - Pack Type
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.productbatches
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_pack_type_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; column:pack_type
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_pack_type_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ProductBatches|pack_type'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.productbatches.pack_cnt
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Productbatches: Pack Cnt'
+  summary: bigint. Number of saleable packs in the batch
+  payload:
+    table_id: table.cold_chain_pharma_compliance.productbatches
+    physical_name: pack_cnt
+    physical_type: bigint
+    business_type: bigint
+    column_role: measure
+    nullable: true
+    business_definition: 'bigint. Number of saleable packs in the batch. Example: 936.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - pack_cnt
+    - Pack Cnt
+    - productbatches
+    - bigint
+    - measure
+    aliases:
+    - Pack Cnt
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.productbatches
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_pack_cnt_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; column:pack_cnt
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_pack_cnt_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ProductBatches|PACK_CNT'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.productbatches.valusd
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Productbatches: Valusd'
+  summary: text. Declared commercial value in USD
+  payload:
+    table_id: table.cold_chain_pharma_compliance.productbatches
+    physical_name: valusd
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Declared commercial value in USD. Example: $57,421.85 .'
+    unit: USD
+    default_aggregation: null
+    usage_warnings:
+    - The public Schema stores this value as text; numeric interpretation requires explicit normalization.
+  discovery:
+    keywords:
+    - valusd
+    - productbatches
+    - text
+    aliases:
+    - Valusd
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.productbatches
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_valusd_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; column:valusd
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_valusd_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ProductBatches|ValUSD'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.productbatches.insusd
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Productbatches: Insusd'
+  summary: real. Insurance coverage value in USD. **NULL means no insurance value set.**
+  payload:
+    table_id: table.cold_chain_pharma_compliance.productbatches
+    physical_name: insusd
+    physical_type: real
+    business_type: real
+    column_role: measure
+    nullable: true
+    business_definition: 'real. Insurance coverage value in USD. **NULL means no insurance value set.**. Example:
+      226483.74.'
+    unit: USD
+    default_aggregation: null
+    usage_warnings:
+    - NULL means no insurance value set.
+  discovery:
+    keywords:
+    - insusd
+    - productbatches
+    - real
+    - measure
+    aliases:
+    - Insusd
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.productbatches
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_insusd_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; column:insusd
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_productbatches_insusd_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ProductBatches|InsUSD'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

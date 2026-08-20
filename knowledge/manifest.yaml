@@ -1,0 +1,31 @@
+package:
+  database_id: cold_chain_pharma_compliance
+  language: en
+  knowledge_version: 0.1.0
+  benchmark_release: LiveSQLBench-Base-Full-v1-public
+  contract_version: 0.1.0
+  lifecycle_status: VALIDATED
+  updated_at: '2026-08-13T17:52:17+08:00'
+public_inputs:
+  schema: eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt
+  column_meaning: eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json
+  hkb: eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl
+agent_knowledge:
+  loader_compatible_with: ai_app_lab_en/knowledge_runtime/catalog.py
+  included_types:
+  - database
+  - table
+  - column
+  - relationship
+  - metric
+  - glossary_term
+  card_counts:
+    database: 1
+    table: 12
+    column: 74
+    relationship: 10
+    measure: 0
+    metric: 17
+    glossary_term: 43
+    total: 157
+  scope: Complete selected-database public Schema, Column Meaning, and HKB; not task-specific.

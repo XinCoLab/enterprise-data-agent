@@ -1,0 +1,318 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+table_knowledge:
+  knowledge_id: table.cold_chain_pharma_compliance.insuranceclaims
+  knowledge_type: table
+  database_id: cold_chain_pharma_compliance
+  title: Insuranceclaims
+  summary: Physical public-schema table with 6 columns and declared primary key (reckeyclaim).
+  payload:
+    physical_name: insuranceclaims
+    business_definition: Physical public-schema table with 6 columns and declared primary key (reckeyclaim).
+    grain: 'One row per declared primary-key combination: reckeyclaim'
+    table_role: unknown
+    logical_primary_key:
+    - reckeyclaim
+    usage_warnings:
+    - Table role is left unknown unless the public key structure directly identifies a bridge table.
+  discovery:
+    keywords:
+    - insuranceclaims
+    - table
+    - reckeyclaim
+    - claimneed
+    - claimstat
+    - claimusd
+    - costimpactusd
+    - respparty
+    aliases:
+    - Insuranceclaims
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.insuranceclaims.claimneed
+    - column.cold_chain_pharma_compliance.insuranceclaims.claimstat
+    - column.cold_chain_pharma_compliance.insuranceclaims.claimusd
+    - column.cold_chain_pharma_compliance.insuranceclaims.costimpactusd
+    - column.cold_chain_pharma_compliance.insuranceclaims.reckeyclaim
+    - column.cold_chain_pharma_compliance.insuranceclaims.respparty
+    - relationship.cold_chain_pharma_compliance.insuranceclaims_reckeyclaim__shipments_reckey
+  evidence_refs:
+  - evidence_id: evidence.table_cold_chain_pharma_compliance_insuranceclaims_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: CREATE TABLE insuranceclaims at line 161
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares the table, physical columns, nullability, primary key, and foreign keys.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+columns:
+- knowledge_id: column.cold_chain_pharma_compliance.insuranceclaims.reckeyclaim
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Insuranceclaims: Reckeyclaim'
+  summary: text. Shipment record key for insurance. PK. FK to Shipments.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.insuranceclaims
+    physical_name: reckeyclaim
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: text. Shipment record key for insurance. PK. FK to Shipments.
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - reckeyclaim
+    - insuranceclaims
+    - text
+    - identifier
+    aliases:
+    - Reckeyclaim
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.insuranceclaims_reckeyclaim__shipments_reckey
+    - table.cold_chain_pharma_compliance.insuranceclaims
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_insuranceclaims_reckeyclaim_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:insuranceclaims; column:reckeyclaim
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_insuranceclaims_reckeyclaim_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|InsuranceClaims|RecKeyClaim'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.insuranceclaims.claimneed
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Insuranceclaims: Claimneed'
+  summary: 'text. Indicator whether a claim is required. Possible values: No, Under Review, Yes.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.insuranceclaims
+    physical_name: claimneed
+    physical_type: text
+    business_type: text
+    column_role: status
+    nullable: true
+    business_definition: 'text. Indicator whether a claim is required. Possible values: No, Under Review, Yes.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - claimneed
+    - insuranceclaims
+    - text
+    - status
+    aliases:
+    - Claimneed
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.insuranceclaims
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_insuranceclaims_claimneed_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:insuranceclaims; column:claimneed
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_insuranceclaims_claimneed_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|InsuranceClaims|ClaimNeed'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.insuranceclaims.claimstat
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Insuranceclaims: Claimstat'
+  summary: 'text. Current claim status. **NULL means claim not initiated.**. Possible values: Approved, Filed, Rejected.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.insuranceclaims
+    physical_name: claimstat
+    physical_type: text
+    business_type: text
+    column_role: status
+    nullable: true
+    business_definition: 'text. Current claim status. **NULL means claim not initiated.**. Possible values: Approved,
+      Filed, Rejected.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means claim not initiated.
+  discovery:
+    keywords:
+    - claimstat
+    - insuranceclaims
+    - text
+    - status
+    aliases:
+    - Claimstat
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.insuranceclaims
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_insuranceclaims_claimstat_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:insuranceclaims; column:claimstat
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_insuranceclaims_claimstat_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|InsuranceClaims|ClaimStat'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.insuranceclaims.claimusd
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Insuranceclaims: Claimusd'
+  summary: real. Amount claimed in USD
+  payload:
+    table_id: table.cold_chain_pharma_compliance.insuranceclaims
+    physical_name: claimusd
+    physical_type: real
+    business_type: real
+    column_role: measure
+    nullable: true
+    business_definition: 'real. Amount claimed in USD. Example: 79419.22.'
+    unit: USD
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - claimusd
+    - insuranceclaims
+    - real
+    - measure
+    aliases:
+    - Claimusd
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.insuranceclaims
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_insuranceclaims_claimusd_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:insuranceclaims; column:claimusd
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_insuranceclaims_claimusd_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|InsuranceClaims|ClaimUSD'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.insuranceclaims.costimpactusd
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Insuranceclaims: Costimpactusd'
+  summary: real. Total cost impact in USD
+  payload:
+    table_id: table.cold_chain_pharma_compliance.insuranceclaims
+    physical_name: costimpactusd
+    physical_type: real
+    business_type: real
+    column_role: measure
+    nullable: true
+    business_definition: 'real. Total cost impact in USD. Example: 47835.32.'
+    unit: USD
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - costimpactusd
+    - insuranceclaims
+    - real
+    - measure
+    aliases:
+    - Costimpactusd
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.insuranceclaims
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_insuranceclaims_costimpactusd_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:insuranceclaims; column:costimpactusd
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_insuranceclaims_costimpactusd_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|InsuranceClaims|CostImpactUSD'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.insuranceclaims.respparty
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Insuranceclaims: Respparty'
+  summary: 'text. Responsible party for loss. **NULL means not yet assigned.**. Possible values: Carrier, Receiver,
+    Shipper, Unknown.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.insuranceclaims
+    physical_name: respparty
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Responsible party for loss. **NULL means not yet assigned.**. Possible values: Carrier,
+      Receiver, Shipper, Unknown.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means not yet assigned.
+  discovery:
+    keywords:
+    - respparty
+    - insuranceclaims
+    - text
+    aliases:
+    - Respparty
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.insuranceclaims
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_insuranceclaims_respparty_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:insuranceclaims; column:respparty
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_insuranceclaims_respparty_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|InsuranceClaims|RespParty'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

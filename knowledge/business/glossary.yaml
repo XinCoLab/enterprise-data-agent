@@ -1,0 +1,1475 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+glossary_terms:
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.critical_temperature_exposure
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Critical Temperature Exposure
+  summary: Indicates when a product has been exposed to temperatures that may significantly impact product quality.
+  payload:
+    term: Critical Temperature Exposure
+    definition: An exposure event where the product temperature deviates more than 5°C from its specified temperature
+      range for more than 60 consecutive minutes.
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Critical Temperature Exposure
+    - domain_knowledge
+    - Critical
+    - Temperature
+    - Exposure
+    - domain rule
+    aliases:
+    - Critical Temperature Exposure
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_critical_temperature_exposure_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 3; id=2
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.route_risk_classification
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Route Risk Classification
+  summary: Categorizes shipping routes based on their risk level for temperature excursions.
+  payload:
+    term: Route Risk Classification
+    definition: 'Routes are classified as: ''Low Risk'' (0-1 historical excursion events per 10 shipments), ''Medium
+      Risk'' (2-4 historical excursion events per 10 shipments), ''High Risk'' (5+ historical excursion events per
+      10 shipments).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Route Risk Classification
+    - value_illustration
+    - Route
+    - Risk
+    - Classification
+    - value illustration
+    aliases:
+    - Route Risk Classification
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_route_risk_classification_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 4; id=3
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.gdp_certification_status
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: GDP Certification Status
+  summary: Illustrates the certification levels for carriers in Good Distribution Practice.
+  payload:
+    term: GDP Certification Status
+    definition: 'Carriers can have one of the following certification statuses: ''None'' (no certification), ''GDP''
+      (Good Distribution Practice certified), ''CEIV Pharma'' (IATA Center of Excellence for Independent Validators
+      certification), or ''Both'' (having both GDP and CEIV Pharma certifications). Null values indicate pending
+      certification status verification.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - GDP Certification Status
+    - value_illustration
+    - GDP
+    - Certification
+    - Status
+    - value illustration
+    aliases:
+    - GDP Certification Status
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_gdp_certification_status_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 5; id=4
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.temperature_sensitivity_tiers
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Temperature Sensitivity Tiers
+  summary: Classifies pharmaceutical products based on their sensitivity to temperature variations.
+  payload:
+    term: Temperature Sensitivity Tiers
+    definition: 'Products are classified into three sensitivity tiers: ''Low'' (can tolerate up to 24 hours of minor
+      temperature deviations), ''Medium'' (can tolerate up to 8 hours of minor temperature deviations), ''High''
+      (cannot tolerate temperature deviations beyond 2 hours).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Temperature Sensitivity Tiers
+    - value_illustration
+    - Temperature
+    - Sensitivity
+    - Tiers
+    - value illustration
+    aliases:
+    - Temperature Sensitivity Tiers
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_temperature_sensitivity_tiers_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 7; id=6
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.tier_1_cold_chain_products
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Tier 1 Cold Chain Products
+  summary: Identifies the highest value and most temperature-sensitive pharmaceutical products.
+  payload:
+    term: Tier 1 Cold Chain Products
+    definition: Products with both a 'High' temperature sensitivity and a value exceeding $100,000 USD.
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Tier 1 Cold Chain Products
+    - domain_knowledge
+    - Tier
+    - Cold
+    - Chain
+    - Products
+    - domain rule
+    aliases:
+    - Tier 1 Cold Chain Products
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.temperature_sensitivity_tiers
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_tier_1_cold_chain_products_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 8; id=7
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.temperature_monitoring_gap
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Temperature Monitoring Gap
+  summary: Indicates periods where temperature data is missing during transit.
+  payload:
+    term: Temperature Monitoring Gap
+    definition: A period of over 15 minutes where no temperature data points were recorded in a shipment that should
+      have continuous monitoring.
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Temperature Monitoring Gap
+    - domain_knowledge
+    - Temperature
+    - Monitoring
+    - Gap
+    - domain rule
+    aliases:
+    - Temperature Monitoring Gap
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_temperature_monitoring_gap_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 9; id=8
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.product_storage_classifications
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Product Storage Classifications
+  summary: Standardized temperature ranges for pharmaceutical product storage.
+  payload:
+    term: Product Storage Classifications
+    definition: 'Four standard storage classifications: ''2-8°C'' (refrigerated), ''-20°C'' (frozen), ''-70°C''
+      (ultra-low temperature), and ''15-25°C'' (controlled room temperature).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Product Storage Classifications
+    - value_illustration
+    - Product
+    - Storage
+    - Classifications
+    - value illustration
+    aliases:
+    - Product Storage Classifications
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_product_storage_classifications_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 10; id=9
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.critical_monitoring_failure
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Critical Monitoring Failure
+  summary: Indicates when monitoring systems fail to provide sufficient data to assess product quality.
+  payload:
+    term: Critical Monitoring Failure
+    definition: Occurs when either GPS completeness falls below 80% or when temperature monitoring has gaps exceeding
+      30 minutes during transit.
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Critical Monitoring Failure
+    - domain_knowledge
+    - Critical
+    - Monitoring
+    - Failure
+    - domain rule
+    aliases:
+    - Critical Monitoring Failure
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.temperature_monitoring_gap
+    - metric.cold_chain_pharma_compliance.cold_chain_monitoring_compliance_score_ccmcs
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_critical_monitoring_failure_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 12; id=11
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.delivery_performance_classification
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Delivery Performance Classification
+  summary: Categorizes delivery performance based on variance from expected delivery time.
+  payload:
+    term: Delivery Performance Classification
+    definition: 'Shipments are classified as: ''Early'' (>2 hours before scheduled time), ''On-Time'' (within ±2
+      hours of scheduled time), ''Delayed'' (2-24 hours after scheduled time), ''Severely Delayed'' (>24 hours after
+      scheduled time).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Delivery Performance Classification
+    - value_illustration
+    - Delivery
+    - Performance
+    - Classification
+    - value illustration
+    aliases:
+    - Delivery Performance Classification
+    related_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.on_time_delivery_performance_otdp
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_delivery_performance_classification_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 14; id=13
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.quality_agreement_status
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Quality Agreement Status
+  summary: Illustrates the current state of quality agreements between parties in the cold chain.
+  payload:
+    term: Quality Agreement Status
+    definition: 'Quality agreements can have the following statuses: ''Active'' (current agreement in force), ''Expired''
+      (agreement has lapsed), ''Pending'' (agreement under review), or null (no formal agreement exists).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Quality Agreement Status
+    - value_illustration
+    - Quality
+    - Agreement
+    - Status
+    - value illustration
+    aliases:
+    - Quality Agreement Status
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_quality_agreement_status_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 15; id=14
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.major_pharmaceutical_markets
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Major Pharmaceutical Markets
+  summary: Identifies the primary global pharmaceutical markets for cold chain distribution.
+  payload:
+    term: Major Pharmaceutical Markets
+    definition: 'Major pharmaceutical markets include: United States, European Union (specifically Germany, France,
+      Italy, Spain, and United Kingdom), Japan, China, Brazil, India, and Russia.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Major Pharmaceutical Markets
+    - domain_knowledge
+    - Major
+    - Pharmaceutical
+    - Markets
+    - domain rule
+    aliases:
+    - Major Pharmaceutical Markets
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_major_pharmaceutical_markets_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 17; id=16
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.high_risk_shipping_origin_destination_pairs
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: High-Risk Shipping Origin-Destination Pairs
+  summary: Identifies shipping routes that historically show elevated risks for cold chain integrity.
+  payload:
+    term: High-Risk Shipping Origin-Destination Pairs
+    definition: 'Shipping lane combinations that either: 1) cross more than three climate zones, 2) involve more
+      than two carrier transfers, 3) include countries with historical customs delays exceeding 48 hours, or 4)
+      have previously documented temperature excursion rates above 15%.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - High-Risk Shipping Origin-Destination Pairs
+    - domain_knowledge
+    - High-Risk
+    - Shipping
+    - Origin-Destination
+    - Pairs
+    - domain rule
+    aliases:
+    - High-Risk Shipping Origin-Destination Pairs
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.major_pharmaceutical_markets
+    - glossary_term.cold_chain_pharma_compliance.route_risk_classification
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_high_risk_shipping_origin_destination_pairs_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 18; id=17
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.location_tracking_states
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Location Tracking States
+  summary: Illustrates the possible states of location tracking systems during transit.
+  payload:
+    term: Location Tracking States
+    definition: 'Location tracking can be in one of these states: ''Active'' (providing regular updates), ''Intermittent''
+      (occasional gaps in tracking), ''Failed'' (no longer providing location data), or null (tracking was not implemented
+      for this shipment).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Location Tracking States
+    - value_illustration
+    - Location
+    - Tracking
+    - States
+    - value illustration
+    aliases:
+    - Location Tracking States
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_location_tracking_states_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 19; id=18
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.regulatory_compliance_status_definitions
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Regulatory Compliance Status Definitions
+  summary: Explains the different compliance status classifications used in quality assessment.
+  payload:
+    term: Regulatory Compliance Status Definitions
+    definition: 'Compliance statuses are defined as: ''Compliant'' (meets all regulatory requirements), ''Non-compliant''
+      (fails to meet one or more critical requirements), ''Under Review'' (compliance being assessed), or null (compliance
+      status not yet determined).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Regulatory Compliance Status Definitions
+    - value_illustration
+    - Regulatory
+    - Compliance
+    - Status
+    - Definitions
+    - value illustration
+    aliases:
+    - Regulatory Compliance Status Definitions
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_regulatory_compliance_status_definitions_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 22; id=21
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.temperature_sensitive_product_categories
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Temperature-Sensitive Product Categories
+  summary: The main categories of pharmaceutical products requiring temperature-controlled transport.
+  payload:
+    term: Temperature-Sensitive Product Categories
+    definition: 'Temperature-sensitive product categories include: Vaccines, Biologics (including monoclonal antibodies
+      and recombinant proteins), Blood Products (including plasma and platelets), and Insulin products.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Temperature-Sensitive Product Categories
+    - domain_knowledge
+    - Temperature-Sensitive
+    - Product
+    - Categories
+    - domain rule
+    aliases:
+    - Temperature-Sensitive Product Categories
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_temperature_sensitive_product_categories_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 23; id=22
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.shock_event_significance_levels
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Shock Event Significance Levels
+  summary: Classifies impact events based on their potential to damage pharmaceutical products.
+  payload:
+    term: Shock Event Significance Levels
+    definition: 'Shock events are classified as: ''Minor'' (unlikely to cause damage), ''Moderate'' (potential to
+      damage if repeated), ''Severe'' (likely to cause damage to product or packaging), with null values indicating
+      no shock monitoring was implemented.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Shock Event Significance Levels
+    - value_illustration
+    - Shock
+    - Event
+    - Significance
+    - Levels
+    - value illustration
+    aliases:
+    - Shock Event Significance Levels
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_shock_event_significance_levels_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 24; id=23
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.cold_chain_vehicle_qualification_status
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Cold Chain Vehicle Qualification Status
+  summary: Illustrates the validation levels of vehicles used in pharmaceutical transport.
+  payload:
+    term: Cold Chain Vehicle Qualification Status
+    definition: 'Vehicles can be classified as: ''Validated'' (fully validated through performance and temperature
+      mapping studies), ''Qualified'' (basic qualification but not fully validated), ''Unqualified'' (not formally
+      qualified for pharmaceutical transport).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Cold Chain Vehicle Qualification Status
+    - value_illustration
+    - Cold
+    - Chain
+    - Vehicle
+    - Qualification
+    - Status
+    - value illustration
+    aliases:
+    - Cold Chain Vehicle Qualification Status
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_cold_chain_vehicle_qualification_status_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 25; id=24
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.quality_risk_zones
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Quality Risk Zones
+  summary: Identifies risk levels for temperature-sensitive products based on excursion metrics.
+  payload:
+    term: Quality Risk Zones
+    definition: 'Quality risk zones are: ''Green Zone'' (TIRP > 98% and no excursions > 30 min), ''Yellow Zone''
+      (95% ≤ TIRP ≤ 98% or any excursion 30-60 min), ''Red Zone'' (TIRP < 95% or any excursion > 60 min).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Quality Risk Zones
+    - domain_knowledge
+    - Quality
+    - Risk
+    - Zones
+    - domain rule
+    aliases:
+    - Quality Risk Zones
+    related_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted
+    - metric.cold_chain_pharma_compliance.time_in_range_percentage_tirp
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_quality_risk_zones_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 28; id=27
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.humidity_sensitivity_categories
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Humidity Sensitivity Categories
+  summary: Classifies pharmaceutical products based on their sensitivity to humidity variations.
+  payload:
+    term: Humidity Sensitivity Categories
+    definition: 'Humidity sensitivity categories are: ''Not Sensitive'' (can tolerate wide humidity variations),
+      ''Moderately Sensitive'' (can tolerate limited humidity variations), ''Highly Sensitive'' (requires strict
+      humidity control), with null values indicating humidity sensitivity not specified.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Humidity Sensitivity Categories
+    - value_illustration
+    - Humidity
+    - Sensitivity
+    - Categories
+    - value illustration
+    aliases:
+    - Humidity Sensitivity Categories
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_humidity_sensitivity_categories_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 29; id=28
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.premium_transport_container_types
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Premium Transport Container Types
+  summary: Identifies specialized containers used for high-value pharmaceutical transport.
+  payload:
+    term: Premium Transport Container Types
+    definition: 'Premium transport containers include: Envirotainer RAP e2, Envirotainer RKN e1, va-Q-tainer USx,
+      CSafe RKN, DoKaSch Opticooler, and Sonoco ThermoSafe PharmaPort 360.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Premium Transport Container Types
+    - domain_knowledge
+    - Premium
+    - Transport
+    - Container
+    - Types
+    - domain rule
+    aliases:
+    - Premium Transport Container Types
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_premium_transport_container_types_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 30; id=29
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.pharmaceutical_stability_budget
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Pharmaceutical Stability Budget
+  summary: The total allowable time a product can spend outside of ideal conditions before quality is compromised.
+  payload:
+    term: Pharmaceutical Stability Budget
+    definition: The maximum cumulative duration (typically specified in hours or days) that a pharmaceutical product
+      can experience conditions outside its labeled storage requirements without significant impact to its quality,
+      safety, or efficacy. Null values indicate stability budget has not been determined for the product.
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Pharmaceutical Stability Budget
+    - domain_knowledge
+    - Pharmaceutical
+    - Stability
+    - Budget
+    - domain rule
+    aliases:
+    - Pharmaceutical Stability Budget
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.product_storage_classifications
+    - glossary_term.cold_chain_pharma_compliance.temperature_sensitivity_tiers
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_pharmaceutical_stability_budget_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 32; id=31
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.package_integrity_monitoring_systems
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Package Integrity Monitoring Systems
+  summary: Identifies technologies used to monitor physical integrity of packages during transit.
+  payload:
+    term: Package Integrity Monitoring Systems
+    definition: 'Package integrity monitoring systems include: Shock Indicators (mechanical devices that show when
+      a package has received an impact), Tilt Indicators (show if a package was tilted beyond acceptable angles),
+      Electronic Impact Recorders (provide detailed shock measurements), and Pressure Indicators (monitor pressure
+      changes in sealed containers).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Package Integrity Monitoring Systems
+    - domain_knowledge
+    - Package
+    - Integrity
+    - Monitoring
+    - Systems
+    - domain rule
+    aliases:
+    - Package Integrity Monitoring Systems
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_package_integrity_monitoring_systems_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 34; id=33
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.product_release_decision_framework
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Product Release Decision Framework
+  summary: Structured approach for determining if temperature-sensitive products can be released for use after transport.
+  payload:
+    term: Product Release Decision Framework
+    definition: 'A decision framework considering: 1) Presence of temperature excursions, 2) Stability data for
+      specific excursion profiles, 3) Package integrity, 4) Product appearance, and 5) Analytical testing results
+      if required. Products can be ''Released'' (meets all criteria), ''Released with CAPA'' (meets essential criteria
+      but requires corrective action), ''Quarantined'' (requires further investigation), or ''Rejected'' (failed
+      critical criteria).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Product Release Decision Framework
+    - domain_knowledge
+    - Product
+    - Release
+    - Decision
+    - Framework
+    - domain rule
+    aliases:
+    - Product Release Decision Framework
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.package_integrity_monitoring_systems
+    - glossary_term.cold_chain_pharma_compliance.pharmaceutical_stability_budget
+    - glossary_term.cold_chain_pharma_compliance.quality_risk_zones
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_product_release_decision_framework_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 35; id=34
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.qualification_status_of_temperature_monitoring_devices
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Qualification Status of Temperature Monitoring Devices
+  summary: Indicates the validation level of monitoring devices used in pharmaceutical transport.
+  payload:
+    term: Qualification Status of Temperature Monitoring Devices
+    definition: 'Monitoring devices can be: ''Fully Qualified'' (calibrated with NIST-traceable standards and validated
+      for pharmaceutical use), ''Partially Qualified'' (calibrated but not fully validated), ''Unqualified'' (not
+      formally qualified), with null values indicating qualification status is unknown.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Qualification Status of Temperature Monitoring Devices
+    - value_illustration
+    - Qualification
+    - Status
+    - Temperature
+    - Monitoring
+    - Devices
+    - value illustration
+    aliases:
+    - Qualification Status of Temperature Monitoring Devices
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_qualification_status_of_temperature_monitoring_devices_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 36; id=35
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.storage_temperature_requirements_for_biologics
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Storage Temperature Requirements for Biologics
+  summary: Specifies the standard temperature storage requirements for biological pharmaceutical products.
+  payload:
+    term: Storage Temperature Requirements for Biologics
+    definition: Most biologics require storage at either '2-8°C' (refrigerated) or '-20°C' (frozen), with certain
+      specialized biologic products requiring '-70°C' (ultra-low temperature) storage. Room temperature (15-25°C)
+      storage is rarely suitable for biologics unless specifically formulated for stability at those temperatures.
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Storage Temperature Requirements for Biologics
+    - domain_knowledge
+    - Storage
+    - Temperature
+    - Requirements
+    - for
+    - Biologics
+    - domain rule
+    aliases:
+    - Storage Temperature Requirements for Biologics
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.product_storage_classifications
+    - glossary_term.cold_chain_pharma_compliance.temperature_sensitive_product_categories
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_storage_temperature_requirements_for_biologics_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 38; id=37
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.last_mile_delivery_risk
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Last Mile Delivery Risk
+  summary: Specific risks associated with the final stage of pharmaceutical product delivery.
+  payload:
+    term: Last Mile Delivery Risk
+    definition: 'Last mile delivery risks include: Lack of temperature-controlled vehicles, Multiple stops increasing
+      door-opening frequency, Variable driver training in handling procedures, Inconsistent receiving procedures
+      at destinations, and Limited monitoring capabilities compared to main transport segments.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Last Mile Delivery Risk
+    - domain_knowledge
+    - Last
+    - Mile
+    - Delivery
+    - Risk
+    - domain rule
+    aliases:
+    - Last Mile Delivery Risk
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_last_mile_delivery_risk_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 39; id=38
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.security_incident_severity_scale
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Security Incident Severity Scale
+  summary: Categorizes security events during pharmaceutical transport by their severity.
+  payload:
+    term: Security Incident Severity Scale
+    definition: 'Security incidents are classified on a scale of 0-4: ''0'' (No security concerns), ''1'' (Minor
+      procedural deviation), ''2'' (Moderate security concern without evidence of tampering), ''3'' (Clear evidence
+      of attempted tampering), ''4'' (Confirmed breach with product access), with null values indicating security
+      assessment was not performed.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Security Incident Severity Scale
+    - value_illustration
+    - Security
+    - Incident
+    - Severity
+    - Scale
+    - value illustration
+    aliases:
+    - Security Incident Severity Scale
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_security_incident_severity_scale_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 40; id=39
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.temperature_profile_categorization
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Temperature Profile Categorization
+  summary: Classifies the pattern of temperature readings during a shipment.
+  payload:
+    term: Temperature Profile Categorization
+    definition: 'Temperature profiles are categorized as: ''Stable'' (minimal variations within range), ''Cyclic''
+      (regular patterns of variation within range), ''Trend'' (gradual increase or decrease over time), ''Excursion''
+      (periods outside acceptable range), or ''Erratic'' (unpredictable variations suggesting monitoring issues).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Temperature Profile Categorization
+    - domain_knowledge
+    - Temperature
+    - Profile
+    - Categorization
+    - domain rule
+    aliases:
+    - Temperature Profile Categorization
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_temperature_profile_categorization_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 41; id=40
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.primary_cold_chain_monitoring_authorities
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Primary Cold Chain Monitoring Authorities
+  summary: Key regulatory bodies that oversee cold chain management for pharmaceuticals.
+  payload:
+    term: Primary Cold Chain Monitoring Authorities
+    definition: 'Primary regulatory authorities for pharmaceutical cold chains include: FDA (US Food and Drug Administration),
+      EMA (European Medicines Agency), MHRA (UK Medicines and Healthcare products Regulatory Agency), Health Canada,
+      TGA (Australian Therapeutic Goods Administration), PMDA (Japanese Pharmaceuticals and Medical Devices Agency),
+      and WHO (World Health Organization).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Primary Cold Chain Monitoring Authorities
+    - domain_knowledge
+    - Primary
+    - Cold
+    - Chain
+    - Monitoring
+    - Authorities
+    - domain rule
+    aliases:
+    - Primary Cold Chain Monitoring Authorities
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_primary_cold_chain_monitoring_authorities_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 43; id=42
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.package_thermal_efficiency_rating
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Package Thermal Efficiency Rating
+  summary: Measures how effectively a packaging system maintains internal temperature despite external conditions.
+  payload:
+    term: Package Thermal Efficiency Rating
+    definition: 'Thermal efficiency rating is classified as: ''Basic'' (<24 hours of protection), ''Standard'' (24-48
+      hours of protection), ''Enhanced'' (48-96 hours of protection), ''Extended'' (>96 hours of protection).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Package Thermal Efficiency Rating
+    - value_illustration
+    - Package
+    - Thermal
+    - Efficiency
+    - Rating
+    - value illustration
+    aliases:
+    - Package Thermal Efficiency Rating
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_package_thermal_efficiency_rating_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 44; id=43
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.risk_based_monitoring_intensity
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Risk-Based Monitoring Intensity
+  summary: Determines appropriate monitoring frequency based on product risk profile.
+  payload:
+    term: Risk-Based Monitoring Intensity
+    definition: High-risk products (biologics, vaccines) require continuous temperature monitoring with 5-minute
+      intervals, medium-risk products should have 15-minute intervals, and low-risk products can use 30-minute intervals,
+      with null values in monitoring frequency indicating unplanned or non-standardized monitoring approaches.
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Risk-Based Monitoring Intensity
+    - domain_knowledge
+    - Risk-Based
+    - Monitoring
+    - Intensity
+    - domain rule
+    aliases:
+    - Risk-Based Monitoring Intensity
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.temperature_sensitive_product_categories
+    - glossary_term.cold_chain_pharma_compliance.temperature_sensitivity_tiers
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_risk_based_monitoring_intensity_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 45; id=44
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.quality_management_system_maturity_model
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Quality Management System Maturity Model
+  summary: Framework for assessing the sophistication of a cold chain quality management system.
+  payload:
+    term: Quality Management System Maturity Model
+    definition: 'QMS maturity levels range from Level 1 (Basic: minimal documentation and reactive approaches) to
+      Level 5 (Optimized: fully integrated systems with continuous improvement). Intermediate levels include Level
+      2 (Developing: standard procedures established), Level 3 (Defined: processes are well-documented and followed),
+      and Level 4 (Managed: processes are measured and controlled).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Quality Management System Maturity Model
+    - domain_knowledge
+    - Quality
+    - Management
+    - System
+    - Maturity
+    - Model
+    - domain rule
+    aliases:
+    - Quality Management System Maturity Model
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.quality_agreement_status
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_quality_management_system_maturity_model_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 47; id=46
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.thermodynamic_stability_class
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Thermodynamic Stability Class
+  summary: Categorizes pharmaceutical products based on their thermal stability characteristics.
+  payload:
+    term: Thermodynamic Stability Class
+    definition: 'Products are classified as: Class A (highly stable, can tolerate brief temperature excursions with
+      minimal degradation), Class B (moderately stable), Class C (limited stability, requires strict temperature
+      control), and Class D (highly unstable, no temperature excursions permitted).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Thermodynamic Stability Class
+    - value_illustration
+    - Thermodynamic
+    - Stability
+    - Class
+    - value illustration
+    aliases:
+    - Thermodynamic Stability Class
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.pharmaceutical_stability_budget
+    - glossary_term.cold_chain_pharma_compliance.temperature_sensitivity_tiers
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_thermodynamic_stability_class_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 48; id=47
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.acceptable_temperature_deviation_limits
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Acceptable Temperature Deviation Limits
+  summary: Industry standards for tolerable temperature deviations during pharmaceutical transport.
+  payload:
+    term: Acceptable Temperature Deviation Limits
+    definition: 'For refrigerated products (2-8°C): brief excursions (< 30 min) to 0-12°C may be acceptable; For
+      frozen products (-20°C): brief excursions to -15°C may be acceptable; For ultra-frozen products (-70°C): brief
+      excursions to -60°C may be acceptable; For controlled room temperature products (15-25°C): brief excursions
+      to 10-30°C may be acceptable.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Acceptable Temperature Deviation Limits
+    - domain_knowledge
+    - Acceptable
+    - Temperature
+    - Deviation
+    - Limits
+    - domain rule
+    aliases:
+    - Acceptable Temperature Deviation Limits
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.pharmaceutical_stability_budget
+    - glossary_term.cold_chain_pharma_compliance.product_storage_classifications
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_acceptable_temperature_deviation_limits_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 50; id=49
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.last_mile_delivery_metrics
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Last Mile Delivery Metrics
+  summary: Key performance indicators specific to final stage pharmaceutical delivery.
+  payload:
+    term: Last Mile Delivery Metrics
+    definition: 'Key last mile metrics include: First Attempt Delivery Success Rate, Temperature Deviation Frequency,
+      Receiver Wait Time, Documentation Completion Rate, and Handler Qualification Status.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Last Mile Delivery Metrics
+    - domain_knowledge
+    - Last
+    - Mile
+    - Delivery
+    - Metrics
+    - domain rule
+    aliases:
+    - Last Mile Delivery Metrics
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_last_mile_delivery_metrics_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 51; id=50
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.batch_release_critical_path_elements
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Batch Release Critical Path Elements
+  summary: The essential components required before a temperature-sensitive product batch can be released.
+  payload:
+    term: Batch Release Critical Path Elements
+    definition: 'Critical path elements include: Complete temperature history with no unexplained gaps, Confirmation
+      that any excursions were within stability budgets, Intact security seals or acceptable explanation for compromised
+      seals, Complete chain of custody documentation, and Acceptable visual inspection results.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Batch Release Critical Path Elements
+    - domain_knowledge
+    - Batch
+    - Release
+    - Critical
+    - Path
+    - Elements
+    - domain rule
+    aliases:
+    - Batch Release Critical Path Elements
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.pharmaceutical_stability_budget
+    - glossary_term.cold_chain_pharma_compliance.security_incident_severity_scale
+    - glossary_term.cold_chain_pharma_compliance.temperature_monitoring_gap
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_batch_release_critical_path_elements_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 52; id=51
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.electronic_monitoring_system_tiers
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Electronic Monitoring System Tiers
+  summary: Classification of monitoring systems based on their capabilities and features.
+  payload:
+    term: Electronic Monitoring System Tiers
+    definition: 'Electronic monitoring systems are classified as: Tier 1 (basic data loggers with manual download),
+      Tier 2 (enhanced loggers with USB or Bluetooth download), Tier 3 (network-connected devices with real-time
+      alerts), and Tier 4 (fully integrated IoT systems with predictive capabilities and automated interventions).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Electronic Monitoring System Tiers
+    - value_illustration
+    - Electronic
+    - Monitoring
+    - System
+    - Tiers
+    - value illustration
+    aliases:
+    - Electronic Monitoring System Tiers
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.qualification_status_of_temperature_monitoring_devices
+    - metric.cold_chain_pharma_compliance.data_logger_reliability_score_dlrs
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_electronic_monitoring_system_tiers_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 53; id=52
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.validation_documentation_requirements
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Validation Documentation Requirements
+  summary: The essential documentation needed to validate cold chain processes and equipment.
+  payload:
+    term: Validation Documentation Requirements
+    definition: 'Required validation documents include: Validation Master Plan, Risk Assessment, User Requirements
+      Specification, Design Qualification, Installation Qualification, Operational Qualification, Performance Qualification,
+      Temperature Mapping Studies, and Final Validation Report.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Validation Documentation Requirements
+    - domain_knowledge
+    - Validation
+    - Documentation
+    - Requirements
+    - domain rule
+    aliases:
+    - Validation Documentation Requirements
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_validation_documentation_requirements_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 54; id=53
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.serialization_maturity_model
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Serialization Maturity Model
+  summary: Framework for assessing pharmaceutical tracking and tracing capabilities.
+  payload:
+    term: Serialization Maturity Model
+    definition: 'Serialization maturity levels are: Level 0 (No serialization), Level 1 (Batch-level tracking only),
+      Level 2 (Package-level serialization without systematic verification), Level 3 (Verified package-level serialization),
+      and Level 4 (End-to-end serialized supply chain with real-time visibility).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Serialization Maturity Model
+    - domain_knowledge
+    - Serialization
+    - Maturity
+    - Model
+    - domain rule
+    aliases:
+    - Serialization Maturity Model
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_serialization_maturity_model_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 55; id=54
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.monitoring_device_calibration_status
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Monitoring Device Calibration Status
+  summary: Indicates if temperature monitoring devices are properly calibrated for accurate readings.
+  payload:
+    term: Monitoring Device Calibration Status
+    definition: 'Calibration status includes: ''Current'' (calibrated within required timeframe, typically 12 months),
+      ''Expired'' (calibration period has elapsed), ''Exempt'' (single-use devices with factory calibration), with
+      null values indicating calibration status is unknown or not documented.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Monitoring Device Calibration Status
+    - value_illustration
+    - Monitoring
+    - Device
+    - Calibration
+    - Status
+    - value illustration
+    aliases:
+    - Monitoring Device Calibration Status
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_monitoring_device_calibration_status_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 56; id=55
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.gdp_corrective_action_categories
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: GDP Corrective Action Categories
+  summary: Standard categories for corrective actions in Good Distribution Practice.
+  payload:
+    term: GDP Corrective Action Categories
+    definition: 'GDP corrective action categories include: Training Enhancement, Documentation Update, Process Modification,
+      Equipment Upgrade, Supplier Management, Transport Adjustment, Monitoring Improvement, and Regulatory Compliance
+      Actions.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - GDP Corrective Action Categories
+    - domain_knowledge
+    - GDP
+    - Corrective
+    - Action
+    - Categories
+    - domain rule
+    aliases:
+    - GDP Corrective Action Categories
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.gdp_certification_status
+    - glossary_term.cold_chain_pharma_compliance.quality_management_system_maturity_model
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_gdp_corrective_action_categories_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 57; id=56
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.vehicle_temperature_monitoring_types
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Vehicle Temperature Monitoring Types
+  summary: Methods used to monitor temperatures in transport vehicles.
+  payload:
+    term: Vehicle Temperature Monitoring Types
+    definition: 'Vehicle temperature monitoring types include: ''Continuous'' (uninterrupted monitoring throughout
+      transport), ''Interval'' (periodic checks at predetermined times), ''None'' (no active monitoring), with null
+      values indicating monitoring type was not specified in documentation.'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Vehicle Temperature Monitoring Types
+    - value_illustration
+    - Vehicle
+    - Temperature
+    - Monitoring
+    - Types
+    - value illustration
+    aliases:
+    - Vehicle Temperature Monitoring Types
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_vehicle_temperature_monitoring_types_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 59; id=58
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB value_illustration record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: glossary_term.cold_chain_pharma_compliance.data_integrity_components
+  knowledge_type: glossary_term
+  database_id: cold_chain_pharma_compliance
+  title: Data Integrity Components
+  summary: Essential elements that ensure cold chain data is reliable for decision-making.
+  payload:
+    term: Data Integrity Components
+    definition: 'Data integrity components include the ALCOA+ principles: Attributable (traceable to individual/system),
+      Legible (readable and permanent), Contemporaneous (recorded at time of activity), Original (source data or
+      certified copy), Accurate (error-free), plus Complete (all data included), Consistent (expected sequence followed),
+      Enduring (preserved for required period), and Available (accessible when needed).'
+    excluded_meanings: []
+  discovery:
+    keywords:
+    - Data Integrity Components
+    - domain_knowledge
+    - Data
+    - Integrity
+    - Components
+    - domain rule
+    aliases:
+    - Data Integrity Components
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.glossary_term_cold_chain_pharma_compliance_data_integrity_components_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 60; id=59
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB domain_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

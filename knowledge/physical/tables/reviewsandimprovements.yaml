@@ -1,0 +1,1290 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+table_knowledge:
+  knowledge_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+  knowledge_type: table
+  database_id: cold_chain_pharma_compliance
+  title: Reviewsandimprovements
+  summary: Physical public-schema table with 27 columns and declared primary key (reckeyrev).
+  payload:
+    physical_name: reviewsandimprovements
+    business_definition: Physical public-schema table with 27 columns and declared primary key (reckeyrev).
+    grain: 'One row per declared primary-key combination: reckeyrev'
+    table_role: unknown
+    logical_primary_key:
+    - reckeyrev
+    usage_warnings:
+    - Table role is left unknown unless the public key structure directly identifies a bridge table.
+  discovery:
+    keywords:
+    - reviewsandimprovements
+    - table
+    - reckeyrev
+    - procimprove
+    - trainneeds
+    - sop_update
+    - vendorimpact
+    - nextshipchg
+    - monfreqchg
+    - routeriskreassess
+    - packspecrev
+    - lanequalstat
+    - techupgrade
+    - costoptpot
+    - sustainimpact
+    - carbonkg
+    - energyscore
+    - docformat
+    - dataintegrity
+    - audittrailcomplete
+    - e_sigstat
+    - sysaccessctrl
+    - databackupstat
+    - reportgenstat
+    - distlist
+    - archivestat
+    - reviewnotes
+    - nextrevts
+    - closestat
+    aliases:
+    - Reviewsandimprovements
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.archivestat
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.audittrailcomplete
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.carbonkg
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.closestat
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.costoptpot
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.databackupstat
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.dataintegrity
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.distlist
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.docformat
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.e_sigstat
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.energyscore
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.lanequalstat
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.monfreqchg
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.nextrevts
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.nextshipchg
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.packspecrev
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.procimprove
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.reckeyrev
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.reportgenstat
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.reviewnotes
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.routeriskreassess
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.sop_update
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.sustainimpact
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.sysaccessctrl
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.techupgrade
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.trainneeds
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.vendorimpact
+    - relationship.cold_chain_pharma_compliance.reviewsandimprovements_reckeyrev__shipments_reckey
+  evidence_refs:
+  - evidence_id: evidence.table_cold_chain_pharma_compliance_reviewsandimprovements_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: CREATE TABLE reviewsandimprovements at line 181
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares the table, physical columns, nullability, primary key, and foreign keys.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+columns:
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.reckeyrev
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Reckeyrev'
+  summary: text. Shipment record key for review. PK. FK to Shipments.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: reckeyrev
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: text. Shipment record key for review. PK. FK to Shipments.
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - reckeyrev
+    - reviewsandimprovements
+    - text
+    - identifier
+    aliases:
+    - Reckeyrev
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.reviewsandimprovements_reckeyrev__shipments_reckey
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_reckeyrev_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:reckeyrev
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_reckeyrev_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|RecKeyRev'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.procimprove
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Procimprove'
+  summary: 'text. Process improvement actions. Possible values: In Progress, No, Yes.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: procimprove
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Process improvement actions. Possible values: In Progress, No, Yes.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - procimprove
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Procimprove
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_procimprove_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:procimprove
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_procimprove_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|ProcImprove'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.trainneeds
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Trainneeds'
+  summary: 'text. Training needs identified. Possible values: No, Under Review, Yes.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: trainneeds
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Training needs identified. Possible values: No, Under Review, Yes.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - trainneeds
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Trainneeds
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_trainneeds_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:trainneeds
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_trainneeds_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|TrainNeeds'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.sop_update
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: SOP Update'
+  summary: 'text. SOP updates required. Possible values: No, Under Review, Yes.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: sop_update
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. SOP updates required. Possible values: No, Under Review, Yes.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - sop_update
+    - SOP Update
+    - reviewsandimprovements
+    - text
+    aliases:
+    - SOP Update
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_sop_update_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:sop_update
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_sop_update_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|SOP_Update'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.vendorimpact
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Vendorimpact'
+  summary: 'text. Impact on vendor performance. **NULL means none recorded.**. Possible values: Disqualification,
+    Warning.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: vendorimpact
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Impact on vendor performance. **NULL means none recorded.**. Possible values: Disqualification,
+      Warning.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means none recorded.
+  discovery:
+    keywords:
+    - vendorimpact
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Vendorimpact
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_vendorimpact_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:vendorimpact
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_vendorimpact_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|VendorImpact'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.nextshipchg
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Nextshipchg'
+  summary: 'text. Changes for next shipment. **NULL means none planned.**. Possible values: Major, Minor.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: nextshipchg
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Changes for next shipment. **NULL means none planned.**. Possible values: Major,
+      Minor.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means none planned.
+  discovery:
+    keywords:
+    - nextshipchg
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Nextshipchg
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_nextshipchg_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:nextshipchg
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_nextshipchg_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|NextShipChg'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.monfreqchg
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Monfreqchg'
+  summary: 'text. Monitoring-frequency changes. Possible values: Decreased, Increased, No Change.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: monfreqchg
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Monitoring-frequency changes. Possible values: Decreased, Increased, No Change.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - monfreqchg
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Monfreqchg
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_monfreqchg_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:monfreqchg
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_monfreqchg_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|MonFreqChg'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.routeriskreassess
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Routeriskreassess'
+  summary: 'text. Route risk reassessment outcome. Possible values: Completed, Not Required, Required.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: routeriskreassess
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Route risk reassessment outcome. Possible values: Completed, Not Required, Required.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - routeriskreassess
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Routeriskreassess
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_routeriskreassess_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:routeriskreassess
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_routeriskreassess_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|RouteRiskReassess'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.packspecrev
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Packspecrev'
+  summary: 'text. Packaging specification revision. Possible values: Completed, Not Required, Required.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: packspecrev
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Packaging specification revision. Possible values: Completed, Not Required, Required.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - packspecrev
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Packspecrev
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_packspecrev_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:packspecrev
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_packspecrev_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|PackSpecRev'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.lanequalstat
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Lanequalstat'
+  summary: 'text. Transport lane quality status. **NULL means status not set.**. Possible values: Invalid, Review
+    Required, Valid.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: lanequalstat
+    physical_type: text
+    business_type: text
+    column_role: status
+    nullable: true
+    business_definition: 'text. Transport lane quality status. **NULL means status not set.**. Possible values:
+      Invalid, Review Required, Valid.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means status not set.
+  discovery:
+    keywords:
+    - lanequalstat
+    - reviewsandimprovements
+    - text
+    - status
+    aliases:
+    - Lanequalstat
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_lanequalstat_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:lanequalstat
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_lanequalstat_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|LaneQualStat'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.techupgrade
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Techupgrade'
+  summary: 'text. Planned technology upgrades. Possible values: No, Under Evaluation, Yes.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: techupgrade
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Planned technology upgrades. Possible values: No, Under Evaluation, Yes.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - techupgrade
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Techupgrade
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_techupgrade_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:techupgrade
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_techupgrade_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|TechUpgrade'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.costoptpot
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Costoptpot'
+  summary: 'text. Cost-optimisation opportunities. **NULL means none identified.**. Possible values: High, Low,
+    Medium.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: costoptpot
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Cost-optimisation opportunities. **NULL means none identified.**. Possible values:
+      High, Low, Medium.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means none identified.
+  discovery:
+    keywords:
+    - costoptpot
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Costoptpot
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_costoptpot_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:costoptpot
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_costoptpot_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|CostOptPot'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.sustainimpact
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Sustainimpact'
+  summary: 'text. Sustainability impact assessment. **NULL means not assessed.**. Possible values: Negative, Neutral,
+    Positive.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: sustainimpact
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Sustainability impact assessment. **NULL means not assessed.**. Possible values:
+      Negative, Neutral, Positive.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means not assessed.
+  discovery:
+    keywords:
+    - sustainimpact
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Sustainimpact
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_sustainimpact_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:sustainimpact
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_sustainimpact_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|SustainImpact'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.carbonkg
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Carbonkg'
+  summary: real. Estimated carbon footprint in kg CO₂-e. **NULL means footprint not calculated.**
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: carbonkg
+    physical_type: real
+    business_type: real
+    column_role: measure
+    nullable: true
+    business_definition: 'real. Estimated carbon footprint in kg CO₂-e. **NULL means footprint not calculated.**.
+      Example: 2617.3.'
+    unit: kg CO2e
+    default_aggregation: null
+    usage_warnings:
+    - NULL means footprint not calculated.
+  discovery:
+    keywords:
+    - carbonkg
+    - reviewsandimprovements
+    - real
+    - measure
+    aliases:
+    - Carbonkg
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_carbonkg_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:carbonkg
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_carbonkg_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|CarbonKG'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.energyscore
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Energyscore'
+  summary: text. Energy efficiency score. **NULL means score not set.**
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: energyscore
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Energy efficiency score. **NULL means score not set.**. Example: 81.0.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means score not set.
+    - The public Schema stores this value as text; numeric interpretation requires explicit normalization.
+  discovery:
+    keywords:
+    - energyscore
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Energyscore
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_energyscore_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:energyscore
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_energyscore_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|EnergyScore'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.docformat
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Docformat'
+  summary: 'text. Review document format. Possible values: Electronic, Hybrid, Paper.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: docformat
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Review document format. Possible values: Electronic, Hybrid, Paper.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - docformat
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Docformat
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_docformat_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:docformat
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_docformat_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|DocFormat'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.dataintegrity
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Dataintegrity'
+  summary: 'text. Data integrity verification status. Possible values: Compromised, Under Review, Verified.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: dataintegrity
+    physical_type: text
+    business_type: text
+    column_role: status
+    nullable: true
+    business_definition: 'text. Data integrity verification status. Possible values: Compromised, Under Review,
+      Verified.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - dataintegrity
+    - reviewsandimprovements
+    - text
+    - status
+    aliases:
+    - Dataintegrity
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_dataintegrity_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:dataintegrity
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_dataintegrity_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|DataIntegrity'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.audittrailcomplete
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Audittrailcomplete'
+  summary: text. Audit-trail completeness status
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: audittrailcomplete
+    physical_type: text
+    business_type: text
+    column_role: status
+    nullable: true
+    business_definition: 'text. Audit-trail completeness status. Example: 91.0.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - audittrailcomplete
+    - reviewsandimprovements
+    - text
+    - status
+    aliases:
+    - Audittrailcomplete
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_audittrailcomplete_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:audittrailcomplete
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_audittrailcomplete_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|AuditTrailComplete'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.e_sigstat
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: E Sigstat'
+  summary: 'text. Electronic-signature compliance status. Possible values: Invalid, Not Required, Valid.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: e_sigstat
+    physical_type: text
+    business_type: text
+    column_role: status
+    nullable: true
+    business_definition: 'text. Electronic-signature compliance status. Possible values: Invalid, Not Required,
+      Valid.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - e_sigstat
+    - E Sigstat
+    - reviewsandimprovements
+    - text
+    - status
+    aliases:
+    - E Sigstat
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_e_sigstat_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:e_sigstat
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_e_sigstat_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|E_SigStat'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.sysaccessctrl
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Sysaccessctrl'
+  summary: 'text. System access-control status. Possible values: Adequate, Compromised, Limited.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: sysaccessctrl
+    physical_type: text
+    business_type: text
+    column_role: status
+    nullable: true
+    business_definition: 'text. System access-control status. Possible values: Adequate, Compromised, Limited.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - sysaccessctrl
+    - reviewsandimprovements
+    - text
+    - status
+    aliases:
+    - Sysaccessctrl
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_sysaccessctrl_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:sysaccessctrl
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_sysaccessctrl_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|SysAccessCtrl'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.databackupstat
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Databackupstat'
+  summary: 'text. Data backup status. **NULL means backup not confirmed.**. Possible values: Current, Failed, Pending.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: databackupstat
+    physical_type: text
+    business_type: text
+    column_role: status
+    nullable: true
+    business_definition: 'text. Data backup status. **NULL means backup not confirmed.**. Possible values: Current,
+      Failed, Pending.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means backup not confirmed.
+  discovery:
+    keywords:
+    - databackupstat
+    - reviewsandimprovements
+    - text
+    - status
+    aliases:
+    - Databackupstat
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_databackupstat_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:databackupstat
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_databackupstat_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|DataBackupStat'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.reportgenstat
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Reportgenstat'
+  summary: 'text. Report generation status. Possible values: Completed, In Progress, Pending.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: reportgenstat
+    physical_type: text
+    business_type: text
+    column_role: status
+    nullable: true
+    business_definition: 'text. Report generation status. Possible values: Completed, In Progress, Pending.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - reportgenstat
+    - reviewsandimprovements
+    - text
+    - status
+    aliases:
+    - Reportgenstat
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_reportgenstat_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:reportgenstat
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_reportgenstat_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|ReportGenStat'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.distlist
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Distlist'
+  summary: 'text. Distribution list details. Possible values: Extended, Limited, Standard.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: distlist
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Distribution list details. Possible values: Extended, Limited, Standard.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - distlist
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Distlist
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_distlist_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:distlist
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_distlist_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|DistList'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.archivestat
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Archivestat'
+  summary: 'text. Archiving status for review records. Possible values: Completed, Not Required, Pending.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: archivestat
+    physical_type: text
+    business_type: text
+    column_role: status
+    nullable: true
+    business_definition: 'text. Archiving status for review records. Possible values: Completed, Not Required, Pending.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - archivestat
+    - reviewsandimprovements
+    - text
+    - status
+    aliases:
+    - Archivestat
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_archivestat_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:archivestat
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_archivestat_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|ArchiveStat'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.reviewnotes
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Reviewnotes'
+  summary: text. Free-text review notes
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: reviewnotes
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Free-text review notes. Example: Agent usually ten food focus. Throughout return
+      mean..'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - reviewnotes
+    - reviewsandimprovements
+    - text
+    aliases:
+    - Reviewnotes
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_reviewnotes_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:reviewnotes
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_reviewnotes_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|ReviewNotes'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.nextrevts
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Nextrevts'
+  summary: timestamp. Scheduled timestamp for next review
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: nextrevts
+    physical_type: timestamp without time zone
+    business_type: timestamp
+    column_role: date
+    nullable: true
+    business_definition: 'timestamp. Scheduled timestamp for next review. Example: 2025/3/13.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - nextrevts
+    - reviewsandimprovements
+    - timestamp without time zone
+    - date
+    aliases:
+    - Nextrevts
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_nextrevts_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:nextrevts
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_nextrevts_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|NextRevTS'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.reviewsandimprovements.closestat
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Reviewsandimprovements: Closestat'
+  summary: 'text. Review closure status. Possible values: Closed, Open, Under Review.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+    physical_name: closestat
+    physical_type: text
+    business_type: text
+    column_role: status
+    nullable: true
+    business_definition: 'text. Review closure status. Possible values: Closed, Open, Under Review.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - closestat
+    - reviewsandimprovements
+    - text
+    - status
+    aliases:
+    - Closestat
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_closestat_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; column:closestat
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_reviewsandimprovements_closestat_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ReviewsAndImprovements|CloseStat'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

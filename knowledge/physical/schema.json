@@ -1,0 +1,659 @@
+{
+  "database_id": "cold_chain_pharma_compliance",
+  "source_file": "eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt",
+  "tables": [
+    {
+      "name": "shipments",
+      "primary_key": [
+        "reckey"
+      ],
+      "columns": [
+        {
+          "name": "reckey",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "log_ts",
+          "physical_type": "timestamp without time zone",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "shiptok",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "shipment_overview",
+          "physical_type": "jsonb",
+          "nullable": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "environmentalmonitoring",
+      "primary_key": [
+        "reckeylink"
+      ],
+      "columns": [
+        {
+          "name": "reckeylink",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "devlink",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "env_metrics",
+          "physical_type": "jsonb",
+          "nullable": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "products",
+      "primary_key": [
+        "prodcode"
+      ],
+      "columns": [
+        {
+          "name": "prodcode",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "prodlabel",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "prodcat",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "maker",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "productbatches",
+      "primary_key": [
+        "batchtag"
+      ],
+      "columns": [
+        {
+          "name": "batchtag",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "prodlink",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "mfg_ts",
+          "physical_type": "timestamp without time zone",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "exp_ts",
+          "physical_type": "timestamp without time zone",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "store_cond",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "tempmin",
+          "physical_type": "real",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "tempmax",
+          "physical_type": "real",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "tempsense",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "pack_type",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "pack_cnt",
+          "physical_type": "bigint",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "valusd",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "insusd",
+          "physical_type": "real",
+          "nullable": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "carriers",
+      "primary_key": [
+        "carriertag"
+      ],
+      "columns": [
+        {
+          "name": "carriertag",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "carriercert",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "vehicles",
+      "primary_key": [
+        "vehref"
+      ],
+      "columns": [
+        {
+          "name": "vehref",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "carrierbond",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "vehtype",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "veh_qual",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "temp_mon_sys",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "monitoringdevices",
+      "primary_key": [
+        "mondevref"
+      ],
+      "columns": [
+        {
+          "name": "mondevref",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "calibts",
+          "physical_type": "timestamp without time zone",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "devacc",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "recintmin",
+          "physical_type": "bigint",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "temppts",
+          "physical_type": "bigint",
+          "nullable": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "qualitycompliance",
+      "primary_key": [
+        "reckeyqc"
+      ],
+      "columns": [
+        {
+          "name": "reckeyqc",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "qc_checklist",
+          "physical_type": "jsonb",
+          "nullable": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "incidentandriskmanagement",
+      "primary_key": [
+        "reckeyrisk"
+      ],
+      "columns": [
+        {
+          "name": "reckeyrisk",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "incident_risk_record",
+          "physical_type": "jsonb",
+          "nullable": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "insuranceclaims",
+      "primary_key": [
+        "reckeyclaim"
+      ],
+      "columns": [
+        {
+          "name": "reckeyclaim",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "claimneed",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "claimstat",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "claimusd",
+          "physical_type": "real",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "costimpactusd",
+          "physical_type": "real",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "respparty",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "reviewsandimprovements",
+      "primary_key": [
+        "reckeyrev"
+      ],
+      "columns": [
+        {
+          "name": "reckeyrev",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "procimprove",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "trainneeds",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "sop_update",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "vendorimpact",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "nextshipchg",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "monfreqchg",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "routeriskreassess",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "packspecrev",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "lanequalstat",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "techupgrade",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "costoptpot",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "sustainimpact",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "carbonkg",
+          "physical_type": "real",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "energyscore",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "docformat",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "dataintegrity",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "audittrailcomplete",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "e_sigstat",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "sysaccessctrl",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "databackupstat",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "reportgenstat",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "distlist",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "archivestat",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "reviewnotes",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "nextrevts",
+          "physical_type": "timestamp without time zone",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "closestat",
+          "physical_type": "text",
+          "nullable": true,
+          "default": null
+        }
+      ]
+    },
+    {
+      "name": "shipsensorlink",
+      "primary_key": [
+        "shpnode",
+        "devnode"
+      ],
+      "columns": [
+        {
+          "name": "shpnode",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "devnode",
+          "physical_type": "text",
+          "nullable": false,
+          "default": null
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "from_table": "environmentalmonitoring",
+      "from_columns": [
+        "reckeylink"
+      ],
+      "to_table": "shipments",
+      "to_columns": [
+        "reckey"
+      ],
+      "source_line": 16
+    },
+    {
+      "from_table": "environmentalmonitoring",
+      "from_columns": [
+        "devlink"
+      ],
+      "to_table": "monitoringdevices",
+      "to_columns": [
+        "mondevref"
+      ],
+      "source_line": 16
+    },
+    {
+      "from_table": "productbatches",
+      "from_columns": [
+        "prodlink"
+      ],
+      "to_table": "products",
+      "to_columns": [
+        "prodcode"
+      ],
+      "source_line": 51
+    },
+    {
+      "from_table": "vehicles",
+      "from_columns": [
+        "carrierbond"
+      ],
+      "to_table": "carriers",
+      "to_columns": [
+        "carriertag"
+      ],
+      "source_line": 92
+    },
+    {
+      "from_table": "qualitycompliance",
+      "from_columns": [
+        "reckeyqc"
+      ],
+      "to_table": "shipments",
+      "to_columns": [
+        "reckey"
+      ],
+      "source_line": 129
+    },
+    {
+      "from_table": "incidentandriskmanagement",
+      "from_columns": [
+        "reckeyrisk"
+      ],
+      "to_table": "shipments",
+      "to_columns": [
+        "reckey"
+      ],
+      "source_line": 145
+    },
+    {
+      "from_table": "insuranceclaims",
+      "from_columns": [
+        "reckeyclaim"
+      ],
+      "to_table": "shipments",
+      "to_columns": [
+        "reckey"
+      ],
+      "source_line": 161
+    },
+    {
+      "from_table": "reviewsandimprovements",
+      "from_columns": [
+        "reckeyrev"
+      ],
+      "to_table": "shipments",
+      "to_columns": [
+        "reckey"
+      ],
+      "source_line": 181
+    },
+    {
+      "from_table": "shipsensorlink",
+      "from_columns": [
+        "shpnode"
+      ],
+      "to_table": "shipments",
+      "to_columns": [
+        "reckey"
+      ],
+      "source_line": 222
+    },
+    {
+      "from_table": "shipsensorlink",
+      "from_columns": [
+        "devnode"
+      ],
+      "to_table": "monitoringdevices",
+      "to_columns": [
+        "mondevref"
+      ],
+      "source_line": 222
+    }
+  ]
+}

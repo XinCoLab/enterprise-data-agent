@@ -1,0 +1,271 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+table_knowledge:
+  knowledge_id: table.cold_chain_pharma_compliance.vehicles
+  knowledge_type: table
+  database_id: cold_chain_pharma_compliance
+  title: Vehicles
+  summary: Physical public-schema table with 5 columns and declared primary key (vehref).
+  payload:
+    physical_name: vehicles
+    business_definition: Physical public-schema table with 5 columns and declared primary key (vehref).
+    grain: 'One row per declared primary-key combination: vehref'
+    table_role: unknown
+    logical_primary_key:
+    - vehref
+    usage_warnings:
+    - Table role is left unknown unless the public key structure directly identifies a bridge table.
+  discovery:
+    keywords:
+    - vehicles
+    - table
+    - vehref
+    - carrierbond
+    - vehtype
+    - veh_qual
+    - temp_mon_sys
+    aliases:
+    - Vehicles
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.vehicles.carrierbond
+    - column.cold_chain_pharma_compliance.vehicles.temp_mon_sys
+    - column.cold_chain_pharma_compliance.vehicles.veh_qual
+    - column.cold_chain_pharma_compliance.vehicles.vehref
+    - column.cold_chain_pharma_compliance.vehicles.vehtype
+    - relationship.cold_chain_pharma_compliance.vehicles_carrierbond__carriers_carriertag
+  evidence_refs:
+  - evidence_id: evidence.table_cold_chain_pharma_compliance_vehicles_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: CREATE TABLE vehicles at line 92
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares the table, physical columns, nullability, primary key, and foreign keys.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+columns:
+- knowledge_id: column.cold_chain_pharma_compliance.vehicles.vehref
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Vehicles: Vehref'
+  summary: text. Unique vehicle reference identifier. PK
+  payload:
+    table_id: table.cold_chain_pharma_compliance.vehicles
+    physical_name: vehref
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: 'text. Unique vehicle reference identifier. PK. Example: VH6122.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - vehref
+    - vehicles
+    - text
+    - identifier
+    aliases:
+    - Vehref
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.vehicles
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_vehicles_vehref_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:vehicles; column:vehref
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_vehicles_vehref_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Vehicles|VehRef'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.vehicles.carrierbond
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Vehicles: Carrierbond'
+  summary: text. Carrier identifier to which the vehicle belongs. FK to Carriers.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.vehicles
+    physical_name: carrierbond
+    physical_type: text
+    business_type: text
+    column_role: foreign_key
+    nullable: true
+    business_definition: text. Carrier identifier to which the vehicle belongs. FK to Carriers.
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - carrierbond
+    - vehicles
+    - text
+    - foreign_key
+    aliases:
+    - Carrierbond
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.vehicles_carrierbond__carriers_carriertag
+    - table.cold_chain_pharma_compliance.vehicles
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_vehicles_carrierbond_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:vehicles; column:carrierbond
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_vehicles_carrierbond_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Vehicles|CarrierBond'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.vehicles.vehtype
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Vehicles: Vehtype'
+  summary: 'text. Vehicle type (e.g., van, truck, reefer). Possible values: Aircraft, Container, Reefer Truck, Van.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.vehicles
+    physical_name: vehtype
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Vehicle type (e.g., van, truck, reefer). Possible values: Aircraft, Container, Reefer
+      Truck, Van.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - vehtype
+    - vehicles
+    - text
+    aliases:
+    - Vehtype
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.vehicles
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_vehicles_vehtype_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:vehicles; column:vehtype
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_vehicles_vehtype_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Vehicles|VehType'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.vehicles.veh_qual
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Vehicles: Veh Qual'
+  summary: 'text. Qualitative vehicle qualification/status. Possible values: Qualified, Under Review, Validated.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.vehicles
+    physical_name: veh_qual
+    physical_type: text
+    business_type: text
+    column_role: status
+    nullable: true
+    business_definition: 'text. Qualitative vehicle qualification/status. Possible values: Qualified, Under Review,
+      Validated.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - veh_qual
+    - Veh Qual
+    - vehicles
+    - text
+    - status
+    aliases:
+    - Veh Qual
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.vehicles
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_vehicles_veh_qual_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:vehicles; column:veh_qual
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_vehicles_veh_qual_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Vehicles|veh_qual'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.vehicles.temp_mon_sys
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Vehicles: Temp Mon Sys'
+  summary: 'text. Temperature-monitoring system installed. Possible values: Continuous, Interval, Manual.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.vehicles
+    physical_name: temp_mon_sys
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Temperature-monitoring system installed. Possible values: Continuous, Interval,
+      Manual.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - temp_mon_sys
+    - Temp Mon Sys
+    - vehicles
+    - text
+    aliases:
+    - Temp Mon Sys
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.vehicles
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_vehicles_temp_mon_sys_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:vehicles; column:temp_mon_sys
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_vehicles_temp_mon_sys_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Vehicles|TEMP_MON_SYS'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

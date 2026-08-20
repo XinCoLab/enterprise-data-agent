@@ -1,0 +1,132 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+table_knowledge:
+  knowledge_id: table.cold_chain_pharma_compliance.carriers
+  knowledge_type: table
+  database_id: cold_chain_pharma_compliance
+  title: Carriers
+  summary: Physical public-schema table with 2 columns and declared primary key (carriertag).
+  payload:
+    physical_name: carriers
+    business_definition: Physical public-schema table with 2 columns and declared primary key (carriertag).
+    grain: 'One row per declared primary-key combination: carriertag'
+    table_role: unknown
+    logical_primary_key:
+    - carriertag
+    usage_warnings:
+    - Table role is left unknown unless the public key structure directly identifies a bridge table.
+  discovery:
+    keywords:
+    - carriers
+    - table
+    - carriertag
+    - carriercert
+    aliases:
+    - Carriers
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.carriers.carriercert
+    - column.cold_chain_pharma_compliance.carriers.carriertag
+    - relationship.cold_chain_pharma_compliance.vehicles_carrierbond__carriers_carriertag
+  evidence_refs:
+  - evidence_id: evidence.table_cold_chain_pharma_compliance_carriers_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: CREATE TABLE carriers at line 77
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares the table, physical columns, nullability, primary key, and foreign keys.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+columns:
+- knowledge_id: column.cold_chain_pharma_compliance.carriers.carriertag
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Carriers: Carriertag'
+  summary: text. Unique carrier identifier. PK
+  payload:
+    table_id: table.cold_chain_pharma_compliance.carriers
+    physical_name: carriertag
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: 'text. Unique carrier identifier. PK. Example: Rodriguez, Mcintyre and Richards.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - carriertag
+    - carriers
+    - text
+    - identifier
+    aliases:
+    - Carriertag
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.vehicles_carrierbond__carriers_carriertag
+    - table.cold_chain_pharma_compliance.carriers
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_carriers_carriertag_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:carriers; column:carriertag
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_carriers_carriertag_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Carriers|CarrierTag'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.carriers.carriercert
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Carriers: Carriercert'
+  summary: 'text. Certification credentials or licence ID. **NULL means certification information unavailable.**.
+    Possible values: Both, CEIV Pharma, GDP.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.carriers
+    physical_name: carriercert
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Certification credentials or licence ID. **NULL means certification information
+      unavailable.**. Possible values: Both, CEIV Pharma, GDP.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means certification information unavailable.
+  discovery:
+    keywords:
+    - carriercert
+    - carriers
+    - text
+    aliases:
+    - Carriercert
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.carriers
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_carriers_carriercert_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:carriers; column:carriercert
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_carriers_carriercert_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Carriers|CarrierCert'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

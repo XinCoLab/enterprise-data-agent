@@ -1,0 +1,12 @@
+duckdb==1.5.5
+fastapi==0.141.1
+langchain-core==1.5.6
+langchain-deepseek==1.1.0
+langgraph==1.2.10
+langgraph-checkpoint-sqlite==3.1.1
+psycopg2-binary==2.9.9
+pydantic==2.13.4
+PyMySQL==1.1.2
+python-dotenv==1.2.2
+PyYAML==6.0.3
+uvicorn==0.52.1

@@ -1,0 +1,798 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+metrics:
+- knowledge_id: metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Temperature Excursion Duration (TED)
+  summary: The total time a shipment spends outside its required temperature range during transit.
+  payload:
+    business_definition: 'The total time a shipment spends outside its required temperature range during transit.
+
+      Public HKB definition: TED = \sum_{i=1}^{n} t_i, \text{where } t_i \text{ is the duration in minutes of each
+      individual temperature excursion event.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids: []
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Temperature Excursion Duration (TED)
+    - calculation_knowledge
+    - Temperature
+    - Excursion
+    - Duration
+    - TED
+    - metric
+    - calculation
+    aliases:
+    - Temperature Excursion Duration (TED)
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_temperature_excursion_duration_ted_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 1; id=0
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.temperature_excursion_severity_index_tesi
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Temperature Excursion Severity Index (TESI)
+  summary: Measures the severity of temperature excursions relative to product temperature requirements.
+  payload:
+    business_definition: 'Measures the severity of temperature excursions relative to product temperature requirements.
+
+      Public HKB definition: TESI = TED \times \frac{|T_{max} - T_{allowed}| + |T_{min} - T_{allowed}|}{2}, \text{where
+      } T_{max} \text{ and } T_{min} \text{ are the maximum and minimum temperatures recorded during excursions,
+      and } T_{allowed} \text{ is the allowed temperature range midpoint.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Temperature Excursion Severity Index (TESI)
+    - calculation_knowledge
+    - Temperature
+    - Excursion
+    - Severity
+    - Index
+    - TESI
+    - metric
+    - calculation
+    aliases:
+    - Temperature Excursion Severity Index (TESI)
+    related_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_temperature_excursion_severity_index_tesi_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 2; id=1
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.cold_chain_compliance_rate_cccr
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Cold Chain Compliance Rate (CCCR)
+  summary: Measures the percentage of shipments that maintained required temperature conditions throughout transit.
+  payload:
+    business_definition: 'Measures the percentage of shipments that maintained required temperature conditions throughout
+      transit.
+
+      Public HKB definition: CCCR = \frac{N_{compliant}}{N_{total}} \times 100\%, \text{where } N_{compliant} \text{
+      is the number of shipments with zero temperature excursions, and } N_{total} \text{ is the total number of
+      shipments.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids: []
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Cold Chain Compliance Rate (CCCR)
+    - calculation_knowledge
+    - Cold
+    - Chain
+    - Compliance
+    - Rate
+    - CCCR
+    - metric
+    - calculation
+    aliases:
+    - Cold Chain Compliance Rate (CCCR)
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_cold_chain_compliance_rate_cccr_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 6; id=5
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.cold_chain_monitoring_compliance_score_ccmcs
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Cold Chain Monitoring Compliance Score (CCMCS)
+  summary: Evaluates the completeness and quality of monitoring data for a shipment.
+  payload:
+    business_definition: 'Evaluates the completeness and quality of monitoring data for a shipment.
+
+      Public HKB definition: CCMCS = 0.4 \times GPS\% + 0.4 \times Temp\% + 0.2 \times (100 - ER), \text{where GPS\%
+      is the GPS completeness percentage, Temp\% is the percentage of expected temperature readings received, and
+      ER is the error rate of readings.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.temperature_monitoring_gap
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Cold Chain Monitoring Compliance Score (CCMCS)
+    - calculation_knowledge
+    - Cold
+    - Chain
+    - Monitoring
+    - Compliance
+    - Score
+    - CCMCS
+    - metric
+    - calculation
+    aliases:
+    - Cold Chain Monitoring Compliance Score (CCMCS)
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.temperature_monitoring_gap
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_cold_chain_monitoring_compliance_score_ccmcs_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 11; id=10
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.on_time_delivery_performance_otdp
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: On-Time Delivery Performance (OTDP)
+  summary: Measures how accurately shipments meet their planned delivery times.
+  payload:
+    business_definition: 'Measures how accurately shipments meet their planned delivery times.
+
+      Public HKB definition: OTDP = \frac{actual\_duration}{planned\_duration} \times 100\%, \text{where a value
+      of 100\% indicates exact on-time delivery, <100\% is early, and >100\% is late delivery.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids: []
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - On-Time Delivery Performance (OTDP)
+    - calculation_knowledge
+    - On-Time
+    - Delivery
+    - Performance
+    - OTDP
+    - metric
+    - calculation
+    aliases:
+    - On-Time Delivery Performance (OTDP)
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_on_time_delivery_performance_otdp_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 13; id=12
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.carrier_performance_index_cpi
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Carrier Performance Index (CPI)
+  summary: Measures the overall performance of a carrier across multiple shipments.
+  payload:
+    business_definition: 'Measures the overall performance of a carrier across multiple shipments.
+
+      Public HKB definition: CPI = 0.4 \times CCCR + 0.3 \times (100 - ATNR) + 0.2 \times (100 - ASDI) + 0.1 \times
+      DPR, \text{where CCCR is Cold Chain Compliance Rate, ATNR is Average Temperature Non-conformance Rate, ASDI
+      is Average Shock and Damage Incidents, and DPR is Documentation Problem Rate.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.cold_chain_compliance_rate_cccr
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Carrier Performance Index (CPI)
+    - calculation_knowledge
+    - Carrier
+    - Performance
+    - Index
+    - CPI
+    - metric
+    - calculation
+    aliases:
+    - Carrier Performance Index (CPI)
+    related_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.cold_chain_compliance_rate_cccr
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_carrier_performance_index_cpi_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 16; id=15
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.packing_integrity_risk_factor_pirf
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Packing Integrity Risk Factor (PIRF)
+  summary: Quantifies the risk of packaging failure based on product, route, and handling conditions.
+  payload:
+    business_definition: 'Quantifies the risk of packaging failure based on product, route, and handling conditions.
+
+      Public HKB definition: PIRF = \frac{S \times D \times T}{P}, \text{where S is the shock event count, D is
+      the distance in thousands of km, T is a temperature factor (1 for 15-25°C, 1.5 for 2-8°C, 2 for -20°C, 2.5
+      for -70°C), and P is the packaging robustness factor (1-10, with 10 being most robust).}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.product_storage_classifications
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Packing Integrity Risk Factor (PIRF)
+    - calculation_knowledge
+    - Packing
+    - Integrity
+    - Risk
+    - Factor
+    - PIRF
+    - metric
+    - calculation
+    aliases:
+    - Packing Integrity Risk Factor (PIRF)
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.product_storage_classifications
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_packing_integrity_risk_factor_pirf_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 20; id=19
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.shipment_risk_score_srs
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Shipment Risk Score (SRS)
+  summary: A comprehensive risk assessment score for cold chain shipments.
+  payload:
+    business_definition: 'A comprehensive risk assessment score for cold chain shipments.
+
+      Public HKB definition: SRS = 0.3 \times TESI + 0.25 \times PIRF + 0.25 \times (100 - CCMCS) + 0.2 \times RRF,
+      \text{where TESI is Temperature Excursion Severity Index, PIRF is Packing Integrity Risk Factor, CCMCS is
+      Cold Chain Monitoring Compliance Score, and RRF is Route Risk Factor (1-10 based on Route Risk Classification).}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.temperature_excursion_severity_index_tesi
+    - metric.cold_chain_pharma_compliance.cold_chain_monitoring_compliance_score_ccmcs
+    - metric.cold_chain_pharma_compliance.packing_integrity_risk_factor_pirf
+    - glossary_term.cold_chain_pharma_compliance.route_risk_classification
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Shipment Risk Score (SRS)
+    - calculation_knowledge
+    - Shipment
+    - Risk
+    - Score
+    - SRS
+    - metric
+    - calculation
+    aliases:
+    - Shipment Risk Score (SRS)
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.route_risk_classification
+    - metric.cold_chain_pharma_compliance.cold_chain_monitoring_compliance_score_ccmcs
+    - metric.cold_chain_pharma_compliance.packing_integrity_risk_factor_pirf
+    - metric.cold_chain_pharma_compliance.temperature_excursion_severity_index_tesi
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_shipment_risk_score_srs_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 21; id=20
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.time_in_range_percentage_tirp
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Time In Range Percentage (TIRP)
+  summary: Calculates the percentage of time a shipment's temperature stayed within required parameters.
+  payload:
+    business_definition: 'Calculates the percentage of time a shipment''s temperature stayed within required parameters.
+
+      Public HKB definition: TIRP = \frac{T_{total} - TED}{T_{total}} \times 100\%, \text{where } T_{total} \text{
+      is the total transit time and TED is the Temperature Excursion Duration.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Time In Range Percentage (TIRP)
+    - calculation_knowledge
+    - Time
+    - Range
+    - Percentage
+    - TIRP
+    - metric
+    - calculation
+    aliases:
+    - Time In Range Percentage (TIRP)
+    related_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_time_in_range_percentage_tirp_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 26; id=25
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.mean_kinetic_temperature_mkt
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Mean Kinetic Temperature (MKT)
+  summary: A calculated temperature that expresses the overall effect of temperature fluctuations during storage
+    or transit.
+  payload:
+    business_definition: 'A calculated temperature that expresses the overall effect of temperature fluctuations
+      during storage or transit.
+
+      Public HKB definition: MKT = \frac{-\Delta H/R}{\ln\left(\frac{\sum_{i=1}^{n} e^{-\Delta H/RT_i}}{n}\right)},
+      \text{where } \Delta H \text{ is the activation energy (usually 83.144 kJ/mol for pharmaceuticals), R is the
+      gas constant (8.3144 J/mol/K), and } T_i \text{ is each temperature point in Kelvin.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids: []
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Mean Kinetic Temperature (MKT)
+    - calculation_knowledge
+    - Mean
+    - Kinetic
+    - Temperature
+    - MKT
+    - metric
+    - calculation
+    aliases:
+    - Mean Kinetic Temperature (MKT)
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_mean_kinetic_temperature_mkt_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 27; id=26
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.supply_chain_resilience_score_scrs
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Supply Chain Resilience Score (SCRS)
+  summary: Measures a cold chain's ability to maintain integrity despite disruptions.
+  payload:
+    business_definition: 'Measures a cold chain''s ability to maintain integrity despite disruptions.
+
+      Public HKB definition: SCRS = 0.4 \times ART + 0.3 \times RRD + 0.2 \times SBP + 0.1 \times SMC, \text{where
+      ART is Alternative Route Availability (0-10), RRD is Redundant Resources Depth (0-10), SBP is Supplier Backup
+      Presence (0-10), and SMC is Stock Management Capability (0-10).}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids: []
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Supply Chain Resilience Score (SCRS)
+    - calculation_knowledge
+    - Supply
+    - Chain
+    - Resilience
+    - Score
+    - SCRS
+    - metric
+    - calculation
+    aliases:
+    - Supply Chain Resilience Score (SCRS)
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_supply_chain_resilience_score_scrs_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 31; id=30
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.stability_budget_consumption_rate_sbcr
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Stability Budget Consumption Rate (SBCR)
+  summary: Measures how quickly a shipment is consuming its allocated stability budget during transit.
+  payload:
+    business_definition: 'Measures how quickly a shipment is consuming its allocated stability budget during transit.
+
+      Public HKB definition: SBCR = \frac{TED}{SB_{total}} \times 100\%, \text{where TED is the Temperature Excursion
+      Duration and } SB_{total} \text{ is the total stability budget allocated for the product.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted
+    - glossary_term.cold_chain_pharma_compliance.pharmaceutical_stability_budget
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Stability Budget Consumption Rate (SBCR)
+    - calculation_knowledge
+    - Stability
+    - Budget
+    - Consumption
+    - Rate
+    - SBCR
+    - metric
+    - calculation
+    aliases:
+    - Stability Budget Consumption Rate (SBCR)
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.pharmaceutical_stability_budget
+    - metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_stability_budget_consumption_rate_sbcr_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 33; id=32
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.lane_risk_potential_lrp
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Lane Risk Potential (LRP)
+  summary: Quantifies the risk associated with a specific shipping route based on historical performance.
+  payload:
+    business_definition: 'Quantifies the risk associated with a specific shipping route based on historical performance.
+
+      Public HKB definition: LRP = \frac{TE_{total} + SD_{total} + CD_{total}}{N_{shipments}}, \text{where } TE_{total}
+      \text{ is the total count of temperature excursions, } SD_{total} \text{ is the total count of shipping delays,
+      } CD_{total} \text{ is the total count of customs delays, and } N_{shipments} \text{ is the number of shipments
+      on that lane.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted
+    - glossary_term.cold_chain_pharma_compliance.delivery_performance_classification
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Lane Risk Potential (LRP)
+    - calculation_knowledge
+    - Lane
+    - Risk
+    - Potential
+    - LRP
+    - metric
+    - calculation
+    aliases:
+    - Lane Risk Potential (LRP)
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.delivery_performance_classification
+    - metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_lane_risk_potential_lrp_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 37; id=36
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.excursion_impact_assessment_eia
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Excursion Impact Assessment (EIA)
+  summary: Evaluates the potential quality impact of temperature excursions on product.
+  payload:
+    business_definition: 'Evaluates the potential quality impact of temperature excursions on product.
+
+      Public HKB definition: EIA = \sum_{i=1}^{n} (|T_i - T_{limit}| \times t_i), \text{where } T_i \text{ is the
+      temperature during excursion } i, T_{limit} \text{ is the nearest temperature limit (upper or lower), and
+      } t_i \text{ is the duration of excursion } i \text{ in hours.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted
+    - glossary_term.cold_chain_pharma_compliance.product_storage_classifications
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Excursion Impact Assessment (EIA)
+    - calculation_knowledge
+    - Excursion
+    - Impact
+    - Assessment
+    - EIA
+    - metric
+    - calculation
+    aliases:
+    - Excursion Impact Assessment (EIA)
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.product_storage_classifications
+    - metric.cold_chain_pharma_compliance.temperature_excursion_duration_ted
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_excursion_impact_assessment_eia_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 42; id=41
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.cold_chain_cost_efficiency_ratio_ccer
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Cold Chain Cost Efficiency Ratio (CCER)
+  summary: Measures the relationship between cold chain protection costs and product value.
+  payload:
+    business_definition: 'Measures the relationship between cold chain protection costs and product value.
+
+      Public HKB definition: CCER = \frac{C_{monitoring} + C_{packaging} + C_{transport}}{V_{product}} \times 100\%,
+      \text{where } C_{monitoring}, C_{packaging}, C_{transport} \text{ are the respective costs, and } V_{product}
+      \text{ is the product value.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids: []
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Cold Chain Cost Efficiency Ratio (CCER)
+    - calculation_knowledge
+    - Cold
+    - Chain
+    - Cost
+    - Efficiency
+    - Ratio
+    - CCER
+    - metric
+    - calculation
+    aliases:
+    - Cold Chain Cost Efficiency Ratio (CCER)
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_cold_chain_cost_efficiency_ratio_ccer_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 46; id=45
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.data_logger_reliability_score_dlrs
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Data Logger Reliability Score (DLRS)
+  summary: Assesses the reliability of temperature monitoring devices based on historical performance.
+  payload:
+    business_definition: 'Assesses the reliability of temperature monitoring devices based on historical performance.
+
+      Public HKB definition: DLRS = 100 - (10 \times F_r + 5 \times F_d + 3 \times F_c + 2 \times F_b), \text{where
+      } F_r \text{ is the rate of reading failures, } F_d \text{ is the rate of download failures, } F_c \text{
+      is the calibration drift rate, and } F_b \text{ is the battery failure rate. All rates are per 100 deployments.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids: []
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Data Logger Reliability Score (DLRS)
+    - calculation_knowledge
+    - Data
+    - Logger
+    - Reliability
+    - Score
+    - DLRS
+    - metric
+    - calculation
+    aliases:
+    - Data Logger Reliability Score (DLRS)
+    related_knowledge_ids: []
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_data_logger_reliability_score_dlrs_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 49; id=48
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: metric.cold_chain_pharma_compliance.temperature_accuracy_impact_factor_taif
+  knowledge_type: metric
+  database_id: cold_chain_pharma_compliance
+  title: Temperature Accuracy Impact Factor (TAIF)
+  summary: Quantifies the potential error in product status assessment due to monitoring device accuracy limitations.
+  payload:
+    business_definition: 'Quantifies the potential error in product status assessment due to monitoring device accuracy
+      limitations.
+
+      Public HKB definition: TAIF = \frac{|T_{max} - T_{upper}|}{A} + \frac{|T_{min} - T_{lower}|}{A}, \text{where
+      } T_{max} \text{ and } T_{min} \text{ are the maximum and minimum recorded temperatures, } T_{upper} \text{
+      and } T_{lower} \text{ are the upper and lower temperature limits, and } A \text{ is the stated accuracy of
+      the monitoring device in °C.}'
+    grain: null
+    formula_sql: 'UNRESOLVED: the public HKB provides a mathematical definition, not an SQL expression or authoritative
+      physical-column binding.'
+    source_knowledge_ids:
+    - metric.cold_chain_pharma_compliance.data_logger_reliability_score_dlrs
+    - glossary_term.cold_chain_pharma_compliance.monitoring_device_calibration_status
+    default_time_field_id: null
+    rounding_rule: null
+    usage_warnings:
+    - Use the public mathematical definition as business knowledge; do not invent an SQL implementation or physical-column
+      binding.
+  discovery:
+    keywords:
+    - Temperature Accuracy Impact Factor (TAIF)
+    - calculation_knowledge
+    - Temperature
+    - Accuracy
+    - Impact
+    - Factor
+    - TAIF
+    - metric
+    - calculation
+    aliases:
+    - Temperature Accuracy Impact Factor (TAIF)
+    related_knowledge_ids:
+    - glossary_term.cold_chain_pharma_compliance.monitoring_device_calibration_status
+    - metric.cold_chain_pharma_compliance.data_logger_reliability_score_dlrs
+  evidence_refs:
+  - evidence_id: evidence.metric_cold_chain_pharma_compliance_temperature_accuracy_impact_factor_taif_hkb
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+    locator: JSONL line 58; id=57
+    snapshot_id: null
+    validation_id: null
+    result_summary: Public HKB calculation_knowledge record with its complete definition and dependency IDs.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

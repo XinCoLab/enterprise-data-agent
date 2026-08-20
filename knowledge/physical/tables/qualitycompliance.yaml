@@ -1,0 +1,228 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+table_knowledge:
+  knowledge_id: table.cold_chain_pharma_compliance.qualitycompliance
+  knowledge_type: table
+  database_id: cold_chain_pharma_compliance
+  title: Qualitycompliance
+  summary: Physical public-schema table with 2 columns and declared primary key (reckeyqc).
+  payload:
+    physical_name: qualitycompliance
+    business_definition: Physical public-schema table with 2 columns and declared primary key (reckeyqc).
+    grain: 'One row per declared primary-key combination: reckeyqc'
+    table_role: unknown
+    logical_primary_key:
+    - reckeyqc
+    usage_warnings:
+    - Table role is left unknown unless the public key structure directly identifies a bridge table.
+  discovery:
+    keywords:
+    - qualitycompliance
+    - table
+    - reckeyqc
+    - qc_checklist
+    aliases:
+    - Qualitycompliance
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.qualitycompliance.qc_checklist
+    - column.cold_chain_pharma_compliance.qualitycompliance.reckeyqc
+    - relationship.cold_chain_pharma_compliance.qualitycompliance_reckeyqc__shipments_reckey
+  evidence_refs:
+  - evidence_id: evidence.table_cold_chain_pharma_compliance_qualitycompliance_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: CREATE TABLE qualitycompliance at line 129
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares the table, physical columns, nullability, primary key, and foreign keys.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+columns:
+- knowledge_id: column.cold_chain_pharma_compliance.qualitycompliance.reckeyqc
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Qualitycompliance: Reckeyqc'
+  summary: text. Shipment record key for QC. PK. FK to Shipments.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.qualitycompliance
+    physical_name: reckeyqc
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: text. Shipment record key for QC. PK. FK to Shipments.
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - reckeyqc
+    - qualitycompliance
+    - text
+    - identifier
+    aliases:
+    - Reckeyqc
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.qualitycompliance_reckeyqc__shipments_reckey
+    - table.cold_chain_pharma_compliance.qualitycompliance
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_qualitycompliance_reckeyqc_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:qualitycompliance; column:reckeyqc
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_qualitycompliance_reckeyqc_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|QualityCompliance|RecKeyQC'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.qualitycompliance.qc_checklist
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Qualitycompliance: QC Checklist'
+  summary: JSONB column. Bundles seal integrity, product/pack condition, documentation and regulatory checks plus
+    release status into a single JSONB field for one-click quality-decision review.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.qualitycompliance
+    physical_name: qc_checklist
+    physical_type: jsonb
+    business_type: jsonb
+    column_role: status
+    nullable: true
+    business_definition: 'JSONB column. Bundles seal integrity, product/pack condition, documentation and regulatory
+      checks plus release status into a single JSONB field for one-click quality-decision review.
+
+      Nested public field meanings:
+
+      - security.seal_status: text. Security seal status. **NULL means seal status not captured.**. Possible values:
+      Broken, Intact, Suspicious.
+
+      - security.security_incident: text. Security incident notes. Possible values: 0, 1, 2.
+
+      - product_integrity.product_intact_check: text. Product-integrity check result. Possible values: Conditional,
+      Failed, Passed.
+
+      - product_integrity.pack_condition: text. Packaging condition assessment. **NULL means packaging condition
+      not assessed.**. Possible values: Compromised, Damaged, Good.
+
+      - product_integrity.label_condition: text. Label condition assessment. Possible values: Clear, Damaged, Illegible.
+
+      - documentation.documentation_complete: text. Documentation completeness status. Possible values: Complete,
+      Incomplete, Partial.
+
+      - documentation.certification_status: text. Certification status at reception. Possible values: Complete,
+      Expired, Missing.
+
+      - customs_and_regulatory.custom_clearance_status: text. Customs-clearance status. Possible values: Cleared,
+      Delayed, Pending.
+
+      - customs_and_regulatory.import_permit_status: text. Import-permit compliance status. Possible values: Not
+      Required, Pending, Valid.
+
+      - customs_and_regulatory.regulatory_compliance_status: text. Regulatory compliance status. Possible values:
+      Compliant, Non-compliant, Under Review.
+
+      - gdp_quality.sop_compliance: text. Standard operating procedure compliance status. Possible values: Full,
+      Non-compliant, Partial.
+
+      - gdp_quality.gdp_compliance: text. Good distribution practice compliance status. Possible values: Full, Non-compliant,
+      Partial.
+
+      - gdp_quality.quality_agreement_status: text. Quality agreement status with partners. Possible values: Active,
+      Expired, Pending.
+
+      - gdp_quality.quality_review_status: text. Quality review status. Possible values: Approved, Pending, Rejected.
+
+      - gdp_quality.responsible_person: text. Responsible quality person. Example: Scott Alexander.
+
+      - gdp_quality.quality_approval_ts: timestamp. Timestamp of quality approval. **NULL means approval pending.**.
+      Example: 2025/1/23.
+
+      - release.product_release_status: text. Product release status. Possible values: Quarantined, Rejected, Released.
+
+      - release.release_ts: timestamp. Product release timestamp. Possible values: 2025/2/19.
+
+      - release.quarantine_reason: text. Reason for quarantine if applicable. **NULL means product not quarantined.**.
+      Possible values: Damage, Documentation, Temperature Deviation.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means seal status not captured.
+    - NULL means packaging condition not assessed.
+    - NULL means approval pending.
+    - NULL means product not quarantined.
+  discovery:
+    keywords:
+    - qc_checklist
+    - QC Checklist
+    - qualitycompliance
+    - jsonb
+    - status
+    - security.seal_status
+    - seal_status
+    - security.security_incident
+    - security_incident
+    - product_integrity.product_intact_check
+    - product_intact_check
+    - product_integrity.pack_condition
+    - pack_condition
+    - product_integrity.label_condition
+    - label_condition
+    - documentation.documentation_complete
+    - documentation_complete
+    - documentation.certification_status
+    - certification_status
+    - customs_and_regulatory.custom_clearance_status
+    - custom_clearance_status
+    - customs_and_regulatory.import_permit_status
+    - import_permit_status
+    - customs_and_regulatory.regulatory_compliance_status
+    - regulatory_compliance_status
+    - gdp_quality.sop_compliance
+    - sop_compliance
+    - gdp_quality.gdp_compliance
+    - gdp_compliance
+    - gdp_quality.quality_agreement_status
+    - quality_agreement_status
+    - gdp_quality.quality_review_status
+    - quality_review_status
+    - gdp_quality.responsible_person
+    - responsible_person
+    - gdp_quality.quality_approval_ts
+    - quality_approval_ts
+    - release.product_release_status
+    - product_release_status
+    - release.release_ts
+    - release_ts
+    - release.quarantine_reason
+    - quarantine_reason
+    aliases:
+    - QC Checklist
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.qualitycompliance
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_qualitycompliance_qc_checklist_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:qualitycompliance; column:qc_checklist
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_qualitycompliance_qc_checklist_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|QualityCompliance|qc_checklist'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

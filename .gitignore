@@ -1,0 +1,47 @@
+# Python cache
+__pycache__/
+.venv/
+*.pyc
+*.pyo
+*.pyd
+
+# Local runtime
+.langgraph_api/
+runtime/
+start-local.cmd
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.duckdb
+*.duckdb.wal
+
+# Secrets
+.env
+.env.*
+!.env.example
+config/settings.env
+config/secrets.env
+config/profiles/*.json
+!config/profiles/livesqlbench-cold-chain.json
+config/profile_secrets/
+config/.active_profile
+
+# Logs / caches
+*.log
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+frontend/node_modules/
+frontend/dist/*
+!frontend/dist/client/
+!frontend/dist/client/**
+frontend/.next/
+
+# IDE
+.idea/
+.vscode/
+
+# Local archives and temporary bundles
+*.rar
+*.zip

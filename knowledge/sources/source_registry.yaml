@@ -1,0 +1,25 @@
+registry_version: 0.1.0
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+sources:
+- source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+  source_type: public_schema
+  title: LiveSQLBench public cold-chain Schema
+  project_relative_path: eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_schema.txt
+  sha256: 9e14cc4fcf39b996d009ec533e9b649684d2deaa0f6e73e2223faf8d368807f3
+  immutable_for_package_build: true
+  trust_role: declared_evidence
+- source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+  source_type: public_column_meaning
+  title: LiveSQLBench public cold-chain Column Meaning
+  project_relative_path: eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_column_meaning_base.json
+  sha256: 4e8c7acfda342709a84b846e1d940b1b2ff04e9c499b4ce3cccece9240302971
+  immutable_for_package_build: true
+  trust_role: declared_evidence
+- source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.hkb
+  source_type: public_hkb
+  title: LiveSQLBench public cold-chain HKB
+  project_relative_path: eval/livesqlbench_base_full_v1/official_source/public/cold_chain_pharma_compliance/cold_chain_pharma_compliance_kb.jsonl
+  sha256: 4628bca8d7262e0fd519d8eed94f8a40fc9914342393fb1aeb73c5616ec5e812
+  immutable_for_package_build: true
+  trust_role: declared_evidence

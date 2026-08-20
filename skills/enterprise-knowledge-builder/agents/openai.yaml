@@ -1,0 +1,7 @@
+interface:
+  display_name: "Enterprise Knowledge Builder"
+  short_description: "Build evidence-backed KnowledgeCard packages"
+  default_prompt: "Use $enterprise-knowledge-builder to build and validate a DataAgent-compatible Knowledge package from my database schema and reviewed business materials."
+
+policy:
+  allow_implicit_invocation: true

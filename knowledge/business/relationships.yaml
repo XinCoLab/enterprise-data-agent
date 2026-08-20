@@ -1,0 +1,443 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+relationships:
+- knowledge_id: relationship.cold_chain_pharma_compliance.environmentalmonitoring_reckeylink__shipments_reckey
+  knowledge_type: relationship
+  database_id: cold_chain_pharma_compliance
+  title: Environmentalmonitoring to Shipments
+  summary: Declared foreign key from environmentalmonitoring(reckeylink) to shipments(reckey).
+  payload:
+    from:
+      table_id: table.cold_chain_pharma_compliance.environmentalmonitoring
+      columns:
+      - reckeylink
+    to:
+      table_id: table.cold_chain_pharma_compliance.shipments
+      columns:
+      - reckey
+    cardinality: one_to_one
+    join_sql: environmentalmonitoring.reckeylink = shipments.reckey
+    preserves_from_grain: true
+    fanout_risks: []
+  discovery:
+    keywords:
+    - environmentalmonitoring
+    - shipments
+    - relationship
+    - foreign key
+    - reckeylink
+    - reckey
+    aliases:
+    - Environmentalmonitoring to Shipments
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.environmentalmonitoring.reckeylink
+    - column.cold_chain_pharma_compliance.shipments.reckey
+    - table.cold_chain_pharma_compliance.environmentalmonitoring
+    - table.cold_chain_pharma_compliance.shipments
+  evidence_refs:
+  - evidence_id: evidence.relationship_cold_chain_pharma_compliance_environmentalmonitoring_reckeylink_shipments_reckey_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:environmentalmonitoring; FOREIGN KEY (reckeylink)
+    snapshot_id: null
+    validation_id: null
+    result_summary: The public Schema directly declares this foreign-key relationship.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: relationship.cold_chain_pharma_compliance.environmentalmonitoring_devlink__monitoringdevices_mondevref
+  knowledge_type: relationship
+  database_id: cold_chain_pharma_compliance
+  title: Environmentalmonitoring to Monitoringdevices
+  summary: Declared foreign key from environmentalmonitoring(devlink) to monitoringdevices(mondevref).
+  payload:
+    from:
+      table_id: table.cold_chain_pharma_compliance.environmentalmonitoring
+      columns:
+      - devlink
+    to:
+      table_id: table.cold_chain_pharma_compliance.monitoringdevices
+      columns:
+      - mondevref
+    cardinality: many_to_one
+    join_sql: environmentalmonitoring.devlink = monitoringdevices.mondevref
+    preserves_from_grain: true
+    fanout_risks: []
+  discovery:
+    keywords:
+    - environmentalmonitoring
+    - monitoringdevices
+    - relationship
+    - foreign key
+    - devlink
+    - mondevref
+    aliases:
+    - Environmentalmonitoring to Monitoringdevices
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.environmentalmonitoring.devlink
+    - column.cold_chain_pharma_compliance.monitoringdevices.mondevref
+    - table.cold_chain_pharma_compliance.environmentalmonitoring
+    - table.cold_chain_pharma_compliance.monitoringdevices
+  evidence_refs:
+  - evidence_id: evidence.relationship_cold_chain_pharma_compliance_environmentalmonitoring_devlink_monitoringdevices_mondevref_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:environmentalmonitoring; FOREIGN KEY (devlink)
+    snapshot_id: null
+    validation_id: null
+    result_summary: The public Schema directly declares this foreign-key relationship.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: relationship.cold_chain_pharma_compliance.productbatches_prodlink__products_prodcode
+  knowledge_type: relationship
+  database_id: cold_chain_pharma_compliance
+  title: Productbatches to Products
+  summary: Declared foreign key from productbatches(prodlink) to products(prodcode).
+  payload:
+    from:
+      table_id: table.cold_chain_pharma_compliance.productbatches
+      columns:
+      - prodlink
+    to:
+      table_id: table.cold_chain_pharma_compliance.products
+      columns:
+      - prodcode
+    cardinality: many_to_one
+    join_sql: productbatches.prodlink = products.prodcode
+    preserves_from_grain: true
+    fanout_risks: []
+  discovery:
+    keywords:
+    - productbatches
+    - products
+    - relationship
+    - foreign key
+    - prodlink
+    - prodcode
+    aliases:
+    - Productbatches to Products
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.productbatches.prodlink
+    - column.cold_chain_pharma_compliance.products.prodcode
+    - table.cold_chain_pharma_compliance.productbatches
+    - table.cold_chain_pharma_compliance.products
+  evidence_refs:
+  - evidence_id: evidence.relationship_cold_chain_pharma_compliance_productbatches_prodlink_products_prodcode_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:productbatches; FOREIGN KEY (prodlink)
+    snapshot_id: null
+    validation_id: null
+    result_summary: The public Schema directly declares this foreign-key relationship.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: relationship.cold_chain_pharma_compliance.vehicles_carrierbond__carriers_carriertag
+  knowledge_type: relationship
+  database_id: cold_chain_pharma_compliance
+  title: Vehicles to Carriers
+  summary: Declared foreign key from vehicles(carrierbond) to carriers(carriertag).
+  payload:
+    from:
+      table_id: table.cold_chain_pharma_compliance.vehicles
+      columns:
+      - carrierbond
+    to:
+      table_id: table.cold_chain_pharma_compliance.carriers
+      columns:
+      - carriertag
+    cardinality: many_to_one
+    join_sql: vehicles.carrierbond = carriers.carriertag
+    preserves_from_grain: true
+    fanout_risks: []
+  discovery:
+    keywords:
+    - vehicles
+    - carriers
+    - relationship
+    - foreign key
+    - carrierbond
+    - carriertag
+    aliases:
+    - Vehicles to Carriers
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.carriers.carriertag
+    - column.cold_chain_pharma_compliance.vehicles.carrierbond
+    - table.cold_chain_pharma_compliance.carriers
+    - table.cold_chain_pharma_compliance.vehicles
+  evidence_refs:
+  - evidence_id: evidence.relationship_cold_chain_pharma_compliance_vehicles_carrierbond_carriers_carriertag_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:vehicles; FOREIGN KEY (carrierbond)
+    snapshot_id: null
+    validation_id: null
+    result_summary: The public Schema directly declares this foreign-key relationship.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: relationship.cold_chain_pharma_compliance.qualitycompliance_reckeyqc__shipments_reckey
+  knowledge_type: relationship
+  database_id: cold_chain_pharma_compliance
+  title: Qualitycompliance to Shipments
+  summary: Declared foreign key from qualitycompliance(reckeyqc) to shipments(reckey).
+  payload:
+    from:
+      table_id: table.cold_chain_pharma_compliance.qualitycompliance
+      columns:
+      - reckeyqc
+    to:
+      table_id: table.cold_chain_pharma_compliance.shipments
+      columns:
+      - reckey
+    cardinality: one_to_one
+    join_sql: qualitycompliance.reckeyqc = shipments.reckey
+    preserves_from_grain: true
+    fanout_risks: []
+  discovery:
+    keywords:
+    - qualitycompliance
+    - shipments
+    - relationship
+    - foreign key
+    - reckeyqc
+    - reckey
+    aliases:
+    - Qualitycompliance to Shipments
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.qualitycompliance.reckeyqc
+    - column.cold_chain_pharma_compliance.shipments.reckey
+    - table.cold_chain_pharma_compliance.qualitycompliance
+    - table.cold_chain_pharma_compliance.shipments
+  evidence_refs:
+  - evidence_id: evidence.relationship_cold_chain_pharma_compliance_qualitycompliance_reckeyqc_shipments_reckey_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:qualitycompliance; FOREIGN KEY (reckeyqc)
+    snapshot_id: null
+    validation_id: null
+    result_summary: The public Schema directly declares this foreign-key relationship.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: relationship.cold_chain_pharma_compliance.incidentandriskmanagement_reckeyrisk__shipments_reckey
+  knowledge_type: relationship
+  database_id: cold_chain_pharma_compliance
+  title: Incidentandriskmanagement to Shipments
+  summary: Declared foreign key from incidentandriskmanagement(reckeyrisk) to shipments(reckey).
+  payload:
+    from:
+      table_id: table.cold_chain_pharma_compliance.incidentandriskmanagement
+      columns:
+      - reckeyrisk
+    to:
+      table_id: table.cold_chain_pharma_compliance.shipments
+      columns:
+      - reckey
+    cardinality: one_to_one
+    join_sql: incidentandriskmanagement.reckeyrisk = shipments.reckey
+    preserves_from_grain: true
+    fanout_risks: []
+  discovery:
+    keywords:
+    - incidentandriskmanagement
+    - shipments
+    - relationship
+    - foreign key
+    - reckeyrisk
+    - reckey
+    aliases:
+    - Incidentandriskmanagement to Shipments
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.incidentandriskmanagement.reckeyrisk
+    - column.cold_chain_pharma_compliance.shipments.reckey
+    - table.cold_chain_pharma_compliance.incidentandriskmanagement
+    - table.cold_chain_pharma_compliance.shipments
+  evidence_refs:
+  - evidence_id: evidence.relationship_cold_chain_pharma_compliance_incidentandriskmanagement_reckeyrisk_shipments_reckey_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:incidentandriskmanagement; FOREIGN KEY (reckeyrisk)
+    snapshot_id: null
+    validation_id: null
+    result_summary: The public Schema directly declares this foreign-key relationship.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: relationship.cold_chain_pharma_compliance.insuranceclaims_reckeyclaim__shipments_reckey
+  knowledge_type: relationship
+  database_id: cold_chain_pharma_compliance
+  title: Insuranceclaims to Shipments
+  summary: Declared foreign key from insuranceclaims(reckeyclaim) to shipments(reckey).
+  payload:
+    from:
+      table_id: table.cold_chain_pharma_compliance.insuranceclaims
+      columns:
+      - reckeyclaim
+    to:
+      table_id: table.cold_chain_pharma_compliance.shipments
+      columns:
+      - reckey
+    cardinality: one_to_one
+    join_sql: insuranceclaims.reckeyclaim = shipments.reckey
+    preserves_from_grain: true
+    fanout_risks: []
+  discovery:
+    keywords:
+    - insuranceclaims
+    - shipments
+    - relationship
+    - foreign key
+    - reckeyclaim
+    - reckey
+    aliases:
+    - Insuranceclaims to Shipments
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.insuranceclaims.reckeyclaim
+    - column.cold_chain_pharma_compliance.shipments.reckey
+    - table.cold_chain_pharma_compliance.insuranceclaims
+    - table.cold_chain_pharma_compliance.shipments
+  evidence_refs:
+  - evidence_id: evidence.relationship_cold_chain_pharma_compliance_insuranceclaims_reckeyclaim_shipments_reckey_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:insuranceclaims; FOREIGN KEY (reckeyclaim)
+    snapshot_id: null
+    validation_id: null
+    result_summary: The public Schema directly declares this foreign-key relationship.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: relationship.cold_chain_pharma_compliance.reviewsandimprovements_reckeyrev__shipments_reckey
+  knowledge_type: relationship
+  database_id: cold_chain_pharma_compliance
+  title: Reviewsandimprovements to Shipments
+  summary: Declared foreign key from reviewsandimprovements(reckeyrev) to shipments(reckey).
+  payload:
+    from:
+      table_id: table.cold_chain_pharma_compliance.reviewsandimprovements
+      columns:
+      - reckeyrev
+    to:
+      table_id: table.cold_chain_pharma_compliance.shipments
+      columns:
+      - reckey
+    cardinality: one_to_one
+    join_sql: reviewsandimprovements.reckeyrev = shipments.reckey
+    preserves_from_grain: true
+    fanout_risks: []
+  discovery:
+    keywords:
+    - reviewsandimprovements
+    - shipments
+    - relationship
+    - foreign key
+    - reckeyrev
+    - reckey
+    aliases:
+    - Reviewsandimprovements to Shipments
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.reviewsandimprovements.reckeyrev
+    - column.cold_chain_pharma_compliance.shipments.reckey
+    - table.cold_chain_pharma_compliance.reviewsandimprovements
+    - table.cold_chain_pharma_compliance.shipments
+  evidence_refs:
+  - evidence_id: evidence.relationship_cold_chain_pharma_compliance_reviewsandimprovements_reckeyrev_shipments_reckey_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:reviewsandimprovements; FOREIGN KEY (reckeyrev)
+    snapshot_id: null
+    validation_id: null
+    result_summary: The public Schema directly declares this foreign-key relationship.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: relationship.cold_chain_pharma_compliance.shipsensorlink_shpnode__shipments_reckey
+  knowledge_type: relationship
+  database_id: cold_chain_pharma_compliance
+  title: Shipsensorlink to Shipments
+  summary: Declared foreign key from shipsensorlink(shpnode) to shipments(reckey).
+  payload:
+    from:
+      table_id: table.cold_chain_pharma_compliance.shipsensorlink
+      columns:
+      - shpnode
+    to:
+      table_id: table.cold_chain_pharma_compliance.shipments
+      columns:
+      - reckey
+    cardinality: many_to_one
+    join_sql: shipsensorlink.shpnode = shipments.reckey
+    preserves_from_grain: true
+    fanout_risks: []
+  discovery:
+    keywords:
+    - shipsensorlink
+    - shipments
+    - relationship
+    - foreign key
+    - shpnode
+    - reckey
+    aliases:
+    - Shipsensorlink to Shipments
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.shipments.reckey
+    - column.cold_chain_pharma_compliance.shipsensorlink.shpnode
+    - table.cold_chain_pharma_compliance.shipments
+    - table.cold_chain_pharma_compliance.shipsensorlink
+  evidence_refs:
+  - evidence_id: evidence.relationship_cold_chain_pharma_compliance_shipsensorlink_shpnode_shipments_reckey_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:shipsensorlink; FOREIGN KEY (shpnode)
+    snapshot_id: null
+    validation_id: null
+    result_summary: The public Schema directly declares this foreign-key relationship.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: relationship.cold_chain_pharma_compliance.shipsensorlink_devnode__monitoringdevices_mondevref
+  knowledge_type: relationship
+  database_id: cold_chain_pharma_compliance
+  title: Shipsensorlink to Monitoringdevices
+  summary: Declared foreign key from shipsensorlink(devnode) to monitoringdevices(mondevref).
+  payload:
+    from:
+      table_id: table.cold_chain_pharma_compliance.shipsensorlink
+      columns:
+      - devnode
+    to:
+      table_id: table.cold_chain_pharma_compliance.monitoringdevices
+      columns:
+      - mondevref
+    cardinality: many_to_one
+    join_sql: shipsensorlink.devnode = monitoringdevices.mondevref
+    preserves_from_grain: true
+    fanout_risks: []
+  discovery:
+    keywords:
+    - shipsensorlink
+    - monitoringdevices
+    - relationship
+    - foreign key
+    - devnode
+    - mondevref
+    aliases:
+    - Shipsensorlink to Monitoringdevices
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.monitoringdevices.mondevref
+    - column.cold_chain_pharma_compliance.shipsensorlink.devnode
+    - table.cold_chain_pharma_compliance.monitoringdevices
+    - table.cold_chain_pharma_compliance.shipsensorlink
+  evidence_refs:
+  - evidence_id: evidence.relationship_cold_chain_pharma_compliance_shipsensorlink_devnode_monitoringdevices_mondevref_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:shipsensorlink; FOREIGN KEY (devnode)
+    snapshot_id: null
+    validation_id: null
+    result_summary: The public Schema directly declares this foreign-key relationship.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

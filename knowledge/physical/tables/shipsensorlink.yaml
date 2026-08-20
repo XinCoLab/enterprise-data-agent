@@ -1,0 +1,132 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+table_knowledge:
+  knowledge_id: table.cold_chain_pharma_compliance.shipsensorlink
+  knowledge_type: table
+  database_id: cold_chain_pharma_compliance
+  title: Shipsensorlink
+  summary: Physical public-schema table with 2 columns and declared primary key (shpnode, devnode).
+  payload:
+    physical_name: shipsensorlink
+    business_definition: Physical public-schema table with 2 columns and declared primary key (shpnode, devnode).
+    grain: 'One row per declared primary-key combination: shpnode, devnode'
+    table_role: bridge
+    logical_primary_key:
+    - shpnode
+    - devnode
+    usage_warnings: []
+  discovery:
+    keywords:
+    - shipsensorlink
+    - table
+    - shpnode
+    - devnode
+    aliases:
+    - Shipsensorlink
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.shipsensorlink.devnode
+    - column.cold_chain_pharma_compliance.shipsensorlink.shpnode
+    - relationship.cold_chain_pharma_compliance.shipsensorlink_devnode__monitoringdevices_mondevref
+    - relationship.cold_chain_pharma_compliance.shipsensorlink_shpnode__shipments_reckey
+  evidence_refs:
+  - evidence_id: evidence.table_cold_chain_pharma_compliance_shipsensorlink_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: CREATE TABLE shipsensorlink at line 222
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares the table, physical columns, nullability, primary key, and foreign keys.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+columns:
+- knowledge_id: column.cold_chain_pharma_compliance.shipsensorlink.shpnode
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Shipsensorlink: Shpnode'
+  summary: text. Shipment record key in link. PK. FK to Shipments.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.shipsensorlink
+    physical_name: shpnode
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: text. Shipment record key in link. PK. FK to Shipments.
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - shpnode
+    - shipsensorlink
+    - text
+    - identifier
+    aliases:
+    - Shpnode
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.shipsensorlink_shpnode__shipments_reckey
+    - table.cold_chain_pharma_compliance.shipsensorlink
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_shipsensorlink_shpnode_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:shipsensorlink; column:shpnode
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_shipsensorlink_shpnode_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ShipSensorLink|ShpNode'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.shipsensorlink.devnode
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Shipsensorlink: Devnode'
+  summary: text. Monitoring-device reference in link. PK. FK to MonitoringDevices.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.shipsensorlink
+    physical_name: devnode
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: text. Monitoring-device reference in link. PK. FK to MonitoringDevices.
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - devnode
+    - shipsensorlink
+    - text
+    - identifier
+    aliases:
+    - Devnode
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.shipsensorlink_devnode__monitoringdevices_mondevref
+    - table.cold_chain_pharma_compliance.shipsensorlink
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_shipsensorlink_devnode_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:shipsensorlink; column:devnode
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_shipsensorlink_devnode_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|ShipSensorLink|DevNode'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

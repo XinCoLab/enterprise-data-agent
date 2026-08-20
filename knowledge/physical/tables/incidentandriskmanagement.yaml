@@ -1,0 +1,228 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+table_knowledge:
+  knowledge_id: table.cold_chain_pharma_compliance.incidentandriskmanagement
+  knowledge_type: table
+  database_id: cold_chain_pharma_compliance
+  title: Incidentandriskmanagement
+  summary: Physical public-schema table with 2 columns and declared primary key (reckeyrisk).
+  payload:
+    physical_name: incidentandriskmanagement
+    business_definition: Physical public-schema table with 2 columns and declared primary key (reckeyrisk).
+    grain: 'One row per declared primary-key combination: reckeyrisk'
+    table_role: unknown
+    logical_primary_key:
+    - reckeyrisk
+    usage_warnings:
+    - Table role is left unknown unless the public key structure directly identifies a bridge table.
+  discovery:
+    keywords:
+    - incidentandriskmanagement
+    - table
+    - reckeyrisk
+    - incident_risk_record
+    aliases:
+    - Incidentandriskmanagement
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.incidentandriskmanagement.incident_risk_record
+    - column.cold_chain_pharma_compliance.incidentandriskmanagement.reckeyrisk
+    - relationship.cold_chain_pharma_compliance.incidentandriskmanagement_reckeyrisk__shipments_reckey
+  evidence_refs:
+  - evidence_id: evidence.table_cold_chain_pharma_compliance_incidentandriskmanagement_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: CREATE TABLE incidentandriskmanagement at line 145
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares the table, physical columns, nullability, primary key, and foreign keys.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+columns:
+- knowledge_id: column.cold_chain_pharma_compliance.incidentandriskmanagement.reckeyrisk
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Incidentandriskmanagement: Reckeyrisk'
+  summary: text. Shipment record key for risk log. PK. FK to Shipments.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.incidentandriskmanagement
+    physical_name: reckeyrisk
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: text. Shipment record key for risk log. PK. FK to Shipments.
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - reckeyrisk
+    - incidentandriskmanagement
+    - text
+    - identifier
+    aliases:
+    - Reckeyrisk
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.incidentandriskmanagement_reckeyrisk__shipments_reckey
+    - table.cold_chain_pharma_compliance.incidentandriskmanagement
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_incidentandriskmanagement_reckeyrisk_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:incidentandriskmanagement; column:reckeyrisk
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_incidentandriskmanagement_reckeyrisk_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|IncidentAndRiskManagement|RecKeyRisk'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.incidentandriskmanagement.incident_risk_record
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Incidentandriskmanagement: Incident Risk Record'
+  summary: JSONB column. Combines stability review, deviation investigation, risk assessment, reporting and impact
+    analysis for a shipment into one JSONB structure to support CAPA and pharmacovigilance workflows.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.incidentandriskmanagement
+    physical_name: incident_risk_record
+    physical_type: jsonb
+    business_type: jsonb
+    column_role: status
+    nullable: true
+    business_definition: 'JSONB column. Combines stability review, deviation investigation, risk assessment, reporting
+      and impact analysis for a shipment into one JSONB structure to support CAPA and pharmacovigilance workflows.
+
+      Nested public field meanings:
+
+      - stability_and_quality.stability_data_review: text. Stability-data review summary. Possible values: Completed,
+      Not Required, Pending.
+
+      - stability_and_quality.stability_impact_assessment: text. Assessment of stability impact. **NULL means impact
+      not assessed.**. Possible values: Major, Minor.
+
+      - stability_and_quality.product_quality_impact: text. Product-quality impact summary. **NULL means impact
+      not assessed.**. Possible values: Confirmed, Possible.
+
+      - batch_decision.batch_release_decision: text. Decision on batch release. Possible values: Approved, Pending,
+      Rejected.
+
+      - deviation_investigation.investigation_status: text. Deviation investigation status. **NULL means investigation
+      not started.**. Possible values: Completed, Ongoing.
+
+      - deviation_investigation.corrective_actions: text. Corrective actions taken. **NULL means actions not defined.**.
+      Possible values: Implemented, Pending.
+
+      - deviation_investigation.preventive_actions: text. Preventive actions planned. **NULL means actions not defined.**.
+      Possible values: Implemented, Planned.
+
+      - risk.risk_assessment_status: text. Overall risk-assessment status. Possible values: Completed, Ongoing,
+      Required.
+
+      - risk.risk_level: text. Assigned risk level. **NULL means level not set.**. Possible values: High, Low, Medium.
+
+      - reporting_notification.incident_report_status: text. Incident-reporting status. **NULL means report not
+      filed.**. Possible values: Draft, Reviewed, Submitted.
+
+      - reporting_notification.health_authority_notification: text. Health-authority notification status. Possible
+      values: Completed, Not Required, Pending.
+
+      - reporting_notification.authority_response: text. Authority response summary. **NULL means no response yet.**.
+      Possible values: Acknowledged, Investigation.
+
+      - reporting_notification.customer_notification: text. Customer notification status. Possible values: Completed,
+      Not Required, Pending.
+
+      - reporting_notification.customer_response: text. Customer response summary. **NULL means no response yet.**.
+      Possible values: Accepted, Rejected.
+
+      - impact.patient_impact: text. Assessment of patient impact. **NULL means impact not assessed.**. Possible
+      values: Confirmed, Possible.
+
+      - impact.market_impact: text. Assessment of market impact. **NULL means impact not assessed.**. Possible values:
+      Limited, Significant.
+
+      - impact.reputation_impact: text. Reputation impact statement. **NULL means impact not assessed.**. Possible
+      values: Major, Minor.
+
+      - lessons_learned: text. Lessons learned documentation reference. Possible values: In Progress, No, Yes.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means impact not assessed.
+    - NULL means investigation not started.
+    - NULL means actions not defined.
+    - NULL means level not set.
+    - NULL means report not filed.
+    - NULL means no response yet.
+  discovery:
+    keywords:
+    - incident_risk_record
+    - Incident Risk Record
+    - incidentandriskmanagement
+    - jsonb
+    - status
+    - stability_and_quality.stability_data_review
+    - stability_data_review
+    - stability_and_quality.stability_impact_assessment
+    - stability_impact_assessment
+    - stability_and_quality.product_quality_impact
+    - product_quality_impact
+    - batch_decision.batch_release_decision
+    - batch_release_decision
+    - deviation_investigation.investigation_status
+    - investigation_status
+    - deviation_investigation.corrective_actions
+    - corrective_actions
+    - deviation_investigation.preventive_actions
+    - preventive_actions
+    - risk.risk_assessment_status
+    - risk_assessment_status
+    - risk.risk_level
+    - risk_level
+    - reporting_notification.incident_report_status
+    - incident_report_status
+    - reporting_notification.health_authority_notification
+    - health_authority_notification
+    - reporting_notification.authority_response
+    - authority_response
+    - reporting_notification.customer_notification
+    - customer_notification
+    - reporting_notification.customer_response
+    - customer_response
+    - impact.patient_impact
+    - patient_impact
+    - impact.market_impact
+    - market_impact
+    - impact.reputation_impact
+    - reputation_impact
+    - lessons_learned
+    aliases:
+    - Incident Risk Record
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.incidentandriskmanagement
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_incidentandriskmanagement_incident_risk_record_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:incidentandriskmanagement; column:incident_risk_record
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_incidentandriskmanagement_incident_risk_record_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|IncidentAndRiskManagement|incident_risk_record'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

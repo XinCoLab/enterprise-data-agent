@@ -1,0 +1,15 @@
+services:
+  data-agent:
+    build:
+      context: .
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      DATA_AGENT_CONFIG_ROOT: /app/runtime/config
+      DATA_AGENT_KNOWLEDGE_IMPORT_ROOT: /app/runtime/knowledge
+      DATA_AGENT_CHECKPOINT_PATH: /app/runtime/state/conversation.sqlite
+    volumes:
+      - ./runtime:/app/runtime
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

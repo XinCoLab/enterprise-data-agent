@@ -1,0 +1,805 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://data-agent.local/schemas/knowledge-card/cold_chain_pharma_compliance/0.1.0",
+  "title": "Cold Chain Pharma Compliance English Knowledge Entry Contract v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "knowledge_id",
+    "knowledge_type",
+    "database_id",
+    "title",
+    "summary",
+    "payload",
+    "discovery",
+    "evidence_refs",
+    "status",
+    "revision",
+    "updated_at"
+  ],
+  "properties": {
+    "knowledge_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z0-9_]+)+$"
+    },
+    "knowledge_type": {
+      "enum": [
+        "database",
+        "table",
+        "column",
+        "relationship",
+        "enum",
+        "measure",
+        "metric",
+        "query_recipe",
+        "warning",
+        "glossary_term"
+      ]
+    },
+    "database_id": {
+      "const": "cold_chain_pharma_compliance"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "payload": {
+      "type": "object"
+    },
+    "discovery": {
+      "$ref": "#/$defs/discovery"
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/evidenceRef"
+      }
+    },
+    "assertions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/assertion"
+      }
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "VALIDATED",
+        "REVIEWED",
+        "CERTIFIED",
+        "STALE",
+        "DEPRECATED"
+      ]
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "knowledge_type": {
+            "const": "database"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/databasePayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "knowledge_type": {
+            "const": "table"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/tablePayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "knowledge_type": {
+            "const": "column"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/columnPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "knowledge_type": {
+            "const": "relationship"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/relationshipPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "knowledge_type": {
+            "const": "enum"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/enumPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "knowledge_type": {
+            "const": "measure"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/measurePayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "knowledge_type": {
+            "const": "metric"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/metricPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "knowledge_type": {
+            "const": "query_recipe"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/queryRecipePayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "knowledge_type": {
+            "const": "warning"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/warningPayload"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "knowledge_type": {
+            "const": "glossary_term"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "$ref": "#/$defs/glossaryPayload"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "idList": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z0-9_]+)+$"
+      }
+    },
+    "discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "keywords",
+        "aliases",
+        "related_knowledge_ids"
+      ],
+      "properties": {
+        "keywords": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "aliases": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "related_knowledge_ids": {
+          "$ref": "#/$defs/idList"
+        }
+      }
+    },
+    "evidenceRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_id",
+        "evidence_type",
+        "source_id",
+        "locator"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "pattern": "^evidence\\.[a-z0-9_]+$"
+        },
+        "evidence_type": {
+          "enum": [
+            "declared",
+            "observed",
+            "validation",
+            "review"
+          ]
+        },
+        "source_id": {
+          "type": "string",
+          "pattern": "^source\\.[a-z0-9_.]+$"
+        },
+        "locator": {
+          "type": "string"
+        },
+        "snapshot_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "validation_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "result_summary": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assertion_id",
+        "fact_type",
+        "statement",
+        "evidence_ids",
+        "status"
+      ],
+      "properties": {
+        "assertion_id": {
+          "type": "string",
+          "pattern": "^assertion\\.[a-z0-9_]+$"
+        },
+        "fact_type": {
+          "enum": [
+            "declared",
+            "observed",
+            "inferred",
+            "derived",
+            "human_decision"
+          ]
+        },
+        "statement": {
+          "type": "string"
+        },
+        "evidence_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^evidence\\.[a-z0-9_]+$"
+          }
+        },
+        "status": {
+          "enum": [
+            "DRAFT",
+            "VALIDATED",
+            "REVIEWED",
+            "CERTIFIED",
+            "STALE",
+            "DEPRECATED"
+          ]
+        }
+      }
+    },
+    "columnSet": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "table_id",
+        "columns"
+      ],
+      "properties": {
+        "table_id": {
+          "type": "string"
+        },
+        "columns": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "databasePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "business_context",
+        "schema_names",
+        "table_ids"
+      ],
+      "properties": {
+        "business_context": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "schema_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "table_ids": {
+          "$ref": "#/$defs/idList"
+        }
+      }
+    },
+    "tablePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "physical_name",
+        "business_definition",
+        "grain",
+        "table_role",
+        "logical_primary_key",
+        "usage_warnings"
+      ],
+      "properties": {
+        "physical_name": {
+          "type": "string"
+        },
+        "business_definition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "grain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "table_role": {
+          "enum": [
+            "dimension",
+            "lookup",
+            "bridge",
+            "transaction_header",
+            "transaction_detail",
+            "fact",
+            "unknown"
+          ]
+        },
+        "logical_primary_key": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "usage_warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "columnPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "table_id",
+        "physical_name",
+        "physical_type",
+        "business_type",
+        "column_role",
+        "nullable",
+        "business_definition",
+        "unit",
+        "default_aggregation",
+        "usage_warnings"
+      ],
+      "properties": {
+        "table_id": {
+          "type": "string"
+        },
+        "physical_name": {
+          "type": "string"
+        },
+        "physical_type": {
+          "type": "string"
+        },
+        "business_type": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "column_role": {
+          "enum": [
+            "identifier",
+            "dimension",
+            "measure",
+            "date",
+            "status",
+            "text",
+            "foreign_key",
+            "unknown"
+          ]
+        },
+        "nullable": {
+          "type": "boolean"
+        },
+        "business_definition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "default_aggregation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "usage_warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "relationshipPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to",
+        "cardinality",
+        "join_sql",
+        "preserves_from_grain",
+        "fanout_risks"
+      ],
+      "properties": {
+        "from": {
+          "$ref": "#/$defs/columnSet"
+        },
+        "to": {
+          "$ref": "#/$defs/columnSet"
+        },
+        "cardinality": {
+          "enum": [
+            "one_to_one",
+            "one_to_many",
+            "many_to_one",
+            "many_to_many",
+            "unknown"
+          ]
+        },
+        "join_sql": {
+          "type": "string"
+        },
+        "preserves_from_grain": {
+          "type": "boolean"
+        },
+        "fanout_risks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "enumPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "column_id",
+        "closed_domain",
+        "values"
+      ],
+      "properties": {
+        "column_id": {
+          "type": "string"
+        },
+        "closed_domain": {
+          "type": "boolean"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "measurePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "business_definition",
+        "base_grain",
+        "expression_sql",
+        "aggregation",
+        "unit",
+        "rounding_rule"
+      ],
+      "properties": {
+        "business_definition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "base_grain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "expression_sql": {
+          "type": "string"
+        },
+        "aggregation": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "unit": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rounding_rule": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "metricPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "business_definition",
+        "grain",
+        "formula_sql",
+        "source_knowledge_ids",
+        "default_time_field_id",
+        "rounding_rule",
+        "usage_warnings"
+      ],
+      "properties": {
+        "business_definition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "grain": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "formula_sql": {
+          "type": "string"
+        },
+        "source_knowledge_ids": {
+          "$ref": "#/$defs/idList"
+        },
+        "default_time_field_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "rounding_rule": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "usage_warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "queryRecipePayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "business_question",
+        "required_knowledge_ids",
+        "parameters",
+        "reference_sql"
+      ],
+      "properties": {
+        "business_question": {
+          "type": "string"
+        },
+        "required_knowledge_ids": {
+          "$ref": "#/$defs/idList"
+        },
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "reference_sql": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "warningPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "applies_to",
+        "severity",
+        "rule",
+        "safe_alternative"
+      ],
+      "properties": {
+        "applies_to": {
+          "$ref": "#/$defs/idList"
+        },
+        "severity": {
+          "enum": [
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ]
+        },
+        "rule": {
+          "type": "string"
+        },
+        "safe_alternative": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "glossaryPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "term",
+        "definition",
+        "excluded_meanings"
+      ],
+      "properties": {
+        "term": {
+          "type": "string"
+        },
+        "definition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "excluded_meanings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

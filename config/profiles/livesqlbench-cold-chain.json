@@ -1,0 +1,12 @@
+{
+  "id": "livesqlbench-cold-chain",
+  "label": "LiveSQLBench cold-chain example",
+  "description": "Public example profile based on the LiveSQLBench Base-Full v1 cold-chain materials.",
+  "backend": "postgresql",
+  "host": "127.0.0.1",
+  "port": 5432,
+  "username": "postgres",
+  "database": "cold_chain_pharma_compliance",
+  "duckdb_path": "",
+  "knowledge_root": "./knowledge"
+}

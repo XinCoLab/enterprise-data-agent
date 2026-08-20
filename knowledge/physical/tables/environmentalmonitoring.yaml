@@ -1,0 +1,258 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+table_knowledge:
+  knowledge_id: table.cold_chain_pharma_compliance.environmentalmonitoring
+  knowledge_type: table
+  database_id: cold_chain_pharma_compliance
+  title: Environmentalmonitoring
+  summary: Physical public-schema table with 3 columns and declared primary key (reckeylink).
+  payload:
+    physical_name: environmentalmonitoring
+    business_definition: Physical public-schema table with 3 columns and declared primary key (reckeylink).
+    grain: 'One row per declared primary-key combination: reckeylink'
+    table_role: unknown
+    logical_primary_key:
+    - reckeylink
+    usage_warnings:
+    - Table role is left unknown unless the public key structure directly identifies a bridge table.
+  discovery:
+    keywords:
+    - environmentalmonitoring
+    - table
+    - reckeylink
+    - devlink
+    - env_metrics
+    aliases:
+    - Environmentalmonitoring
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.environmentalmonitoring.devlink
+    - column.cold_chain_pharma_compliance.environmentalmonitoring.env_metrics
+    - column.cold_chain_pharma_compliance.environmentalmonitoring.reckeylink
+    - relationship.cold_chain_pharma_compliance.environmentalmonitoring_devlink__monitoringdevices_mondevref
+    - relationship.cold_chain_pharma_compliance.environmentalmonitoring_reckeylink__shipments_reckey
+  evidence_refs:
+  - evidence_id: evidence.table_cold_chain_pharma_compliance_environmentalmonitoring_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: CREATE TABLE environmentalmonitoring at line 16
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares the table, physical columns, nullability, primary key, and foreign keys.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+columns:
+- knowledge_id: column.cold_chain_pharma_compliance.environmentalmonitoring.reckeylink
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Environmentalmonitoring: Reckeylink'
+  summary: text. Shipment record key this monitoring pertains to. PK. FK to Shipments.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.environmentalmonitoring
+    physical_name: reckeylink
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: text. Shipment record key this monitoring pertains to. PK. FK to Shipments.
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - reckeylink
+    - environmentalmonitoring
+    - text
+    - identifier
+    aliases:
+    - Reckeylink
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.environmentalmonitoring_reckeylink__shipments_reckey
+    - table.cold_chain_pharma_compliance.environmentalmonitoring
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_environmentalmonitoring_reckeylink_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:environmentalmonitoring; column:reckeylink
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_environmentalmonitoring_reckeylink_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|EnvironmentalMonitoring|RecKeyLink'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.environmentalmonitoring.devlink
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Environmentalmonitoring: Devlink'
+  summary: text. Monitoring-device reference. FK to MonitoringDevices.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.environmentalmonitoring
+    physical_name: devlink
+    physical_type: text
+    business_type: text
+    column_role: foreign_key
+    nullable: true
+    business_definition: text. Monitoring-device reference. FK to MonitoringDevices.
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - devlink
+    - environmentalmonitoring
+    - text
+    - foreign_key
+    aliases:
+    - Devlink
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.environmentalmonitoring_devlink__monitoringdevices_mondevref
+    - table.cold_chain_pharma_compliance.environmentalmonitoring
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_environmentalmonitoring_devlink_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:environmentalmonitoring; column:devlink
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_environmentalmonitoring_devlink_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|EnvironmentalMonitoring|DevLink'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.environmentalmonitoring.env_metrics
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Environmentalmonitoring: Env Metrics'
+  summary: JSONB column. Consolidates all temperature, humidity, shock, light and tracking telemetry collected for
+    a shipment into one JSONB object for faster rule-engine evaluation.
+  payload:
+    table_id: table.cold_chain_pharma_compliance.environmentalmonitoring
+    physical_name: env_metrics
+    physical_type: jsonb
+    business_type: jsonb
+    column_role: status
+    nullable: true
+    business_definition: 'JSONB column. Consolidates all temperature, humidity, shock, light and tracking telemetry
+      collected for a shipment into one JSONB object for faster rule-engine evaluation.
+
+      Nested public field meanings:
+
+      - temperature.avg_c: real. Average temperature recorded (°C). Example: 3.1.
+
+      - temperature.min_c: real. Minimum temperature recorded (°C). Example: 0.1.
+
+      - temperature.max_c: real. Maximum temperature recorded (°C). Example: 10.0.
+
+      - temperature.excursion_count: bigint. Count of temperature deviations beyond limits. Example: 4.
+
+      - temperature.excursion_duration_min: bigint. Total minutes of temperature deviation. Example: 48.
+
+      - temperature.alarm_count: bigint. Number of temperature alarm events. Possible values: 0, 1, 2, 3, 4, 5.
+
+      - humidity.humidity_monitor: text. Humidity monitoring flag. **NULL means humidity was not monitored.**. Possible
+      values: No, Partial, Yes.
+
+      - humidity.avg_pct: real. Average relative humidity percentage. Example: 42.3.
+
+      - humidity.excursion_count: bigint. Count of humidity deviations. Possible values: 0, 1, 2, 3, 4, 5.
+
+      - light_and_shock.light_monitor_mode: text. Light-exposure monitoring flag. **NULL means light was not monitored.**.
+      Possible values: Continuous, Periodic.
+
+      - light_and_shock.shock_monitor: text. Shock-event monitoring flag. **NULL means shock was not monitored.**.
+      Possible values: Active, Passive.
+
+      - light_and_shock.shock_event_count: bigint. Count of shock events detected. Example: 5.
+
+      - tracking.location_tracking_state: text. Location-tracking status indicator. Possible values: Active, Failed,
+      Intermittent.
+
+      - tracking.gps_completeness_pct: text. GPS completeness/coverage descriptor. Example: 97.4.
+
+      - tracking.route_deviation_incidents: bigint. Number of route deviation incidents. Possible values: 0, 1,
+      2, 3.
+
+      - tracking.unscheduled_stops: bigint. Count of unplanned stops. Possible values: 0, 1, 2, 3, 4, 5.
+
+      - tracking.stop_duration_min: bigint. Total minutes spent in unplanned stops. Example: 55.'
+    unit: degrees Celsius
+    default_aggregation: null
+    usage_warnings:
+    - NULL means humidity was not monitored.
+    - NULL means light was not monitored.
+    - NULL means shock was not monitored.
+  discovery:
+    keywords:
+    - env_metrics
+    - Env Metrics
+    - environmentalmonitoring
+    - jsonb
+    - status
+    - temperature.avg_c
+    - avg_c
+    - temperature.min_c
+    - min_c
+    - temperature.max_c
+    - max_c
+    - temperature.excursion_count
+    - excursion_count
+    - temperature.excursion_duration_min
+    - excursion_duration_min
+    - temperature.alarm_count
+    - alarm_count
+    - humidity.humidity_monitor
+    - humidity_monitor
+    - humidity.avg_pct
+    - avg_pct
+    - humidity.excursion_count
+    - light_and_shock.light_monitor_mode
+    - light_monitor_mode
+    - light_and_shock.shock_monitor
+    - shock_monitor
+    - light_and_shock.shock_event_count
+    - shock_event_count
+    - tracking.location_tracking_state
+    - location_tracking_state
+    - tracking.gps_completeness_pct
+    - gps_completeness_pct
+    - tracking.route_deviation_incidents
+    - route_deviation_incidents
+    - tracking.unscheduled_stops
+    - unscheduled_stops
+    - tracking.stop_duration_min
+    - stop_duration_min
+    aliases:
+    - Env Metrics
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.environmentalmonitoring
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_environmentalmonitoring_env_metrics_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:environmentalmonitoring; column:env_metrics
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_environmentalmonitoring_env_metrics_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|EnvironmentalMonitoring|env_metrics'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

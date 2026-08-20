@@ -1,0 +1,272 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+table_knowledge:
+  knowledge_id: table.cold_chain_pharma_compliance.monitoringdevices
+  knowledge_type: table
+  database_id: cold_chain_pharma_compliance
+  title: Monitoringdevices
+  summary: Physical public-schema table with 5 columns and declared primary key (mondevref).
+  payload:
+    physical_name: monitoringdevices
+    business_definition: Physical public-schema table with 5 columns and declared primary key (mondevref).
+    grain: 'One row per declared primary-key combination: mondevref'
+    table_role: unknown
+    logical_primary_key:
+    - mondevref
+    usage_warnings:
+    - Table role is left unknown unless the public key structure directly identifies a bridge table.
+  discovery:
+    keywords:
+    - monitoringdevices
+    - table
+    - mondevref
+    - calibts
+    - devacc
+    - recintmin
+    - temppts
+    aliases:
+    - Monitoringdevices
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.monitoringdevices.calibts
+    - column.cold_chain_pharma_compliance.monitoringdevices.devacc
+    - column.cold_chain_pharma_compliance.monitoringdevices.mondevref
+    - column.cold_chain_pharma_compliance.monitoringdevices.recintmin
+    - column.cold_chain_pharma_compliance.monitoringdevices.temppts
+    - relationship.cold_chain_pharma_compliance.environmentalmonitoring_devlink__monitoringdevices_mondevref
+    - relationship.cold_chain_pharma_compliance.shipsensorlink_devnode__monitoringdevices_mondevref
+  evidence_refs:
+  - evidence_id: evidence.table_cold_chain_pharma_compliance_monitoringdevices_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: CREATE TABLE monitoringdevices at line 111
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares the table, physical columns, nullability, primary key, and foreign keys.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+columns:
+- knowledge_id: column.cold_chain_pharma_compliance.monitoringdevices.mondevref
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Monitoringdevices: Mondevref'
+  summary: text. Unique monitoring-device reference. PK
+  payload:
+    table_id: table.cold_chain_pharma_compliance.monitoringdevices
+    physical_name: mondevref
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: 'text. Unique monitoring-device reference. PK. Example: MD9886.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - mondevref
+    - monitoringdevices
+    - text
+    - identifier
+    aliases:
+    - Mondevref
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.environmentalmonitoring_devlink__monitoringdevices_mondevref
+    - relationship.cold_chain_pharma_compliance.shipsensorlink_devnode__monitoringdevices_mondevref
+    - table.cold_chain_pharma_compliance.monitoringdevices
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_monitoringdevices_mondevref_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:monitoringdevices; column:mondevref
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_monitoringdevices_mondevref_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|MonitoringDevices|MonDevRef'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.monitoringdevices.calibts
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Monitoringdevices: Calibts'
+  summary: timestamp. Timestamp of last calibration
+  payload:
+    table_id: table.cold_chain_pharma_compliance.monitoringdevices
+    physical_name: calibts
+    physical_type: timestamp without time zone
+    business_type: timestamp
+    column_role: date
+    nullable: true
+    business_definition: 'timestamp. Timestamp of last calibration. Example: 2024/10/6.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - calibts
+    - monitoringdevices
+    - timestamp without time zone
+    - date
+    aliases:
+    - Calibts
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.monitoringdevices
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_monitoringdevices_calibts_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:monitoringdevices; column:calibts
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_monitoringdevices_calibts_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|MonitoringDevices|CalibTS'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.monitoringdevices.devacc
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Monitoringdevices: Devacc'
+  summary: text. Device accuracy specification
+  payload:
+    table_id: table.cold_chain_pharma_compliance.monitoringdevices
+    physical_name: devacc
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Device accuracy specification. Example: 0.31.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - devacc
+    - monitoringdevices
+    - text
+    aliases:
+    - Devacc
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.monitoringdevices
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_monitoringdevices_devacc_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:monitoringdevices; column:devacc
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_monitoringdevices_devacc_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|MonitoringDevices|DevAcc'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.monitoringdevices.recintmin
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Monitoringdevices: Recintmin'
+  summary: 'bigint. Recording interval in minutes. **NULL means interval not configured.**. Possible values: 5.0,
+    10.0, 15.0, 30.0.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.monitoringdevices
+    physical_name: recintmin
+    physical_type: bigint
+    business_type: bigint
+    column_role: measure
+    nullable: true
+    business_definition: 'bigint. Recording interval in minutes. **NULL means interval not configured.**. Possible
+      values: 5.0, 10.0, 15.0, 30.0.'
+    unit: minutes
+    default_aggregation: null
+    usage_warnings:
+    - NULL means interval not configured.
+  discovery:
+    keywords:
+    - recintmin
+    - monitoringdevices
+    - bigint
+    - measure
+    aliases:
+    - Recintmin
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.monitoringdevices
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_monitoringdevices_recintmin_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:monitoringdevices; column:recintmin
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_monitoringdevices_recintmin_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|MonitoringDevices|RecIntMin'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.monitoringdevices.temppts
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Monitoringdevices: Temppts'
+  summary: bigint. Number of temperature points that can be stored
+  payload:
+    table_id: table.cold_chain_pharma_compliance.monitoringdevices
+    physical_name: temppts
+    physical_type: bigint
+    business_type: bigint
+    column_role: measure
+    nullable: true
+    business_definition: 'bigint. Number of temperature points that can be stored. Example: 891.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - temppts
+    - monitoringdevices
+    - bigint
+    - measure
+    aliases:
+    - Temppts
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.monitoringdevices
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_monitoringdevices_temppts_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:monitoringdevices; column:temppts
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_monitoringdevices_temppts_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|MonitoringDevices|TempPts'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'

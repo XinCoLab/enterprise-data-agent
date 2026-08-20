@@ -1,0 +1,221 @@
+database_id: cold_chain_pharma_compliance
+updated_at: '2026-08-13T17:52:17+08:00'
+table_knowledge:
+  knowledge_id: table.cold_chain_pharma_compliance.products
+  knowledge_type: table
+  database_id: cold_chain_pharma_compliance
+  title: Products
+  summary: Physical public-schema table with 4 columns and declared primary key (prodcode).
+  payload:
+    physical_name: products
+    business_definition: Physical public-schema table with 4 columns and declared primary key (prodcode).
+    grain: 'One row per declared primary-key combination: prodcode'
+    table_role: unknown
+    logical_primary_key:
+    - prodcode
+    usage_warnings:
+    - Table role is left unknown unless the public key structure directly identifies a bridge table.
+  discovery:
+    keywords:
+    - products
+    - table
+    - prodcode
+    - prodlabel
+    - prodcat
+    - maker
+    aliases:
+    - Products
+    related_knowledge_ids:
+    - column.cold_chain_pharma_compliance.products.maker
+    - column.cold_chain_pharma_compliance.products.prodcat
+    - column.cold_chain_pharma_compliance.products.prodcode
+    - column.cold_chain_pharma_compliance.products.prodlabel
+    - relationship.cold_chain_pharma_compliance.productbatches_prodlink__products_prodcode
+  evidence_refs:
+  - evidence_id: evidence.table_cold_chain_pharma_compliance_products_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: CREATE TABLE products at line 34
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares the table, physical columns, nullability, primary key, and foreign keys.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+columns:
+- knowledge_id: column.cold_chain_pharma_compliance.products.prodcode
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Products: Prodcode'
+  summary: text. Unique product code. PK
+  payload:
+    table_id: table.cold_chain_pharma_compliance.products
+    physical_name: prodcode
+    physical_type: text
+    business_type: text
+    column_role: identifier
+    nullable: false
+    business_definition: 'text. Unique product code. PK. Example: PH75271.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - prodcode
+    - products
+    - text
+    - identifier
+    aliases:
+    - Prodcode
+    related_knowledge_ids:
+    - relationship.cold_chain_pharma_compliance.productbatches_prodlink__products_prodcode
+    - table.cold_chain_pharma_compliance.products
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_products_prodcode_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:products; column:prodcode
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_products_prodcode_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Products|ProdCode'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.products.prodlabel
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Products: Prodlabel'
+  summary: text. Commercial product label
+  payload:
+    table_id: table.cold_chain_pharma_compliance.products
+    physical_name: prodlabel
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Commercial product label. Example: strategize value-added deliverables.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - prodlabel
+    - products
+    - text
+    aliases:
+    - Prodlabel
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.products
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_products_prodlabel_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:products; column:prodlabel
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_products_prodlabel_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Products|ProdLabel'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.products.prodcat
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Products: Prodcat'
+  summary: 'text. Product category or therapeutic class. Possible values: Biologics, Blood Products, Insulin, Vaccines.'
+  payload:
+    table_id: table.cold_chain_pharma_compliance.products
+    physical_name: prodcat
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Product category or therapeutic class. Possible values: Biologics, Blood Products,
+      Insulin, Vaccines.'
+    unit: null
+    default_aggregation: null
+    usage_warnings: []
+  discovery:
+    keywords:
+    - prodcat
+    - products
+    - text
+    aliases:
+    - Prodcat
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.products
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_products_prodcat_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:products; column:prodcat
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_products_prodcat_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Products|ProdCat'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
+- knowledge_id: column.cold_chain_pharma_compliance.products.maker
+  knowledge_type: column
+  database_id: cold_chain_pharma_compliance
+  title: 'Products: Maker'
+  summary: text. Manufacturer name. **NULL means manufacturer not specified.**
+  payload:
+    table_id: table.cold_chain_pharma_compliance.products
+    physical_name: maker
+    physical_type: text
+    business_type: text
+    column_role: text
+    nullable: true
+    business_definition: 'text. Manufacturer name. **NULL means manufacturer not specified.**. Example: York Ltd.'
+    unit: null
+    default_aggregation: null
+    usage_warnings:
+    - NULL means manufacturer not specified.
+  discovery:
+    keywords:
+    - maker
+    - products
+    - text
+    aliases:
+    - Maker
+    related_knowledge_ids:
+    - table.cold_chain_pharma_compliance.products
+  evidence_refs:
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_products_maker_schema
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.schema
+    locator: table:products; column:maker
+    snapshot_id: null
+    validation_id: null
+    result_summary: Declares physical name, type, nullability, and key participation.
+  - evidence_id: evidence.column_cold_chain_pharma_compliance_products_maker_column_meaning
+    evidence_type: declared
+    source_id: source.livesqlbench_base_full_v1.public.cold_chain_pharma_compliance.column_meaning
+    locator: 'JSON key: cold_chain_pharma_compliance|Products|Maker'
+    snapshot_id: null
+    validation_id: null
+    result_summary: Provides the public business meaning and, for JSONB columns, nested field meanings.
+  status: VALIDATED
+  revision: 1
+  updated_at: '2026-08-13T17:52:17+08:00'
