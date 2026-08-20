@@ -128,7 +128,7 @@ The current product interface supports DeepSeek V4 Pro and DeepSeek V4 Flash. Th
 
 Knowledge can be selected from a local directory or uploaded as a ZIP. Imports are bounded by file count and size, reject path traversal and symbolic links, and must pass the KnowledgeCard loader before activation.
 
-The bundled example package is derived from the public LiveSQLBench Base-Full v1 `cold_chain_pharma_compliance` materials. It is public benchmark data, not a private enterprise configuration.
+The bundled example package is derived from the public LiveSQLBench Base-Full v1 `cold_chain_pharma_compliance` materials. It is public benchmark data, not a private enterprise configuration. See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for source attribution and licensing.
 
 ### Runs
 
