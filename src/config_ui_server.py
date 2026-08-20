@@ -531,10 +531,25 @@ def _apply_payload(payload: ProfilePayload, password: str) -> None:
     else:
         updates["DATA_AGENT_DATABASE_PATH"] = str(_resolve_local_path(payload.duckdb_path))
     _update_env(SETTINGS_PATH, updates)
+    for key, value in updates.items():
+        os.environ[key] = str(value)
     password_key = _password_key(payload.backend)
     if password_key and password:
         _update_env(SECRETS_PATH, {password_key: password})
+        os.environ[password_key] = password
     _atomic_text(ACTIVE_PROFILE_PATH, payload.id + "\n")
+
+
+def _refresh_knowledge_runtime(root: Path) -> None:
+    from knowledge_runtime.current_knowledge import reload_knowledge
+
+    reload_knowledge(root)
+
+
+def _refresh_model_runtime() -> None:
+    from graph.nodes.main_agent_llm_node import refresh_model_runtime
+
+    refresh_model_runtime()
 
 
 @app.get("/api/state")
@@ -600,10 +615,12 @@ def save_model_settings(payload: ModelSettingsPayload):
     if api_key:
         _update_env(SECRETS_PATH, {"DEEPSEEK_API_KEY": api_key})
         os.environ["DEEPSEEK_API_KEY"] = api_key
+    with GRAPH_RUN_LOCK:
+        _refresh_model_runtime()
 
     return {
         "status": "success",
-        "message": "模型配置已保存。若 Agent 已执行过分析，请重启服务后使用新配置。",
+        "message": "模型配置已保存并立即生效。",
         "model": payload.model,
         "model_configured": True,
     }
@@ -709,11 +726,13 @@ def save_and_apply(payload: ProfilePayload):
         password_key = _password_key(payload.backend)
         if password_key and password:
             _update_env(_profile_secret_path(payload.id), {password_key: password})
-        _apply_payload(payload, password)
+        with GRAPH_RUN_LOCK:
+            _apply_payload(payload, password)
+            _refresh_knowledge_runtime(knowledge_root)
         return {
             "status": "success",
-            "message": "配置方案已保存并应用。请重启 Agent 服务后生效。",
-            "restart_required": True,
+            "message": "数据库与 Knowledge 配置已保存并立即生效。",
+            "restart_required": False,
         }
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"保存失败：{error}") from error
@@ -725,11 +744,18 @@ def apply_profile(reference: ProfileReference):
     payload = ProfilePayload(**profile, password="")
     try:
         password = _profile_password(payload.id, payload.backend)
-        _apply_payload(payload, password)
+        knowledge_root = _resolve_local_path(
+            payload.knowledge_root,
+            PROJECT_ROOT / "knowledge",
+        )
+        load_knowledge_cards(knowledge_root)
+        with GRAPH_RUN_LOCK:
+            _apply_payload(payload, password)
+            _refresh_knowledge_runtime(knowledge_root)
         return {
             "status": "success",
-            "message": f"已切换到“{payload.label}”。请重启 Agent 服务后生效。",
-            "restart_required": True,
+            "message": f"已切换到“{payload.label}”并立即生效。",
+            "restart_required": False,
         }
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"切换失败：{error}") from error

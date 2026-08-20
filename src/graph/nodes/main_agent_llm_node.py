@@ -7,11 +7,7 @@ from langchain_core.runnables import RunnableConfig
 
 from graph.text2sql_state import Text2SQLState
 from knowledge_runtime.catalog import browse_catalog
-from knowledge_runtime.current_knowledge import (
-    KNOWLEDGE_CATALOG,
-    KNOWLEDGE_NAVIGATION_GRAPH,
-    KNOWLEDGE_NAVIGATION_GRAPH_TEXT,
-)
+from knowledge_runtime import current_knowledge
 from knowledge_runtime.knowledge_view import (
     build_subglobal_knowledge_graph,
     render_subglobal_knowledge_graph,
@@ -19,15 +15,16 @@ from knowledge_runtime.knowledge_view import (
 )
 from model_clients.llm_api_clients import (
     ALLOWED_MAIN_MODELS,
-    DEFAULT_MAIN_MODEL,
-    MAIN_LLM,
+    clear_main_llm_cache,
+    configured_main_model,
     get_main_llm,
 )
 from prompts.prompt_loader import build_model_input
 from tools.tool_registry import TOOLS
 
 
-MAIN_LLM_WITH_TOOLS = MAIN_LLM.bind_tools(TOOLS)
+DEFAULT_MAIN_MODEL = configured_main_model()
+MAIN_LLM_WITH_TOOLS = get_main_llm(DEFAULT_MAIN_MODEL).bind_tools(TOOLS)
 
 
 @lru_cache(maxsize=max(1, len(ALLOWED_MAIN_MODELS) - 1))
@@ -41,6 +38,18 @@ def _model_with_tools(model_name: str):
     if model_name == DEFAULT_MAIN_MODEL:
         return MAIN_LLM_WITH_TOOLS
     return _alternate_model_with_tools(model_name)
+
+
+def refresh_model_runtime() -> None:
+    """Replace cached clients after an explicit settings save."""
+
+    global DEFAULT_MAIN_MODEL
+    global MAIN_LLM_WITH_TOOLS
+
+    clear_main_llm_cache()
+    _alternate_model_with_tools.cache_clear()
+    DEFAULT_MAIN_MODEL = configured_main_model()
+    MAIN_LLM_WITH_TOOLS = get_main_llm(DEFAULT_MAIN_MODEL).bind_tools(TOOLS)
 
 
 def _requested_model(config: RunnableConfig | None) -> str:
@@ -75,17 +84,17 @@ def _invalid_tool_json_fallback(reply: AIMessage) -> AIMessage | None:
 def main_agent_llm_node(state: Text2SQLState, config: RunnableConfig | None = None):
     """Inject the selected Knowledge view, then request tools or answer."""
 
-    runtime_directory = browse_catalog(KNOWLEDGE_CATALOG, "/")
+    runtime_directory = browse_catalog(current_knowledge.KNOWLEDGE_CATALOG, "/")
     knowledge_view_mode = select_knowledge_view(state)
     subglobal_graph = build_subglobal_knowledge_graph(
         state,
-        KNOWLEDGE_NAVIGATION_GRAPH,
+        current_knowledge.KNOWLEDGE_NAVIGATION_GRAPH,
     )
     subglobal_graph_text = render_subglobal_knowledge_graph(subglobal_graph)
     model_input = build_model_input(
         state["messages"],
         runtime_directory=runtime_directory,
-        runtime_navigation_graph=KNOWLEDGE_NAVIGATION_GRAPH_TEXT,
+        runtime_navigation_graph=current_knowledge.KNOWLEDGE_NAVIGATION_GRAPH_TEXT,
         knowledge_view_mode=knowledge_view_mode,
         runtime_subglobal_graph=subglobal_graph_text,
     )
@@ -96,7 +105,9 @@ def main_agent_llm_node(state: Text2SQLState, config: RunnableConfig | None = No
     global_graph_included = knowledge_view_mode in {"GLOBAL", "REGLOBAL"}
     subglobal_graph_included = knowledge_view_mode in {"SUBGLOBAL", "REGLOBAL"}
     navigation_context_chars = (
-        len(KNOWLEDGE_NAVIGATION_GRAPH_TEXT) if global_graph_included else 0
+        len(current_knowledge.KNOWLEDGE_NAVIGATION_GRAPH_TEXT)
+        if global_graph_included
+        else 0
     ) + (len(subglobal_graph_text) if subglobal_graph_included else 0)
     knowledge_view_trace = {
         "knowledge_view_mode": knowledge_view_mode,

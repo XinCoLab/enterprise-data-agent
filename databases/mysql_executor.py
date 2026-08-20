@@ -8,15 +8,6 @@ from decimal import Decimal
 
 import pymysql
 
-from config.project_paths import (
-    MYSQL_DATABASE,
-    MYSQL_HOST,
-    MYSQL_PASSWORD,
-    MYSQL_PORT,
-    MYSQL_USER,
-)
-
-
 FORBIDDEN_SQL = re.compile(
     r"\b(insert|update|delete|replace|merge|create|drop|alter|truncate|"
     r"rename|load|grant|revoke|call|do|handler|set|reset|prepare|execute|"
@@ -76,12 +67,13 @@ def validate_readonly_sql(sql: str) -> str:
         raise ValueError("Locking reads are not allowed.")
     if "@" in statement:
         raise ValueError("MySQL user and system variables are not allowed.")
+    configured_database = os.getenv("DATA_AGENT_MYSQL_DATABASE", "").strip().lower()
     for table_reference in TABLE_REFERENCE.findall(statement):
         parts = [
             part.strip().strip("`").lower()
             for part in re.split(r"\s*\.\s*", table_reference)
         ]
-        if len(parts) == 2 and parts[0] != MYSQL_DATABASE.lower():
+        if len(parts) == 2 and parts[0] != configured_database:
             raise ValueError(
                 "SQL references a database outside the configured data scope."
             )
@@ -97,16 +89,20 @@ def _json_value(value):
 
 
 def _connect():
-    if not MYSQL_HOST or not MYSQL_PORT or not MYSQL_USER or not MYSQL_DATABASE:
+    host = os.getenv("DATA_AGENT_MYSQL_HOST", "127.0.0.1").strip()
+    port = int(os.getenv("DATA_AGENT_MYSQL_PORT", "3306"))
+    user = os.getenv("DATA_AGENT_MYSQL_USER", "").strip()
+    database = os.getenv("DATA_AGENT_MYSQL_DATABASE", "").strip()
+    if not host or not port or not user or not database:
         raise RuntimeError(
             "MySQL host, port, user, and database are required."
         )
     return pymysql.connect(
-        host=MYSQL_HOST,
-        port=MYSQL_PORT,
-        user=MYSQL_USER,
-        password=MYSQL_PASSWORD,
-        database=MYSQL_DATABASE,
+        host=host,
+        port=port,
+        user=user,
+        password=os.getenv("DATA_AGENT_MYSQL_PASSWORD", ""),
+        database=database,
         charset="utf8mb4",
         connect_timeout=5,
         read_timeout=int(SQL_QUERY_TIMEOUT_SECONDS) + 2,

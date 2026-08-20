@@ -86,7 +86,7 @@ th { background:#f7f8fa; color:#596476; font-weight:600; }
 .profile-item.active { border-color:#cbdafb; background:#f3f7ff; }
 .profile-item strong { font-size:13px; }
 .profile-item span { color:var(--muted); font-size:11px; }
-.restart-note { color:var(--amber); font-size:11px; }
+.apply-note { color:var(--green); font-size:11px; }
 .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .form-grid label,.settings-panel>label { display:grid; gap:6px; color:#465166; font-size:12px; font-weight:600; }
 .form-grid small,.settings-panel>label small { color:var(--muted); font-size:11px; font-weight:400; }

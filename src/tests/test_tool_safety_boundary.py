@@ -219,10 +219,17 @@ class ToolSafetyBoundaryTest(unittest.TestCase):
 
     def test_sql_timeout_has_a_stable_error_contract(self):
         sql_tool_module = importlib.import_module("tools.execute_readonly_sql")
+
+        class TimeoutErrorForTest(Exception):
+            pass
+
+        def fail_with_timeout(_sql):
+            raise TimeoutErrorForTest("too slow")
+
         with patch.object(
             sql_tool_module,
-            "execute_readonly_sql_query",
-            side_effect=sql_tool_module.SqlTimeoutError("too slow"),
+            "_configured_executor",
+            return_value=(fail_with_timeout, ValueError, TimeoutErrorForTest),
         ):
             result = json.loads(
                 sql_tool_module.execute_readonly_sql.invoke({"sql": "SELECT 1"})
@@ -231,6 +238,24 @@ class ToolSafetyBoundaryTest(unittest.TestCase):
         self.assertEqual(result["status"], "rejected")
         self.assertEqual(result["error_type"], "TIMEOUT")
         self.assertFalse(result["retryable"])
+
+    def test_sql_safety_uses_the_current_database_backend(self):
+        call = StandardToolCall(
+            tool_name="execute_readonly_sql",
+            arguments={"sql": "SELECT * FROM another_database.records"},
+            tool_call_id="sql-backend",
+        )
+        with patch.dict(
+            "os.environ",
+            {
+                "DATA_AGENT_DATABASE_BACKEND": "mysql",
+                "DATA_AGENT_MYSQL_DATABASE": "configured_database",
+            },
+        ):
+            decision = check_tool_calls([call], registered_tools=TOOLS_BY_NAME)[0]
+
+        self.assertEqual(decision.decision, DENY)
+        self.assertEqual(decision.error_code, POLICY_DENIED)
 
     def test_invalid_tool_json_becomes_a_terminal_non_tool_response(self):
         malformed = AIMessage(

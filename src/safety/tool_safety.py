@@ -1,19 +1,11 @@
 """Framework-independent safety decisions for standard tool calls."""
 
 from dataclasses import asdict, dataclass
+from importlib import import_module
+import os
 import re
 from typing import Any, Mapping, Sequence
 
-from config.project_paths import DATABASE_BACKEND
-
-if DATABASE_BACKEND == "postgresql":
-    from databases.postgresql_executor import validate_readonly_sql
-elif DATABASE_BACKEND == "mysql":
-    from databases.mysql_executor import validate_readonly_sql
-elif DATABASE_BACKEND == "duckdb":
-    from databases.duckdb_executor import validate_readonly_sql
-else:
-    raise RuntimeError(f"Unsupported database backend: {DATABASE_BACKEND!r}")
 ALLOW = "ALLOW"
 DENY = "DENY"
 
@@ -31,6 +23,14 @@ _EXTERNAL_SQL_SOURCE = re.compile(
     r"\bfrom\s+['\"])",
     re.IGNORECASE,
 )
+
+
+def _validate_configured_database_sql(sql: str) -> None:
+    backend = os.getenv("DATA_AGENT_DATABASE_BACKEND", "postgresql").strip().lower()
+    if backend not in {"postgresql", "mysql", "duckdb"}:
+        raise ValueError(f"Unsupported database backend: {backend!r}")
+    module = import_module(f"databases.{backend}_executor")
+    module.validate_readonly_sql(sql)
 
 
 @dataclass(frozen=True)
@@ -203,7 +203,7 @@ def _check_execute_readonly_sql(
     if len(sql) > MAX_SQL_LENGTH:
         return "SQL exceeds the allowed statement length."
     try:
-        validate_readonly_sql(sql)
+        _validate_configured_database_sql(sql)
     except ValueError as error:
         return f"SQL is outside the read-only database boundary: {error}"
     if _EXTERNAL_SQL_SOURCE.search(sql):

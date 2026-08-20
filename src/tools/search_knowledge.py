@@ -6,7 +6,7 @@ from typing import Annotated
 from langchain_core.tools import tool
 
 from knowledge_runtime.catalog import search_knowledge_cards
-from knowledge_runtime.current_knowledge import KNOWLEDGE_CARDS
+from knowledge_runtime import current_knowledge
 
 
 @tool("search_knowledge")
@@ -37,7 +37,7 @@ def search_knowledge(
     result = {
         "query": query,
         "results": search_knowledge_cards(
-            cards=KNOWLEDGE_CARDS,
+            cards=current_knowledge.KNOWLEDGE_CARDS,
             query=query,
             knowledge_type=knowledge_type,
         ),

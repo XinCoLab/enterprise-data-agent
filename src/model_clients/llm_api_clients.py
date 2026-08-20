@@ -14,11 +14,18 @@ load_dotenv(BACKEND_ENV_PATH)
 
 
 ALLOWED_MAIN_MODELS = ("deepseek-v4-pro", "deepseek-v4-flash")
-DEFAULT_MAIN_MODEL = os.getenv("DATA_AGENT_MODEL", "deepseek-v4-pro").strip()
-if DEFAULT_MAIN_MODEL not in ALLOWED_MAIN_MODELS:
-    raise RuntimeError(
-        "DATA_AGENT_MODEL must be deepseek-v4-pro or deepseek-v4-flash."
-    )
+
+
+def configured_main_model() -> str:
+    model_name = os.getenv("DATA_AGENT_MODEL", "deepseek-v4-pro").strip()
+    if model_name not in ALLOWED_MAIN_MODELS:
+        raise RuntimeError(
+            "DATA_AGENT_MODEL must be deepseek-v4-pro or deepseek-v4-flash."
+        )
+    return model_name
+
+
+DEFAULT_MAIN_MODEL = configured_main_model()
 
 
 class DeepSeekThinkingChatModel(ChatDeepSeek):
@@ -62,6 +69,12 @@ def get_main_llm(model_name: str = DEFAULT_MAIN_MODEL) -> DeepSeekThinkingChatMo
         temperature=0,
         stream_usage=True,
     )
+
+
+def clear_main_llm_cache() -> None:
+    """Discard clients after an explicit model credential update."""
+
+    get_main_llm.cache_clear()
 
 
 # Compatibility alias for existing tests and non-product runners. The default

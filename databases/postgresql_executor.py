@@ -1,21 +1,13 @@
 """Read-only PostgreSQL execution adapter for the configured database."""
 
 import json
+import os
 import re
 from datetime import date, datetime
 from decimal import Decimal
 
 import psycopg2
 from psycopg2.errors import QueryCanceled
-
-from config.project_paths import (
-    POSTGRES_DATABASE,
-    POSTGRES_HOST,
-    POSTGRES_PASSWORD,
-    POSTGRES_PORT,
-    POSTGRES_USER,
-)
-
 
 FORBIDDEN_SQL = re.compile(
     r"\b(insert|update|delete|merge|create|drop|alter|truncate|copy|grant|"
@@ -66,14 +58,15 @@ def _json_value(value):
 
 
 def _connect():
-    if not POSTGRES_DATABASE:
+    database = os.getenv("DATA_AGENT_POSTGRES_DATABASE", "").strip()
+    if not database:
         raise RuntimeError("DATA_AGENT_POSTGRES_DATABASE is required.")
     return psycopg2.connect(
-        host=POSTGRES_HOST,
-        port=POSTGRES_PORT,
-        user=POSTGRES_USER,
-        password=POSTGRES_PASSWORD,
-        dbname=POSTGRES_DATABASE,
+        host=os.getenv("DATA_AGENT_POSTGRES_HOST", "127.0.0.1").strip(),
+        port=int(os.getenv("DATA_AGENT_POSTGRES_PORT", "5432")),
+        user=os.getenv("DATA_AGENT_POSTGRES_USER", "").strip(),
+        password=os.getenv("DATA_AGENT_POSTGRES_PASSWORD", ""),
+        dbname=database,
         connect_timeout=5,
         application_name="enterprise-data-agent",
     )

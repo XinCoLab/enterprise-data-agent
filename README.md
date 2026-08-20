@@ -64,11 +64,11 @@ The configuration page supports:
 
 It tests the connection with a read-only transaction and stores passwords only in ignored local runtime files. When DataAgent runs in Docker and the database runs on the host machine, use `host.docker.internal` instead of `127.0.0.1`.
 
-Database and Knowledge changes take effect after a service restart. This keeps the proven Agent Runtime import path unchanged rather than introducing a second hot-reload system.
+Database and Knowledge changes take effect immediately after explicit validation. The save request swaps the active in-memory configuration under the existing run lock; it does not use a filesystem watcher or LangGraph hot reload.
 
 ### Model settings
 
-Select DeepSeek V4 Pro or DeepSeek V4 Flash and save the API key directly in the Web page. The backend stores the key only in the ignored local secrets file; the API exposes only whether a key is configured.
+Select DeepSeek V4 Pro or DeepSeek V4 Flash and save the API key directly in the Web page. The backend stores the key only in the ignored local secrets file; the API exposes only whether a key is configured. Model and credential changes take effect immediately without restarting the service.
 
 ### Knowledge
 

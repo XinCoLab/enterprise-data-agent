@@ -12,6 +12,7 @@ from knowledge_runtime.catalog import (
     read_knowledge_cards,
     search_knowledge_cards,
 )
+from knowledge_runtime import current_knowledge
 from tools.browse_knowledge import browse_knowledge
 from tools.read_knowledge import read_knowledge
 from tools.search_knowledge import search_knowledge
@@ -167,6 +168,35 @@ class KnowledgeToolSchemaTest(unittest.TestCase):
         )
         self.assertTrue(search_result["results"])
         self.assertEqual(search_result["results"][0]["knowledge_id"], selected_id)
+
+    def test_explicit_reload_is_visible_to_existing_tool_objects(self):
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+            (root / "records.yaml").write_text(
+                """
+knowledge_id: table.demo.runtime_records
+knowledge_type: table
+title: Runtime Records
+summary: One row per runtime record.
+payload:
+  physical_name: runtime_records
+""".strip()
+                + "\n",
+                encoding="utf-8",
+            )
+            try:
+                current_knowledge.reload_knowledge(root)
+                result = json.loads(
+                    search_knowledge.invoke(
+                        {"query": "Runtime Records", "knowledge_type": "table"}
+                    )
+                )
+                self.assertEqual(
+                    result["results"][0]["knowledge_id"],
+                    "table.demo.runtime_records",
+                )
+            finally:
+                current_knowledge.reload_knowledge(BUNDLED_DEMO_ROOT)
 
 
 if __name__ == "__main__":

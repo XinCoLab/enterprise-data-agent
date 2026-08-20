@@ -1,4 +1,5 @@
 import io
+import os
 from pathlib import Path
 import zipfile
 
@@ -50,7 +51,9 @@ def test_model_settings_store_key_without_returning_it(tmp_path: Path, monkeypat
     secrets_path = tmp_path / "secrets.env"
     monkeypatch.setattr(server, "SETTINGS_PATH", settings_path)
     monkeypatch.setattr(server, "SECRETS_PATH", secrets_path)
+    monkeypatch.setattr(server, "_refresh_model_runtime", lambda: None)
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.setenv("DATA_AGENT_MODEL", "deepseek-v4-pro")
     secret = "test-secret-not-for-output"
 
     response = client.post(
@@ -65,6 +68,44 @@ def test_model_settings_store_key_without_returning_it(tmp_path: Path, monkeypat
         encoding="utf-8"
     )
     assert f"DEEPSEEK_API_KEY={secret}" in secrets_path.read_text(encoding="utf-8")
+
+
+def test_apply_payload_updates_database_environment_immediately(
+    tmp_path: Path,
+    monkeypatch,
+):
+    monkeypatch.setattr(server, "SETTINGS_PATH", tmp_path / "settings.env")
+    monkeypatch.setattr(server, "SECRETS_PATH", tmp_path / "secrets.env")
+    monkeypatch.setattr(server, "ACTIVE_PROFILE_PATH", tmp_path / ".active_profile")
+    for key in (
+        "DATA_AGENT_DATABASE_BACKEND",
+        "DATA_AGENT_POSTGRES_HOST",
+        "DATA_AGENT_POSTGRES_PORT",
+        "DATA_AGENT_POSTGRES_USER",
+        "DATA_AGENT_POSTGRES_PASSWORD",
+        "DATA_AGENT_POSTGRES_DATABASE",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    payload = server.ProfilePayload(
+        id="test-profile",
+        label="Test",
+        backend="postgresql",
+        host="db.internal",
+        port=5433,
+        username="readonly",
+        database="analytics",
+        password="",
+        knowledge_root=str(server.PROJECT_ROOT / "knowledge"),
+    )
+
+    server._apply_payload(payload, "local-password")
+
+    assert os.environ["DATA_AGENT_DATABASE_BACKEND"] == "postgresql"
+    assert os.environ["DATA_AGENT_POSTGRES_HOST"] == "db.internal"
+    assert os.environ["DATA_AGENT_POSTGRES_PORT"] == "5433"
+    assert os.environ["DATA_AGENT_POSTGRES_USER"] == "readonly"
+    assert os.environ["DATA_AGENT_POSTGRES_PASSWORD"] == "local-password"
+    assert os.environ["DATA_AGENT_POSTGRES_DATABASE"] == "analytics"
 
 
 def test_turn_result_links_sql_to_its_real_tool_result():

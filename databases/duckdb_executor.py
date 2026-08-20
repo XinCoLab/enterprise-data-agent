@@ -11,9 +11,10 @@ from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from datetime import date, datetime
 from decimal import Decimal
 from math import prod
+from pathlib import Path
 
 import duckdb
-from config.project_paths import DATABASE_PATH
+from config.project_paths import PROJECT_ROOT
 
 
 FORBIDDEN_SQL = re.compile(
@@ -33,6 +34,14 @@ SQL_MAX_PLAN_NODES = int(os.getenv("SQL_MAX_PLAN_NODES", "80"))
 # function, the database connection itself cannot read files, URLs, object
 # storage, or external databases.
 DUCKDB_SAFE_CONNECTION_CONFIG = {"enable_external_access": "false"}
+
+
+def _database_path() -> Path:
+    raw_path = os.getenv("DATA_AGENT_DATABASE_PATH", "").strip()
+    path = Path(raw_path).expanduser() if raw_path else PROJECT_ROOT / "databases" / "data_agent.duckdb"
+    if not path.is_absolute():
+        path = PROJECT_ROOT / path
+    return path.resolve()
 
 
 class SqlResourceLimitError(ValueError):
@@ -132,7 +141,7 @@ def validate_sql_resource_budget(sql: str) -> str:
 
     readonly_sql = validate_readonly_sql(sql)
     with duckdb.connect(
-        str(DATABASE_PATH),
+        str(_database_path()),
         read_only=True,
         config=DUCKDB_SAFE_CONNECTION_CONFIG,
     ) as connection:
@@ -160,7 +169,7 @@ def _execute_query_with_timeout(sql: str) -> tuple[list[str], list[tuple]]:
     """在独立执行线程中查询；超时后由主线程中断 DuckDB。"""
 
     connection = duckdb.connect(
-        str(DATABASE_PATH),
+        str(_database_path()),
         read_only=True,
         config=DUCKDB_SAFE_CONNECTION_CONFIG,
     )

@@ -6,7 +6,7 @@ from typing import Annotated
 from langchain_core.tools import tool
 
 from knowledge_runtime.catalog import browse_catalog
-from knowledge_runtime.current_knowledge import KNOWLEDGE_CATALOG
+from knowledge_runtime import current_knowledge
 
 
 @tool("browse_knowledge")
@@ -30,7 +30,7 @@ def browse_knowledge(
 
     try:
         result = browse_catalog(
-            catalog=KNOWLEDGE_CATALOG,
+            catalog=current_knowledge.KNOWLEDGE_CATALOG,
             path=directory_path,
         )
     except KeyError:

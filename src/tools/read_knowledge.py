@@ -6,7 +6,7 @@ from typing import Annotated
 from langchain_core.tools import tool
 
 from knowledge_runtime.catalog import read_knowledge_cards
-from knowledge_runtime.current_knowledge import KNOWLEDGE_CARDS
+from knowledge_runtime import current_knowledge
 
 
 @tool("read_knowledge")
@@ -28,7 +28,7 @@ def read_knowledge(
     try:
         result = {
             "cards": read_knowledge_cards(
-                cards=KNOWLEDGE_CARDS,
+                cards=current_knowledge.KNOWLEDGE_CARDS,
                 knowledge_ids=knowledge_ids,
             )
         }

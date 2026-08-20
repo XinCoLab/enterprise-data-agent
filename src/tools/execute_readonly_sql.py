@@ -1,32 +1,25 @@
 """Agent-facing wrapper around the configured read-only SQL executor."""
 
+from importlib import import_module
 import json
+import os
 from typing import Annotated
 
 from langchain_core.tools import tool
 
-from config.project_paths import DATABASE_BACKEND
+ALLOWED_DATABASE_BACKENDS = {"postgresql", "mysql", "duckdb"}
 
-if DATABASE_BACKEND == "postgresql":
-    from databases.postgresql_executor import (
-        SqlResourceLimitError,
-        SqlTimeoutError,
-        execute_readonly_sql_query,
+
+def _configured_executor():
+    backend = os.getenv("DATA_AGENT_DATABASE_BACKEND", "postgresql").strip().lower()
+    if backend not in ALLOWED_DATABASE_BACKENDS:
+        raise RuntimeError(f"Unsupported database backend: {backend!r}")
+    module = import_module(f"databases.{backend}_executor")
+    return (
+        module.execute_readonly_sql_query,
+        module.SqlResourceLimitError,
+        module.SqlTimeoutError,
     )
-elif DATABASE_BACKEND == "mysql":
-    from databases.mysql_executor import (
-        SqlResourceLimitError,
-        SqlTimeoutError,
-        execute_readonly_sql_query,
-    )
-elif DATABASE_BACKEND == "duckdb":
-    from databases.duckdb_executor import (
-        SqlResourceLimitError,
-        SqlTimeoutError,
-        execute_readonly_sql_query,
-    )
-else:
-    raise RuntimeError(f"Unsupported database backend: {DATABASE_BACKEND!r}")
 
 
 @tool("execute_readonly_sql")
@@ -47,9 +40,10 @@ def execute_readonly_sql(
     required before query results may be presented to the user.
     """
 
+    executor, resource_limit_error, timeout_error = _configured_executor()
     try:
-        return execute_readonly_sql_query(sql)
-    except SqlTimeoutError as error:
+        return executor(sql)
+    except timeout_error as error:
         return json.dumps(
             {
                 "status": "rejected",
@@ -61,7 +55,7 @@ def execute_readonly_sql(
             ensure_ascii=False,
             indent=2,
         )
-    except SqlResourceLimitError as error:
+    except resource_limit_error as error:
         return json.dumps(
             {
                 "status": "rejected",
