@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter, deque
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from io import BytesIO
 import json
@@ -15,12 +16,13 @@ import threading
 from time import perf_counter
 from uuid import uuid4
 import webbrowser
-from typing import Literal
+from typing import Any, Iterator, Literal
 from urllib.parse import unquote
 from zipfile import BadZipFile, ZipFile
 
 import duckdb
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 import psycopg2
 import pymysql
@@ -42,10 +44,13 @@ MAX_KNOWLEDGE_EXTRACTED_BYTES = 100 * 1024 * 1024
 MAX_KNOWLEDGE_FILES = 2000
 RECENT_RUNS: deque[dict] = deque(maxlen=50)
 GRAPH_RUN_LOCK = threading.RLock()
+ACTIVE_RUNS_LOCK = threading.Lock()
+ACTIVE_RUNS: dict[str, ActiveRun] = {}
 
 PROFILE_ID = re.compile(r"^[a-z0-9][a-z0-9-]{0,63}$")
 ENV_ASSIGNMENT = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=")
 THREAD_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+RUN_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 
 
 class ProfilePayload(BaseModel):
@@ -74,6 +79,15 @@ class ChatRequest(BaseModel):
     question: str = Field(min_length=1, max_length=20000)
     thread_id: str = Field(default="", max_length=128)
     model: Literal["deepseek-v4-pro", "deepseek-v4-flash"] = "deepseek-v4-pro"
+
+
+@dataclass
+class ActiveRun:
+    """Cooperative cancellation state for one Web Agent request."""
+
+    run_id: str
+    thread_id: str
+    cancel_requested: threading.Event = field(default_factory=threading.Event)
 
 
 class ModelSettingsPayload(BaseModel):
@@ -246,20 +260,375 @@ def _turn_result(messages: list) -> dict:
     }
 
 
-def _run_agent(request: ChatRequest) -> dict:
-    from langchain_core.messages import HumanMessage
-    from langgraph.errors import GraphRecursionError
-    from graph.data_agent_graph import graph
+def _empty_turn_result() -> dict:
+    return {
+        "answer": "",
+        "tool_counts": {},
+        "sql_queries": [],
+        "result_preview": None,
+        "knowledge_view": None,
+    }
 
+
+def _agent_config(request: ChatRequest) -> tuple[str, dict]:
     thread_id = request.thread_id.strip() or str(uuid4())
     if not THREAD_ID.fullmatch(thread_id):
         raise HTTPException(status_code=400, detail="thread_id 格式不合法。")
     settings = _read_env(SETTINGS_PATH)
     recursion_limit = int(settings.get("LANGGRAPH_DEFAULT_RECURSION_LIMIT", "35"))
-    config = {
+    return thread_id, {
         "configurable": {"thread_id": thread_id, "model": request.model},
         "recursion_limit": recursion_limit,
     }
+
+
+def _record_run(
+    *,
+    run_id: str,
+    thread_id: str,
+    model: str,
+    status: str,
+    latency_ms: int,
+    details: dict,
+    created_at: str | None = None,
+) -> None:
+    RECENT_RUNS.appendleft(
+        {
+            "run_id": run_id,
+            "created_at": created_at or datetime.now(timezone.utc).isoformat(),
+            "thread_id": thread_id,
+            "model": model,
+            "status": status,
+            "latency_ms": latency_ms,
+            "tool_counts": details["tool_counts"],
+            "sql_count": len(details["sql_queries"]),
+        }
+    )
+
+
+def _run_response(
+    *,
+    run_id: str,
+    thread_id: str,
+    model: str,
+    status: str,
+    latency_ms: int,
+    details: dict,
+) -> dict:
+    return {
+        "run_id": run_id,
+        "status": status,
+        "thread_id": thread_id,
+        "model": model,
+        "latency_ms": latency_ms,
+        **details,
+    }
+
+
+def _stream_line(payload: dict) -> str:
+    return json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n"
+
+
+_NODE_ACTIVITY = {
+    "Main Agent LLM": "正在分析现有信息并决定下一步…",
+    "Tool Safety": "正在校验工具请求…",
+    "Tool Execution": "正在执行已通过校验的工具…",
+}
+
+_TOOL_ACTIVITY = {
+    "browse_knowledge": "正在浏览 Knowledge 目录…",
+    "search_knowledge": "正在搜索相关 Knowledge…",
+    "read_knowledge": "正在读取 KnowledgeCard…",
+    "execute_readonly_sql": "正在执行只读 SQL…",
+}
+
+
+def _task_progress_event(part: dict) -> dict | None:
+    data = part.get("data")
+    if not isinstance(data, dict) or "input" not in data:
+        return None
+    node_name = str(data.get("name", ""))
+    message = _NODE_ACTIVITY.get(node_name)
+    if not message:
+        return None
+    return {"type": "progress", "stage": node_name, "message": message}
+
+
+def _tool_result_progress(message: Any) -> dict | None:
+    from langchain_core.messages import ToolMessage
+
+    if not isinstance(message, ToolMessage):
+        return None
+    tool_name = str(message.name or "")
+    if tool_name != "execute_readonly_sql":
+        return {
+            "type": "progress",
+            "stage": "Tool Execution",
+            "tool": tool_name,
+            "message": f"{tool_name} 已返回结果。",
+        }
+    try:
+        payload = json.loads(str(message.content))
+    except (TypeError, json.JSONDecodeError):
+        payload = {}
+    returned_rows = payload.get("returned_rows")
+    if isinstance(returned_rows, int):
+        suffix = "，结果已截断" if payload.get("truncated") else ""
+        text = f"SQL 执行完成，返回 {returned_rows} 行{suffix}。"
+    elif payload.get("status") in {"error", "denied"}:
+        text = "SQL 未成功执行，Agent 将根据错误信息调整。"
+    else:
+        text = "SQL 执行已返回。"
+    return {
+        "type": "progress",
+        "stage": "Tool Execution",
+        "tool": tool_name,
+        "message": text,
+    }
+
+
+def _visible_ai_content(content: Any) -> str:
+    """Return only the assistant content that is part of the public message."""
+
+    if isinstance(content, str):
+        return content.strip()
+    if not isinstance(content, list):
+        return ""
+    text_parts: list[str] = []
+    for block in content:
+        if isinstance(block, str):
+            text_parts.append(block)
+        elif isinstance(block, dict) and isinstance(block.get("text"), str):
+            text_parts.append(block["text"])
+    return "\n".join(part.strip() for part in text_parts if part.strip())
+
+
+def _llm_round_event(part: dict, round_number: int) -> dict | None:
+    from langchain_core.messages import AIMessage
+
+    data = part.get("data")
+    if not isinstance(data, dict):
+        return None
+    main_update = data.get("Main Agent LLM")
+    if not isinstance(main_update, dict):
+        return None
+    messages = main_update.get("messages", [])
+    reply = messages[-1] if messages else None
+    if not isinstance(reply, AIMessage):
+        return None
+
+    tool_calls = []
+    for call in reply.tool_calls:
+        arguments = call.get("args", {})
+        if not isinstance(arguments, dict):
+            arguments = {"value": str(arguments)}
+        tool_calls.append(
+            {
+                "name": str(call.get("name", "")),
+                "arguments": arguments,
+            }
+        )
+
+    return {
+        "type": "round",
+        "stage": "Main Agent LLM",
+        "round": round_number,
+        "content": _visible_ai_content(reply.content),
+        "tool_calls": tool_calls,
+        "message": (
+            "本轮模型输出已生成，正在执行工具。"
+            if tool_calls
+            else "本轮模型已生成最终回答。"
+        ),
+    }
+
+
+def _update_progress_events(part: dict) -> list[dict]:
+    data = part.get("data")
+    if not isinstance(data, dict):
+        return []
+    events: list[dict] = []
+    execution_update = data.get("Tool Execution")
+    if isinstance(execution_update, dict):
+        for message in execution_update.get("messages", []):
+            event = _tool_result_progress(message)
+            if event is not None:
+                events.append(event)
+    return events
+
+
+def _safe_cancel_boundary(part: dict) -> bool:
+    """Stop only after a complete Tool round or a terminal Assistant reply."""
+
+    from langchain_core.messages import AIMessage
+
+    data = part.get("data")
+    if not isinstance(data, dict):
+        return False
+    if "Tool Execution" in data:
+        return True
+    main_update = data.get("Main Agent LLM")
+    if not isinstance(main_update, dict):
+        return False
+    messages = main_update.get("messages", [])
+    reply = messages[-1] if messages else None
+    return isinstance(reply, AIMessage) and not reply.tool_calls
+
+
+def _agent_graph():
+    from graph.data_agent_graph import graph
+
+    return graph
+
+
+def _stream_agent(request: ChatRequest) -> Iterator[str]:
+    from langchain_core.messages import HumanMessage
+    from langgraph.errors import GraphRecursionError
+
+    thread_id, config = _agent_config(request)
+    run_id = str(uuid4())
+    created_at = datetime.now(timezone.utc).isoformat()
+    control = ActiveRun(run_id=run_id, thread_id=thread_id)
+    with ACTIVE_RUNS_LOCK:
+        ACTIVE_RUNS[run_id] = control
+
+    started = perf_counter()
+    details = _empty_turn_result()
+    status = "error"
+    recorded = False
+    graph = _agent_graph()
+    stream = None
+    try:
+        yield _stream_line(
+            {
+                "type": "started",
+                "run_id": run_id,
+                "thread_id": thread_id,
+                "model": request.model,
+            }
+        )
+        if control.cancel_requested.is_set():
+            status = "canceled"
+        else:
+            try:
+                with GRAPH_RUN_LOCK:
+                    if control.cancel_requested.is_set():
+                        status = "canceled"
+                    else:
+                        stream = graph.stream(
+                            {
+                                "messages": [
+                                    HumanMessage(content=request.question.strip())
+                                ]
+                            },
+                            config=config,
+                            stream_mode=["tasks", "updates"],
+                            version="v2",
+                        )
+                        canceled_at_safe_boundary = False
+                        llm_round = 0
+                        for part in stream:
+                            if part.get("type") == "tasks":
+                                event = _task_progress_event(part)
+                                if event is not None:
+                                    event["run_id"] = run_id
+                                    yield _stream_line(event)
+                            elif part.get("type") == "updates":
+                                round_event = _llm_round_event(part, llm_round + 1)
+                                if round_event is not None:
+                                    llm_round += 1
+                                    round_event["run_id"] = run_id
+                                    yield _stream_line(round_event)
+                                for event in _update_progress_events(part):
+                                    event["run_id"] = run_id
+                                    yield _stream_line(event)
+                                if (
+                                    control.cancel_requested.is_set()
+                                    and _safe_cancel_boundary(part)
+                                ):
+                                    canceled_at_safe_boundary = True
+                                    break
+                        snapshot = graph.get_state(config)
+                        details = _turn_result(
+                            list(snapshot.values.get("messages", []))
+                        )
+                        status = (
+                            "canceled" if canceled_at_safe_boundary else "success"
+                        )
+            except GraphRecursionError:
+                status = "incomplete"
+                with GRAPH_RUN_LOCK:
+                    snapshot = graph.get_state(config)
+                details = _turn_result(list(snapshot.values.get("messages", [])))
+
+        if status == "canceled":
+            details["answer"] = (
+                "本次分析已在消息完整的安全位置停止。已完成的 Knowledge "
+                "与 SQL 结果仍保留在当前会话中。"
+            )
+        elif status == "incomplete":
+            details["answer"] = (
+                "本次分析在当前步骤预算内没有完成。当前执行状态已保留，"
+                "请不要直接追加新问题；后续需要选择继续执行或开启新会话。"
+            )
+
+        elapsed_ms = round((perf_counter() - started) * 1000)
+        _record_run(
+            run_id=run_id,
+            thread_id=thread_id,
+            model=request.model,
+            status=status,
+            latency_ms=elapsed_ms,
+            details=details,
+            created_at=created_at,
+        )
+        recorded = True
+        response = _run_response(
+            run_id=run_id,
+            thread_id=thread_id,
+            model=request.model,
+            status=status,
+            latency_ms=elapsed_ms,
+            details=details,
+        )
+        yield _stream_line({"type": "final", "run_id": run_id, "response": response})
+    except GeneratorExit:
+        control.cancel_requested.set()
+        raise
+    except Exception as error:
+        elapsed_ms = round((perf_counter() - started) * 1000)
+        if not recorded:
+            _record_run(
+                run_id=run_id,
+                thread_id=thread_id,
+                model=request.model,
+                status="error",
+                latency_ms=elapsed_ms,
+                details=details,
+                created_at=created_at,
+            )
+            recorded = True
+        yield _stream_line(
+            {
+                "type": "error",
+                "run_id": run_id,
+                "message": f"分析执行失败：{_safe_error_text(error)}",
+            }
+        )
+    finally:
+        if stream is not None and hasattr(stream, "close"):
+            stream.close()
+        with ACTIVE_RUNS_LOCK:
+            ACTIVE_RUNS.pop(run_id, None)
+
+
+def _run_agent(request: ChatRequest) -> dict:
+    from langchain_core.messages import HumanMessage
+    from langgraph.errors import GraphRecursionError
+    from graph.data_agent_graph import graph
+
+    thread_id, config = _agent_config(request)
+    run_id = str(uuid4())
     started = perf_counter()
     status = "success"
     try:
@@ -279,24 +648,22 @@ def _run_agent(request: ChatRequest) -> dict:
             "你可以缩小问题范围或补充关键口径后继续。"
         )
     elapsed_ms = round((perf_counter() - started) * 1000)
-    event = {
-        "run_id": str(uuid4()),
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "thread_id": thread_id,
-        "model": request.model,
-        "status": status,
-        "latency_ms": elapsed_ms,
-        "tool_counts": details["tool_counts"],
-        "sql_count": len(details["sql_queries"]),
-    }
-    RECENT_RUNS.appendleft(event)
-    return {
-        "status": status,
-        "thread_id": thread_id,
-        "model": request.model,
-        "latency_ms": elapsed_ms,
-        **details,
-    }
+    _record_run(
+        run_id=run_id,
+        thread_id=thread_id,
+        model=request.model,
+        status=status,
+        latency_ms=elapsed_ms,
+        details=details,
+    )
+    return _run_response(
+        run_id=run_id,
+        thread_id=thread_id,
+        model=request.model,
+        status=status,
+        latency_ms=elapsed_ms,
+        details=details,
+    )
 
 
 def _load_profile(profile_id: str) -> dict:
@@ -602,6 +969,42 @@ def chat(request: ChatRequest):
             status_code=500,
             detail=f"分析执行失败：{_safe_error_text(error)}",
         ) from error
+
+
+@app.post("/api/chat/stream")
+def chat_stream(request: ChatRequest):
+    if not _model_api_key():
+        raise HTTPException(
+            status_code=400,
+            detail="尚未配置模型 API Key，请先前往模型设置完成配置。",
+        )
+    _agent_config(request)
+    return StreamingResponse(
+        _stream_agent(request),
+        media_type="application/x-ndjson",
+        headers={
+            "Cache-Control": "no-cache, no-transform",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.post("/api/runs/{run_id}/cancel")
+def cancel_run(run_id: str):
+    if not RUN_ID.fullmatch(run_id):
+        raise HTTPException(status_code=400, detail="run_id 格式不合法。")
+    with ACTIVE_RUNS_LOCK:
+        control = ACTIVE_RUNS.get(run_id)
+        if control is None:
+            return {
+                "status": "not_running",
+                "message": "任务已结束或不存在。",
+            }
+        control.cancel_requested.set()
+    return {
+        "status": "cancel_requested",
+        "message": "已请求停止，将在当前模型或工具步骤结束后安全停止。",
+    }
 
 
 @app.post("/api/model-settings")

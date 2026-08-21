@@ -52,3 +52,22 @@ test("exposes analysis, knowledge and model controls", async () => {
   assert.match(source, />Knowledge</);
   assert.match(source, />运行</);
 });
+
+test("streams Agent progress and exposes cooperative cancellation", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /\/api\/chat\/stream/);
+  assert.match(source, /\/api\/runs\/\$\{runId\}\/cancel/);
+  assert.match(source, /停止将在当前模型或工具调用结束后的安全位置生效/);
+  assert.match(source, /currentRound/);
+  assert.match(source, /模型本轮输出/);
+  assert.match(source, /本轮 Tool Call/);
+  assert.doesNotMatch(source, /activityLog/);
+});
+
+test("keeps every SQL beside its own Tool Result", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /<ResultTable result=\{query\.result\} \/>/);
+  assert.doesNotMatch(source, /<ResultTable result=\{message\.details\.result_preview\} \/>/);
+});

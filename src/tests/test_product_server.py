@@ -1,6 +1,8 @@
 import io
+import json
 import os
 from pathlib import Path
+from types import SimpleNamespace
 import zipfile
 
 from fastapi.testclient import TestClient
@@ -134,6 +136,120 @@ def test_turn_result_links_sql_to_its_real_tool_result():
     assert result["answer"] == "There are 12 records."
     assert result["sql_queries"][0]["sql"].startswith("SELECT COUNT")
     assert result["result_preview"]["rows"] == [{"n": 12}]
+
+
+class _StreamingGraph:
+    def __init__(self):
+        self.messages = []
+        self.emitted_terminal_answer = False
+
+    def stream(self, payload, **_kwargs):
+        human = payload["messages"][0]
+        tool_call = AIMessage(
+            content="",
+            tool_calls=[
+                {
+                    "name": "execute_readonly_sql",
+                    "args": {"sql": "SELECT COUNT(*) AS n FROM records"},
+                    "id": "sql-stream-1",
+                }
+            ],
+        )
+        tool_result = ToolMessage(
+            name="execute_readonly_sql",
+            tool_call_id="sql-stream-1",
+            content='{"columns":["n"],"rows":[{"n":12}],"returned_rows":1,"truncated":false}',
+        )
+        self.messages = [human]
+        yield {
+            "type": "tasks",
+            "ns": (),
+            "data": {"name": "Main Agent LLM", "input": {}},
+        }
+        self.messages.append(tool_call)
+        yield {
+            "type": "updates",
+            "ns": (),
+            "data": {"Main Agent LLM": {"messages": [tool_call]}},
+        }
+        yield {
+            "type": "tasks",
+            "ns": (),
+            "data": {"name": "Tool Safety", "input": {}},
+        }
+        yield {
+            "type": "updates",
+            "ns": (),
+            "data": {"Tool Safety": {"messages": [tool_call]}},
+        }
+        yield {
+            "type": "tasks",
+            "ns": (),
+            "data": {"name": "Tool Execution", "input": {}},
+        }
+        self.messages.append(tool_result)
+        yield {
+            "type": "updates",
+            "ns": (),
+            "data": {"Tool Execution": {"messages": [tool_result]}},
+        }
+        self.emitted_terminal_answer = True
+        final = AIMessage(content="There are 12 records.")
+        self.messages.append(final)
+        yield {
+            "type": "updates",
+            "ns": (),
+            "data": {"Main Agent LLM": {"messages": [final]}},
+        }
+
+    def get_state(self, _config):
+        return SimpleNamespace(values={"messages": list(self.messages)})
+
+
+def test_streaming_run_cancels_only_after_tool_results_complete_protocol(
+    tmp_path: Path,
+    monkeypatch,
+):
+    fake_graph = _StreamingGraph()
+    monkeypatch.setattr(server, "_agent_graph", lambda: fake_graph)
+    monkeypatch.setattr(server, "SETTINGS_PATH", tmp_path / "settings.env")
+    request = server.ChatRequest(
+        question="Count records",
+        thread_id="stream-thread",
+        model="deepseek-v4-pro",
+    )
+
+    events = server._stream_agent(request)
+    started = json.loads(next(events))
+    assert started["type"] == "started"
+    first_progress = json.loads(next(events))
+    assert first_progress["type"] == "progress"
+
+    cancel_response = client.post(f"/api/runs/{started['run_id']}/cancel")
+    assert cancel_response.status_code == 200
+    assert cancel_response.json()["status"] == "cancel_requested"
+
+    remaining = [json.loads(line) for line in events]
+    round_event = next(event for event in remaining if event["type"] == "round")
+    assert round_event["round"] == 1
+    assert round_event["content"] == ""
+    assert round_event["tool_calls"] == [
+        {
+            "name": "execute_readonly_sql",
+            "arguments": {"sql": "SELECT COUNT(*) AS n FROM records"},
+        }
+    ]
+    final = next(event for event in remaining if event["type"] == "final")
+    assert final["response"]["status"] == "canceled"
+    assert final["response"]["result_preview"]["rows"] == [{"n": 12}]
+    assert fake_graph.emitted_terminal_answer is False
+    assert started["run_id"] not in server.ACTIVE_RUNS
+
+
+def test_cancel_endpoint_is_idempotent_for_finished_or_unknown_run():
+    response = client.post("/api/runs/not-running/cancel")
+    assert response.status_code == 200
+    assert response.json()["status"] == "not_running"
 
 
 def _archive(files: dict[str, str]) -> bytes:
