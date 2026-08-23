@@ -275,11 +275,73 @@ def _agent_config(request: ChatRequest) -> tuple[str, dict]:
     if not THREAD_ID.fullmatch(thread_id):
         raise HTTPException(status_code=400, detail="thread_id 格式不合法。")
     settings = _read_env(SETTINGS_PATH)
-    recursion_limit = int(settings.get("LANGGRAPH_DEFAULT_RECURSION_LIMIT", "35"))
+    max_recursions = max(
+        1,
+        int(settings.get("DATA_AGENT_MAX_RECURSIONS", "10")),
+    )
     return thread_id, {
-        "configurable": {"thread_id": thread_id, "model": request.model},
-        "recursion_limit": recursion_limit,
+        "configurable": {
+            "thread_id": thread_id,
+            "model": request.model,
+            "max_recursions": max_recursions,
+        },
+        # One round graph contains only LLM, Safety, and Tool Execution. This
+        # remains an internal emergency guard, not the product recursion budget.
+        "recursion_limit": max(
+            4,
+            int(settings.get("LANGGRAPH_DEFAULT_RECURSION_LIMIT", "6")),
+        ),
     }
+
+
+def _max_recursions(config: dict) -> int:
+    return int(config.get("configurable", {}).get("max_recursions", 10))
+
+
+def _tool_protocol_state(messages: list[Any]) -> str:
+    """Return complete, pending, or invalid for contiguous Tool batches."""
+
+    from langchain_core.messages import AIMessage, ToolMessage
+
+    pending: list[str] = []
+    for message in messages:
+        if pending:
+            if not isinstance(message, ToolMessage):
+                return "invalid"
+            tool_call_id = str(message.tool_call_id)
+            if tool_call_id not in pending:
+                return "invalid"
+            pending.remove(tool_call_id)
+            continue
+
+        if isinstance(message, AIMessage) and message.tool_calls:
+            pending = [str(call.get("id", "")) for call in message.tool_calls]
+            if not all(pending) or len(set(pending)) != len(pending):
+                return "invalid"
+        elif isinstance(message, ToolMessage):
+            return "invalid"
+    return "pending" if pending else "complete"
+
+
+def _prepare_checkpoint_for_new_input(graph: Any, config: dict) -> bool:
+    """Finish a recoverable half-round before accepting a new HumanMessage."""
+
+    snapshot = graph.get_state(config)
+    messages = list(snapshot.values.get("messages", []))
+    protocol_state = _tool_protocol_state(messages)
+    if protocol_state == "complete":
+        return True
+    if protocol_state == "invalid":
+        return False
+
+    pending_nodes = set(getattr(snapshot, "next", ()) or ())
+    if not pending_nodes.intersection({"Tool Safety", "Tool Execution"}):
+        return False
+
+    graph.invoke(None, config=config)
+    repaired = graph.get_state(config)
+    repaired_messages = list(repaired.values.get("messages", []))
+    return _tool_protocol_state(repaired_messages) == "complete"
 
 
 def _record_run(
@@ -476,14 +538,32 @@ def _safe_cancel_boundary(part: dict) -> bool:
 
 
 def _agent_graph():
-    from graph.data_agent_graph import graph
+    from graph.data_agent_graph import round_graph
 
-    return graph
+    return round_graph
+
+
+def _generate_pause_summary(messages: list[Any], *, model_name: str):
+    from langchain_core.messages import AIMessage
+    from prompts.runtime_pause_summary import generate_runtime_pause_summary
+
+    fallback = (
+        "本次运行已达到最大循环次数，当前进度和工具结果已经保存。"
+        "你可以继续原任务，或在当前会话中调整要求。"
+    )
+    try:
+        raw_reply = generate_runtime_pause_summary(messages, model_name=model_name)
+        content = _visible_ai_content(raw_reply.content)
+    except Exception:
+        content = ""
+    tool_markup = ("<|DSML|", "tool_calls>", "invoke name=")
+    if any(marker in content for marker in tool_markup):
+        content = ""
+    return AIMessage(content=content or fallback)
 
 
 def _stream_agent(request: ChatRequest) -> Iterator[str]:
-    from langchain_core.messages import HumanMessage
-    from langgraph.errors import GraphRecursionError
+    from langchain_core.messages import AIMessage, HumanMessage
 
     thread_id, config = _agent_config(request)
     run_id = str(uuid4())
@@ -507,69 +587,107 @@ def _stream_agent(request: ChatRequest) -> Iterator[str]:
                 "model": request.model,
             }
         )
-        if control.cancel_requested.is_set():
-            status = "canceled"
-        else:
-            try:
-                with GRAPH_RUN_LOCK:
-                    if control.cancel_requested.is_set():
-                        status = "canceled"
-                    else:
-                        stream = graph.stream(
-                            {
-                                "messages": [
-                                    HumanMessage(content=request.question.strip())
-                                ]
-                            },
-                            config=config,
-                            stream_mode=["tasks", "updates"],
-                            version="v2",
-                        )
-                        canceled_at_safe_boundary = False
-                        llm_round = 0
-                        for part in stream:
-                            if part.get("type") == "tasks":
-                                event = _task_progress_event(part)
-                                if event is not None:
-                                    event["run_id"] = run_id
-                                    yield _stream_line(event)
-                            elif part.get("type") == "updates":
-                                round_event = _llm_round_event(part, llm_round + 1)
-                                if round_event is not None:
-                                    llm_round += 1
-                                    round_event["run_id"] = run_id
-                                    yield _stream_line(round_event)
-                                for event in _update_progress_events(part):
-                                    event["run_id"] = run_id
-                                    yield _stream_line(event)
-                                if (
-                                    control.cancel_requested.is_set()
-                                    and _safe_cancel_boundary(part)
-                                ):
-                                    canceled_at_safe_boundary = True
-                                    break
-                        snapshot = graph.get_state(config)
-                        details = _turn_result(
-                            list(snapshot.values.get("messages", []))
-                        )
-                        status = (
-                            "canceled" if canceled_at_safe_boundary else "success"
-                        )
-            except GraphRecursionError:
-                status = "incomplete"
-                with GRAPH_RUN_LOCK:
-                    snapshot = graph.get_state(config)
-                details = _turn_result(list(snapshot.values.get("messages", [])))
+        input_payload = {
+            "messages": [HumanMessage(content=request.question.strip())]
+        }
+        completed = False
+        canceled_at_safe_boundary = control.cancel_requested.is_set()
+
+        with GRAPH_RUN_LOCK:
+            if not _prepare_checkpoint_for_new_input(graph, config):
+                raise RuntimeError(
+                    "当前会话的上一批工具消息不完整，Runtime 已拒绝写入"
+                    "这次新问题。"
+                )
+            for recursion_index in range(_max_recursions(config)):
+                if control.cancel_requested.is_set():
+                    canceled_at_safe_boundary = True
+                    break
+
+                stream = graph.stream(
+                    input_payload,
+                    config=config,
+                    stream_mode=["tasks", "updates"],
+                    version="v2",
+                )
+                input_payload = {}
+
+                for part in stream:
+                    if part.get("type") == "tasks":
+                        event = _task_progress_event(part)
+                        if event is not None:
+                            event["run_id"] = run_id
+                            yield _stream_line(event)
+                    elif part.get("type") == "updates":
+                        round_event = _llm_round_event(part, recursion_index + 1)
+                        if round_event is not None:
+                            round_event["run_id"] = run_id
+                            yield _stream_line(round_event)
+                        for event in _update_progress_events(part):
+                            event["run_id"] = run_id
+                            yield _stream_line(event)
+                        if (
+                            control.cancel_requested.is_set()
+                            and _safe_cancel_boundary(part)
+                        ):
+                            canceled_at_safe_boundary = True
+                            break
+
+                if hasattr(stream, "close"):
+                    stream.close()
+                stream = None
+
+                snapshot = graph.get_state(config)
+                messages = list(snapshot.values.get("messages", []))
+                if _tool_protocol_state(messages) != "complete":
+                    raise RuntimeError(
+                        "单轮 Agent Loop 结束后仍存在未闭合的工具消息。"
+                    )
+                if canceled_at_safe_boundary:
+                    break
+
+                reply = messages[-1] if messages else None
+                if isinstance(reply, AIMessage) and not reply.tool_calls:
+                    completed = True
+                    break
+
+            snapshot = graph.get_state(config)
+            messages = list(snapshot.values.get("messages", []))
+
+            if canceled_at_safe_boundary:
+                status = "canceled"
+                details = _turn_result(messages)
+            elif completed:
+                status = "success"
+                details = _turn_result(messages)
+            else:
+                yield _stream_line(
+                    {
+                        "type": "progress",
+                        "run_id": run_id,
+                        "stage": "Runtime Pause Summary",
+                        "message": "本次循环次数已用完，正在整理当前进度…",
+                    }
+                )
+                pause_summary = _generate_pause_summary(
+                    messages,
+                    model_name=request.model,
+                )
+                graph.update_state(config, {"messages": [pause_summary]})
+                snapshot = graph.get_state(config)
+                details = _turn_result(
+                    list(snapshot.values.get("messages", []))
+                )
+                status = (
+                    "canceled"
+                    if control.cancel_requested.is_set()
+                    else "paused"
+                )
 
         if status == "canceled":
             details["answer"] = (
                 "本次分析已在消息完整的安全位置停止。已完成的 Knowledge "
                 "与 SQL 结果仍保留在当前会话中。"
-            )
-        elif status == "incomplete":
-            details["answer"] = (
-                "本次分析在当前步骤预算内没有完成。当前执行状态已保留，"
-                "请不要直接追加新问题；后续需要选择继续执行或开启新会话。"
             )
 
         elapsed_ms = round((perf_counter() - started) * 1000)
@@ -623,30 +741,50 @@ def _stream_agent(request: ChatRequest) -> Iterator[str]:
 
 
 def _run_agent(request: ChatRequest) -> dict:
-    from langchain_core.messages import HumanMessage
-    from langgraph.errors import GraphRecursionError
-    from graph.data_agent_graph import graph
+    from langchain_core.messages import AIMessage, HumanMessage
 
     thread_id, config = _agent_config(request)
     run_id = str(uuid4())
     started = perf_counter()
     status = "success"
-    try:
-        with GRAPH_RUN_LOCK:
-            result = graph.invoke(
-                {"messages": [HumanMessage(content=request.question.strip())]},
-                config=config,
+    graph = _agent_graph()
+    input_payload = {
+        "messages": [HumanMessage(content=request.question.strip())]
+    }
+    completed = False
+
+    with GRAPH_RUN_LOCK:
+        if not _prepare_checkpoint_for_new_input(graph, config):
+            raise RuntimeError(
+                "当前会话的上一批工具消息不完整，Runtime 已拒绝写入"
+                "这次新问题。"
             )
-        details = _turn_result(result["messages"])
-    except GraphRecursionError:
-        status = "incomplete"
-        with GRAPH_RUN_LOCK:
+        for _recursion_index in range(_max_recursions(config)):
+            result = graph.invoke(input_payload, config=config)
+            input_payload = {}
+            messages = list(result.get("messages", []))
+            if _tool_protocol_state(messages) != "complete":
+                raise RuntimeError(
+                    "单轮 Agent Loop 结束后仍存在未闭合的工具消息。"
+                )
+            reply = messages[-1] if messages else None
+            if isinstance(reply, AIMessage) and not reply.tool_calls:
+                completed = True
+                break
+
+        if completed:
+            status = "success"
+            details = _turn_result(messages)
+        else:
+            pause_summary = _generate_pause_summary(
+                messages,
+                model_name=request.model,
+            )
+            graph.update_state(config, {"messages": [pause_summary]})
             snapshot = graph.get_state(config)
-        details = _turn_result(list(snapshot.values.get("messages", [])))
-        details["answer"] = (
-            "本次分析在当前步骤预算内没有完成。已保留会话状态，"
-            "你可以缩小问题范围或补充关键口径后继续。"
-        )
+            details = _turn_result(list(snapshot.values.get("messages", [])))
+            status = "paused"
+
     elapsed_ms = round((perf_counter() - started) * 1000)
     _record_run(
         run_id=run_id,
