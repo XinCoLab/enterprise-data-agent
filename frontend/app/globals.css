@@ -57,8 +57,43 @@ select,input { height:38px; padding:0 10px; }
 .round-tool-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:9px 11px; border-bottom:1px solid var(--line); }
 .round-tool-heading code { color:var(--muted); font-size:11px; }
 .round-tool-call pre { max-height:220px; overflow:auto; margin:0; padding:11px; background:#f7f8fa; white-space:pre-wrap; word-break:break-word; font-size:12px; line-height:1.55; }
-.round-status { display:flex; align-items:center; gap:7px; margin-top:11px; color:var(--muted); font-size:12px; }
-.round-status span { width:7px; height:7px; border-radius:50%; background:var(--blue); box-shadow:0 0 0 3px #eaf0ff; }
+.round-status {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  max-width:100%;
+  margin-top:11px;
+  color:var(--muted);
+  font-size:12px;
+  font-weight:600;
+}
+.round-status-text {
+  display:inline-block;
+  color:transparent;
+  background:linear-gradient(90deg,#697386 0%,#697386 34%,#172033 45%,#2563eb 50%,#172033 55%,#697386 66%,#697386 100%);
+  background-size:300% 100%;
+  background-position:100% 0;
+  -webkit-background-clip:text;
+  background-clip:text;
+  animation:round-status-shimmer 1.35s linear infinite;
+}
+.round-status-dot {
+  flex:0 0 auto;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--blue);
+  box-shadow:0 0 0 3px #eaf0ff;
+  animation:round-status-pulse 1.4s ease-in-out infinite;
+}
+@keyframes round-status-shimmer {
+  from { background-position:100% 0; }
+  to { background-position:-150% 0; }
+}
+@keyframes round-status-pulse {
+  0%,100% { opacity:.55; transform:scale(.88); }
+  50% { opacity:1; transform:scale(1); }
+}
 .pending small { display:block; margin-top:9px; color:var(--amber); }
 .answer-body { color:#222b3a; }
 .answer-body p { margin:5px 0; }
@@ -136,5 +171,9 @@ th { background:#f7f8fa; color:#596476; font-weight:600; }
 .toast.error { border-color:#e6b2b2; color:var(--red); }
 .toast.info { border-color:#cbd7e9; color:#40506b; }
 .toast button { border:0; background:transparent; color:currentColor; font-size:16px; line-height:1; }
+@media (prefers-reduced-motion:reduce) {
+  .round-status-text { color:var(--muted); background:none; animation:none; }
+  .round-status-dot { animation:none; }
+}
 @media (max-width:820px) { .product-shell{grid-template-columns:58px minmax(0,1fr)} .main-nav{padding:14px 8px} .brand strong{display:none} .brand{padding-inline:6px} .main-nav nav button{justify-content:center;padding:0;font-size:0} .main-nav nav button>span{font-size:17px} .nav-status{display:none} .two-column-page,.knowledge-grid{grid-template-columns:1fr} .profile-panel{display:none} }
 @media (max-width:560px) { .app-header{height:auto;align-items:flex-start;flex-direction:column;padding:12px 16px} .header-actions{width:100%;justify-content:space-between} .model-select span{display:none} .analysis-page{height:calc(100vh - 110px)} .conversation,.composer{width:calc(100% - 24px)} .form-grid{grid-template-columns:1fr} .form-grid .wide{grid-column:auto} .content-page{padding:14px} }
