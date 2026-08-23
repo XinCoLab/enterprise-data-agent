@@ -20,6 +20,7 @@ from model_clients.llm_api_clients import (
     get_main_llm,
 )
 from prompts.prompt_loader import build_model_input
+from prompts.runtime_database_context import inject_runtime_database_context
 from tools.tool_registry import TOOLS
 
 
@@ -98,6 +99,7 @@ def main_agent_llm_node(state: Text2SQLState, config: RunnableConfig | None = No
         knowledge_view_mode=knowledge_view_mode,
         runtime_subglobal_graph=subglobal_graph_text,
     )
+    model_input = inject_runtime_database_context(model_input)
     reply = _model_with_tools(_requested_model(config)).invoke(model_input)
     invalid_json_fallback = _invalid_tool_json_fallback(reply)
     if invalid_json_fallback is not None:
