@@ -48,7 +48,6 @@ select,input { height:38px; padding:0 10px; }
 .message-label { margin-bottom:8px; color:var(--muted); font-size:12px; font-weight:600; }
 .message p { margin:0; }
 .pending { color:var(--muted); }
-.live-activity { color:#34405a; font-weight:600; }
 .current-round { color:#222b3a; }
 .round-section-title { margin:0 0 7px; color:var(--muted); font-size:12px; font-weight:600; }
 .round-empty { color:#536078; }
@@ -64,7 +63,7 @@ select,input { height:38px; padding:0 10px; }
   max-width:100%;
   margin-top:11px;
   color:var(--muted);
-  font-size:12px;
+  font-size:14px;
   font-weight:600;
 }
 .round-status-text {
@@ -163,7 +162,7 @@ th { background:#f7f8fa; color:#596476; font-weight:600; }
 .empty-list { padding:70px 20px; color:var(--muted); text-align:center; }
 .run-status { font-weight:600; }
 .run-status.success { color:var(--green); }
-.run-status.incomplete { color:var(--amber); }
+.run-status.paused { color:var(--amber); }
 .run-status.canceled { color:#667085; }
 .run-status.error { color:var(--red); }
 .toast { position:fixed; right:20px; bottom:20px; max-width:440px; display:flex; align-items:flex-start; gap:12px; padding:11px 13px; border:1px solid; border-radius:7px; background:#fff; box-shadow:0 10px 26px rgba(30,40,60,.12); font-size:12px; }

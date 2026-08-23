@@ -138,13 +138,41 @@ def test_turn_result_links_sql_to_its_real_tool_result():
     assert result["result_preview"]["rows"] == [{"n": 12}]
 
 
+def test_round_graph_returns_to_runtime_after_one_complete_tool_cycle():
+    from graph.data_agent_graph import round_graph
+
+    edges = {
+        (edge.source, edge.target)
+        for edge in round_graph.get_graph().edges
+    }
+
+    assert ("Tool Safety", "Tool Execution") in edges
+    assert ("Tool Execution", "__end__") in edges
+    assert ("Tool Execution", "Main Agent LLM") not in edges
+
+
 class _StreamingGraph:
     def __init__(self):
         self.messages = []
+        self.round_number = 0
         self.emitted_terminal_answer = False
 
     def stream(self, payload, **_kwargs):
-        human = payload["messages"][0]
+        if payload.get("messages"):
+            self.messages.extend(payload["messages"])
+        self.round_number += 1
+
+        if self.round_number > 1:
+            self.emitted_terminal_answer = True
+            final = AIMessage(content="There are 12 records.")
+            self.messages.append(final)
+            yield {
+                "type": "updates",
+                "ns": (),
+                "data": {"Main Agent LLM": {"messages": [final]}},
+            }
+            return
+
         tool_call = AIMessage(
             content="",
             tool_calls=[
@@ -160,7 +188,6 @@ class _StreamingGraph:
             tool_call_id="sql-stream-1",
             content='{"columns":["n"],"rows":[{"n":12}],"returned_rows":1,"truncated":false}',
         )
-        self.messages = [human]
         yield {
             "type": "tasks",
             "ns": (),
@@ -193,14 +220,9 @@ class _StreamingGraph:
             "ns": (),
             "data": {"Tool Execution": {"messages": [tool_result]}},
         }
-        self.emitted_terminal_answer = True
-        final = AIMessage(content="There are 12 records.")
-        self.messages.append(final)
-        yield {
-            "type": "updates",
-            "ns": (),
-            "data": {"Main Agent LLM": {"messages": [final]}},
-        }
+
+    def update_state(self, _config, values):
+        self.messages.extend(values.get("messages", []))
 
     def get_state(self, _config):
         return SimpleNamespace(values={"messages": list(self.messages)})
@@ -244,6 +266,116 @@ def test_streaming_run_cancels_only_after_tool_results_complete_protocol(
     assert final["response"]["result_preview"]["rows"] == [{"n": 12}]
     assert fake_graph.emitted_terminal_answer is False
     assert started["run_id"] not in server.ACTIVE_RUNS
+
+
+def test_streaming_runtime_counts_one_complete_tool_cycle_as_one_recursion(
+    tmp_path: Path,
+    monkeypatch,
+):
+    fake_graph = _StreamingGraph()
+    settings_path = tmp_path / "settings.env"
+    settings_path.write_text(
+        "DATA_AGENT_MAX_RECURSIONS=2\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server, "_agent_graph", lambda: fake_graph)
+    monkeypatch.setattr(server, "SETTINGS_PATH", settings_path)
+    request = server.ChatRequest(
+        question="Count records",
+        thread_id="two-round-thread",
+        model="deepseek-v4-pro",
+    )
+
+    events = [json.loads(line) for line in server._stream_agent(request)]
+
+    rounds = [event["round"] for event in events if event["type"] == "round"]
+    final = next(event for event in events if event["type"] == "final")
+    assert rounds == [1, 2]
+    assert final["response"]["status"] == "success"
+    assert final["response"]["answer"] == "There are 12 records."
+    assert fake_graph.emitted_terminal_answer is True
+
+
+def test_max_recursions_generates_tool_free_pause_summary_after_a_full_round(
+    tmp_path: Path,
+    monkeypatch,
+):
+    fake_graph = _StreamingGraph()
+    settings_path = tmp_path / "settings.env"
+    settings_path.write_text(
+        "DATA_AGENT_MAX_RECURSIONS=1\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server, "_agent_graph", lambda: fake_graph)
+    monkeypatch.setattr(
+        server,
+        "_generate_pause_summary",
+        lambda _messages, **_kwargs: AIMessage(content="Pause report"),
+    )
+    monkeypatch.setattr(server, "SETTINGS_PATH", settings_path)
+    request = server.ChatRequest(
+        question="Count records",
+        thread_id="budget-thread",
+        model="deepseek-v4-pro",
+    )
+
+    events = [json.loads(line) for line in server._stream_agent(request)]
+
+    final = next(event for event in events if event["type"] == "final")
+    response = final["response"]
+    assert response["status"] == "paused"
+    assert response["answer"] == "Pause report"
+    assert isinstance(fake_graph.messages[-2], ToolMessage)
+    assert isinstance(fake_graph.messages[-1], AIMessage)
+    assert fake_graph.emitted_terminal_answer is False
+
+
+def test_pause_summary_never_persists_new_tool_calls(monkeypatch):
+    from prompts import runtime_pause_summary
+
+    monkeypatch.setattr(
+        runtime_pause_summary,
+        "generate_runtime_pause_summary",
+        lambda _messages, **_kwargs: AIMessage(
+            content='<|DSML|tool_calls><|DSML|invoke name="read_knowledge">',
+            tool_calls=[
+                {
+                    "id": "unexpected-summary-tool",
+                    "name": "read_knowledge",
+                    "args": {"knowledge_ids": ["table.example"]},
+                }
+            ],
+        ),
+    )
+
+    reply = server._generate_pause_summary(
+        [HumanMessage(content="复杂分析任务")],
+        model_name="deepseek-v4-pro",
+    )
+
+    assert reply.content
+    assert "DSML" not in reply.content
+    assert reply.tool_calls == []
+
+
+def test_agent_config_separates_product_recursions_from_langgraph_guard(
+    tmp_path: Path,
+    monkeypatch,
+):
+    settings_path = tmp_path / "settings.env"
+    settings_path.write_text(
+        "DATA_AGENT_MAX_RECURSIONS=10\n"
+        "LANGGRAPH_DEFAULT_RECURSION_LIMIT=6\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(server, "SETTINGS_PATH", settings_path)
+
+    _thread_id, config = server._agent_config(
+        server.ChatRequest(question="test", thread_id="budget-config")
+    )
+
+    assert config["configurable"]["max_recursions"] == 10
+    assert config["recursion_limit"] == 6
 
 
 def test_cancel_endpoint_is_idempotent_for_finished_or_unknown_run():
