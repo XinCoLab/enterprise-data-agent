@@ -53,6 +53,29 @@ test("exposes analysis, knowledge and model controls", async () => {
   assert.match(source, />运行</);
 });
 
+test("renders the interactive Knowledge graph from runtime data", async () => {
+  const pageSource = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  const graphSource = await readFile(new URL("../app/KnowledgeGraph.tsx", import.meta.url), "utf8");
+
+  assert.match(pageSource, /<KnowledgeGraph revision=\{runtimeRevision\} \/>/);
+  assert.match(pageSource, /setRuntimeRevision/);
+  assert.match(graphSource, /\/api\/knowledge-graph/);
+  assert.match(graphSource, /cache: "no-store"/);
+  assert.match(graphSource, /<canvas/);
+  assert.match(graphSource, /pointerdown/);
+  assert.match(graphSource, /wheel/);
+});
+
+test("shows the active database schema beside its connection settings", async () => {
+  const pageSource = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  const explorerSource = await readFile(new URL("../app/DatabaseExplorer.tsx", import.meta.url), "utf8");
+
+  assert.match(pageSource, /<DatabaseExplorer revision=\{runtimeRevision\} \/>/);
+  assert.match(explorerSource, /\/api\/database-schema/);
+  assert.match(explorerSource, /Schema Explorer/);
+  assert.match(explorerSource, /column\.data_type/);
+});
+
 test("streams Agent progress and exposes cooperative cancellation", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
 
