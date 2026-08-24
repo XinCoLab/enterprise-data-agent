@@ -5,7 +5,7 @@ from pathlib import Path
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from config.project_paths import AI_APP_LAB_ROOT
-from graph.data_agent_graph import studio_graph
+from graph.round_graph import studio_graph
 from knowledge_runtime.catalog import browse_catalog
 from knowledge_runtime.current_knowledge import (
     KNOWLEDGE_CATALOG,

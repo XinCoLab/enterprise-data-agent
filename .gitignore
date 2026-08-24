@@ -7,7 +7,7 @@ __pycache__/
 
 # Local runtime
 .langgraph_api/
-runtime/
+/runtime/
 start-local.cmd
 *.sqlite
 *.sqlite-shm

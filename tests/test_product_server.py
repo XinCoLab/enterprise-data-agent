@@ -8,10 +8,13 @@ import zipfile
 from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-import config_ui_server as server
+from api import configuration_app as config_server
+from api.app import app
+from api.schemas import ChatRequest, ProfilePayload
+from runtime import agent_runtime
 
 
-client = TestClient(server.app)
+client = TestClient(app)
 
 
 def test_state_exposes_only_supported_models():
@@ -34,7 +37,7 @@ def test_chat_reports_missing_model_key_without_exposing_internal_name(
     tmp_path: Path,
     monkeypatch,
 ):
-    monkeypatch.setattr(server, "SECRETS_PATH", tmp_path / "secrets.env")
+    monkeypatch.setattr(agent_runtime, "SECRETS_PATH", tmp_path / "secrets.env")
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
 
     response = client.post(
@@ -51,9 +54,9 @@ def test_chat_reports_missing_model_key_without_exposing_internal_name(
 def test_model_settings_store_key_without_returning_it(tmp_path: Path, monkeypatch):
     settings_path = tmp_path / "settings.env"
     secrets_path = tmp_path / "secrets.env"
-    monkeypatch.setattr(server, "SETTINGS_PATH", settings_path)
-    monkeypatch.setattr(server, "SECRETS_PATH", secrets_path)
-    monkeypatch.setattr(server, "_refresh_model_runtime", lambda: None)
+    monkeypatch.setattr(config_server, "SETTINGS_PATH", settings_path)
+    monkeypatch.setattr(config_server, "SECRETS_PATH", secrets_path)
+    monkeypatch.setattr(config_server, "_refresh_model_runtime", lambda: None)
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
     monkeypatch.setenv("DATA_AGENT_MODEL", "deepseek-v4-pro")
     secret = "test-secret-not-for-output"
@@ -76,9 +79,13 @@ def test_apply_payload_updates_database_environment_immediately(
     tmp_path: Path,
     monkeypatch,
 ):
-    monkeypatch.setattr(server, "SETTINGS_PATH", tmp_path / "settings.env")
-    monkeypatch.setattr(server, "SECRETS_PATH", tmp_path / "secrets.env")
-    monkeypatch.setattr(server, "ACTIVE_PROFILE_PATH", tmp_path / ".active_profile")
+    monkeypatch.setattr(config_server, "SETTINGS_PATH", tmp_path / "settings.env")
+    monkeypatch.setattr(config_server, "SECRETS_PATH", tmp_path / "secrets.env")
+    monkeypatch.setattr(
+        config_server,
+        "ACTIVE_PROFILE_PATH",
+        tmp_path / ".active_profile",
+    )
     for key in (
         "DATA_AGENT_DATABASE_BACKEND",
         "DATA_AGENT_POSTGRES_HOST",
@@ -88,7 +95,7 @@ def test_apply_payload_updates_database_environment_immediately(
         "DATA_AGENT_POSTGRES_DATABASE",
     ):
         monkeypatch.delenv(key, raising=False)
-    payload = server.ProfilePayload(
+    payload = ProfilePayload(
         id="test-profile",
         label="Test",
         backend="postgresql",
@@ -97,10 +104,10 @@ def test_apply_payload_updates_database_environment_immediately(
         username="readonly",
         database="analytics",
         password="",
-        knowledge_root=str(server.PROJECT_ROOT / "knowledge"),
+        knowledge_root=str(config_server.PROJECT_ROOT / "knowledge"),
     )
 
-    server._apply_payload(payload, "local-password")
+    config_server._apply_payload(payload, "local-password")
 
     assert os.environ["DATA_AGENT_DATABASE_BACKEND"] == "postgresql"
     assert os.environ["DATA_AGENT_POSTGRES_HOST"] == "db.internal"
@@ -131,7 +138,7 @@ def test_turn_result_links_sql_to_its_real_tool_result():
         AIMessage(content="There are 12 records."),
     ]
 
-    result = server._turn_result(messages)
+    result = agent_runtime._turn_result(messages)
 
     assert result["answer"] == "There are 12 records."
     assert result["sql_queries"][0]["sql"].startswith("SELECT COUNT")
@@ -139,7 +146,7 @@ def test_turn_result_links_sql_to_its_real_tool_result():
 
 
 def test_round_graph_returns_to_runtime_after_one_complete_tool_cycle():
-    from graph.data_agent_graph import round_graph
+    from graph.round_graph import round_graph
 
     edges = {
         (edge.source, edge.target)
@@ -233,15 +240,15 @@ def test_streaming_run_cancels_only_after_tool_results_complete_protocol(
     monkeypatch,
 ):
     fake_graph = _StreamingGraph()
-    monkeypatch.setattr(server, "_agent_graph", lambda: fake_graph)
-    monkeypatch.setattr(server, "SETTINGS_PATH", tmp_path / "settings.env")
-    request = server.ChatRequest(
+    monkeypatch.setattr(agent_runtime, "_agent_graph", lambda: fake_graph)
+    monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", tmp_path / "settings.env")
+    request = ChatRequest(
         question="Count records",
         thread_id="stream-thread",
         model="deepseek-v4-pro",
     )
 
-    events = server._stream_agent(request)
+    events = agent_runtime.stream_agent(request)
     started = json.loads(next(events))
     assert started["type"] == "started"
     first_progress = json.loads(next(events))
@@ -265,7 +272,7 @@ def test_streaming_run_cancels_only_after_tool_results_complete_protocol(
     assert final["response"]["status"] == "canceled"
     assert final["response"]["result_preview"]["rows"] == [{"n": 12}]
     assert fake_graph.emitted_terminal_answer is False
-    assert started["run_id"] not in server.ACTIVE_RUNS
+    assert started["run_id"] not in agent_runtime.ACTIVE_RUNS
 
 
 def test_streaming_runtime_counts_one_complete_tool_cycle_as_one_recursion(
@@ -278,15 +285,15 @@ def test_streaming_runtime_counts_one_complete_tool_cycle_as_one_recursion(
         "DATA_AGENT_MAX_RECURSIONS=2\n",
         encoding="utf-8",
     )
-    monkeypatch.setattr(server, "_agent_graph", lambda: fake_graph)
-    monkeypatch.setattr(server, "SETTINGS_PATH", settings_path)
-    request = server.ChatRequest(
+    monkeypatch.setattr(agent_runtime, "_agent_graph", lambda: fake_graph)
+    monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", settings_path)
+    request = ChatRequest(
         question="Count records",
         thread_id="two-round-thread",
         model="deepseek-v4-pro",
     )
 
-    events = [json.loads(line) for line in server._stream_agent(request)]
+    events = [json.loads(line) for line in agent_runtime.stream_agent(request)]
 
     rounds = [event["round"] for event in events if event["type"] == "round"]
     final = next(event for event in events if event["type"] == "final")
@@ -306,20 +313,20 @@ def test_max_recursions_generates_tool_free_pause_summary_after_a_full_round(
         "DATA_AGENT_MAX_RECURSIONS=1\n",
         encoding="utf-8",
     )
-    monkeypatch.setattr(server, "_agent_graph", lambda: fake_graph)
+    monkeypatch.setattr(agent_runtime, "_agent_graph", lambda: fake_graph)
     monkeypatch.setattr(
-        server,
+        agent_runtime,
         "_generate_pause_summary",
         lambda _messages, **_kwargs: AIMessage(content="Pause report"),
     )
-    monkeypatch.setattr(server, "SETTINGS_PATH", settings_path)
-    request = server.ChatRequest(
+    monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", settings_path)
+    request = ChatRequest(
         question="Count records",
         thread_id="budget-thread",
         model="deepseek-v4-pro",
     )
 
-    events = [json.loads(line) for line in server._stream_agent(request)]
+    events = [json.loads(line) for line in agent_runtime.stream_agent(request)]
 
     final = next(event for event in events if event["type"] == "final")
     response = final["response"]
@@ -348,7 +355,7 @@ def test_pause_summary_never_persists_new_tool_calls(monkeypatch):
         ),
     )
 
-    reply = server._generate_pause_summary(
+    reply = agent_runtime._generate_pause_summary(
         [HumanMessage(content="复杂分析任务")],
         model_name="deepseek-v4-pro",
     )
@@ -368,10 +375,10 @@ def test_agent_config_separates_product_recursions_from_langgraph_guard(
         "LANGGRAPH_DEFAULT_RECURSION_LIMIT=6\n",
         encoding="utf-8",
     )
-    monkeypatch.setattr(server, "SETTINGS_PATH", settings_path)
+    monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", settings_path)
 
-    _thread_id, config = server._agent_config(
-        server.ChatRequest(question="test", thread_id="budget-config")
+    _thread_id, config = agent_runtime.build_agent_config(
+        ChatRequest(question="test", thread_id="budget-config")
     )
 
     assert config["configurable"]["max_recursions"] == 10
@@ -393,7 +400,7 @@ def _archive(files: dict[str, str]) -> bytes:
 
 
 def test_knowledge_import_accepts_valid_cards(tmp_path: Path, monkeypatch):
-    monkeypatch.setattr(server, "KNOWLEDGE_IMPORT_ROOT", tmp_path)
+    monkeypatch.setattr(config_server, "KNOWLEDGE_IMPORT_ROOT", tmp_path)
     card = """
 knowledge_id: table.demo.records
 knowledge_type: table
@@ -413,7 +420,7 @@ payload:
 
 
 def test_knowledge_import_rejects_parent_traversal(tmp_path: Path, monkeypatch):
-    monkeypatch.setattr(server, "KNOWLEDGE_IMPORT_ROOT", tmp_path)
+    monkeypatch.setattr(config_server, "KNOWLEDGE_IMPORT_ROOT", tmp_path)
     response = client.post(
         "/api/import-knowledge",
         content=_archive({"../outside.yaml": "not allowed"}),

@@ -235,7 +235,7 @@ def main() -> None:
 
     # Import only after runtime variables are set. Gold is not opened until
     # the Agent has completed and its final successful SQL has been captured.
-    from graph.data_agent_graph import graph
+    from graph.round_graph import graph
 
     question = _load_public_question(args.instance_id)
     usage_recorder = UsageRecorder()

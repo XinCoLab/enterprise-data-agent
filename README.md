@@ -55,10 +55,25 @@ The service binds to `127.0.0.1:8080` by default instead of exposing itself to t
 Install `requirements.txt` in a Python environment, then run:
 
 ```powershell
-python -m uvicorn config_ui_server:app --app-dir src --host 127.0.0.1 --port 8080
+python -m uvicorn api.app:app --app-dir src --host 127.0.0.1 --port 8080
 ```
 
 Open [http://127.0.0.1:8080](http://127.0.0.1:8080). The prebuilt frontend is included, so Node.js is not required for normal local use.
+
+### Code reading order
+
+To follow one Agent request from its real entrypoint to the database, read these files in order:
+
+```text
+src/api/app.py
+  -> src/api/routers/chat.py
+  -> src/runtime/agent_runtime.py
+  -> src/graph/round_graph.py
+  -> src/graph/nodes/
+  -> src/tools/
+```
+
+`src/api/configuration_app.py` is the separate configuration and Knowledge-import subsystem. Benchmark runners live in `benchmarks/`, developer CLIs in `scripts/`, and tests in `tests/`; none of them are part of the main request path above.
 
 ## How it works
 
@@ -184,7 +199,7 @@ Run Python tests:
 
 ```powershell
 $env:PYTHONPATH="$PWD\src;$PWD"
-python -m pytest -q src/tests
+python -m pytest -q tests
 ```
 
 Run frontend tests:

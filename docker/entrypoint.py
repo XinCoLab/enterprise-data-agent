@@ -32,7 +32,7 @@ os.execvp(
     "uvicorn",
     [
         "uvicorn",
-        "config_ui_server:app",
+        "api.app:app",
         "--app-dir",
         "/app/src",
         "--host",
