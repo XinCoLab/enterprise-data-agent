@@ -12,6 +12,18 @@ NODE_ACTIVITY = {
     "Tool Execution": "正在执行已通过校验的工具…",
 }
 
+KNOWLEDGE_TOOLS = {
+    "browse_knowledge",
+    "search_knowledge",
+    "read_knowledge",
+}
+
+KNOWLEDGE_STAGE = {
+    "browse_knowledge": ("browsing", "正在浏览 Knowledge 目录"),
+    "search_knowledge": ("searching", "正在搜索 Knowledge"),
+    "read_knowledge": ("reading", "正在读取 KnowledgeCard"),
+}
+
 
 def encode_event(payload: dict) -> str:
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n"
@@ -115,6 +127,121 @@ def llm_round_event(part: dict, round_number: int) -> dict | None:
             else "本轮模型已生成最终回答。"
         ),
     }
+
+
+def knowledge_trace_events(part: dict) -> list[dict]:
+    """Expose real Knowledge navigation activity without exposing reasoning.
+
+    The graph opens only after Tool Safety has allowed a Knowledge tool. It
+    stays open while the next model call consumes those results, then closes
+    when the model moves to SQL or produces its final answer.
+    """
+
+    from langchain_core.messages import AIMessage
+
+    data = part.get("data")
+    if not isinstance(data, dict):
+        return []
+
+    safety_update = data.get("Tool Safety")
+    if isinstance(safety_update, dict):
+        messages = safety_update.get("messages", [])
+        safe_message = messages[-1] if messages else None
+        if not isinstance(safe_message, AIMessage):
+            return []
+
+        decisions = safe_message.additional_kwargs.get(
+            "tool_safety_decisions",
+            [],
+        )
+        allowed_call_ids = {
+            str(decision.get("tool_call_id", ""))
+            for decision in decisions
+            if isinstance(decision, dict)
+            and decision.get("decision") == "ALLOW"
+            and decision.get("tool_name") in KNOWLEDGE_TOOLS
+        }
+        allowed_calls = [
+            call
+            for call in safe_message.tool_calls
+            if str(call.get("id", "")) in allowed_call_ids
+            and call.get("name") in KNOWLEDGE_TOOLS
+        ]
+        if not allowed_calls:
+            return []
+
+        trace = (safe_message.response_metadata or {}).get("knowledge_view")
+        active_ids = []
+        if isinstance(trace, dict):
+            active_ids.extend(trace.get("subglobal_knowledge_ids") or [])
+        for call in allowed_calls:
+            arguments = call.get("args") or {}
+            requested_ids = arguments.get("knowledge_ids", [])
+            if call.get("name") == "read_knowledge" and isinstance(
+                requested_ids,
+                list,
+            ):
+                active_ids.extend(requested_ids)
+
+        ordered_ids = list(
+            dict.fromkeys(
+                str(item)
+                for item in active_ids
+                if isinstance(item, str) and item.strip()
+            )
+        )
+        tool_names = [str(call.get("name", "")) for call in allowed_calls]
+        primary_tool = next(
+            (
+                name
+                for name in (
+                    "read_knowledge",
+                    "search_knowledge",
+                    "browse_knowledge",
+                )
+                if name in tool_names
+            ),
+            "browse_knowledge",
+        )
+        stage, message = KNOWLEDGE_STAGE[primary_tool]
+        return [
+            {
+                "type": "knowledge_trace",
+                "action": "open",
+                "stage": stage,
+                "message": message,
+                "mode": (
+                    trace.get("knowledge_view_mode")
+                    if isinstance(trace, dict)
+                    else None
+                ),
+                "active_ids": ordered_ids,
+                "tool_names": tool_names,
+            }
+        ]
+
+    main_update = data.get("Main Agent LLM")
+    if not isinstance(main_update, dict):
+        return []
+    messages = main_update.get("messages", [])
+    model_output = messages[-1] if messages else None
+    if not isinstance(model_output, AIMessage):
+        return []
+    if any(
+        call.get("name") in KNOWLEDGE_TOOLS
+        for call in model_output.tool_calls
+    ):
+        return []
+    return [
+        {
+            "type": "knowledge_trace",
+            "action": "close",
+            "stage": "complete",
+            "message": "Knowledge 导航完成",
+            "active_ids": [],
+            "tool_names": [],
+        }
+    ]
 
 
 def update_progress_events(part: dict) -> list[dict]:

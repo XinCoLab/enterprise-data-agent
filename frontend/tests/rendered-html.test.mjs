@@ -66,6 +66,18 @@ test("renders the interactive Knowledge graph from runtime data", async () => {
   assert.match(graphSource, /wheel/);
 });
 
+test("shows Knowledge navigation only while runtime events request it", async () => {
+  const pageSource = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  const graphSource = await readFile(new URL("../app/KnowledgeGraph.tsx", import.meta.url), "utf8");
+
+  assert.match(pageSource, /event\.type === "knowledge_trace"/);
+  assert.match(pageSource, /event\.action === "open"/);
+  assert.match(pageSource, /live-knowledge-overlay/);
+  assert.match(graphSource, /activeIds/);
+  assert.match(graphSource, /frontierRefs/);
+  assert.match(graphSource, /lineDashOffset/);
+});
+
 test("shows the active database schema beside its connection settings", async () => {
   const pageSource = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   const explorerSource = await readFile(new URL("../app/DatabaseExplorer.tsx", import.meta.url), "utf8");
