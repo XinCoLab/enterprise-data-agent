@@ -20,6 +20,13 @@ type Notice = { tone: "success" | "error" | "info"; text: string };
 const emptyProfile = (): Profile => ({ id: `profile-${Date.now()}`, label: "新配置方案", description: "", backend: "postgresql", host: "", port: 5432, username: "", database: "", password: "", duckdb_path: "", knowledge_root: "" });
 const pageNames: Record<Page, string> = { analysis: "数据分析", database: "数据源", knowledge: "Knowledge", model: "模型设置", runs: "运行记录" };
 
+// randomUUID() 只在 HTTPS 或 localhost 等安全环境中可用。公网 HTTP
+// 试运行时退化为普通客户端 ID，避免页面在首次渲染时直接崩溃。
+function createClientId() {
+  if (typeof globalThis.crypto?.randomUUID === "function") return globalThis.crypto.randomUUID();
+  return `client-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...(options?.headers || {}) } });
   const payload = await response.json();
@@ -126,7 +133,7 @@ export default function Home() {
   const [form, setForm] = useState<Profile>(emptyProfile());
   const [model, setModel] = useState<Model>("deepseek-v4-pro");
   const [modelApiKey, setModelApiKey] = useState("");
-  const [threadId, setThreadId] = useState(() => crypto.randomUUID());
+  const [threadId, setThreadId] = useState(createClientId);
   const [messages, setMessages] = useState<ChatItem[]>([]);
   const [question, setQuestion] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
@@ -162,7 +169,7 @@ export default function Home() {
   const sendQuestion = async (suggestedText?: string) => {
     const text = (suggestedText ?? question).trim();
     if (!text || chatBusy) return;
-    setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content: text }]);
+    setMessages((current) => [...current, { id: createClientId(), role: "user", content: text }]);
     setQuestion(""); setChatBusy(true); setStopRequested(false); setCurrentRound(null); setRoundStatus("正在分析现有信息并决定下一步…"); setActiveRunId(null); activeRunIdRef.current = null;
     try {
       const response = await fetch("/api/chat/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: text, thread_id: threadId, model }) });
@@ -185,14 +192,14 @@ export default function Home() {
         } else if (event.type === "final" && event.response) {
           finalReceived = true;
           setThreadId(event.response.thread_id);
-          setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant", content: event.response!.answer || "分析完成，但没有生成可展示的回答。", details: event.response }]);
+          setMessages((current) => [...current, { id: createClientId(), role: "assistant", content: event.response!.answer || "分析完成，但没有生成可展示的回答。", details: event.response }]);
         } else if (event.type === "error") {
           throw new Error(event.message || "分析执行失败。");
         }
       });
       if (!finalReceived) throw new Error("响应流已结束，但没有收到最终结果。");
     } catch (error) {
-      setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant", content: error instanceof Error ? error.message : "分析执行失败。" }]);
+      setMessages((current) => [...current, { id: createClientId(), role: "assistant", content: error instanceof Error ? error.message : "分析执行失败。" }]);
     } finally { activeRunIdRef.current = null; setActiveRunId(null); setStopRequested(false); setCurrentRound(null); setRoundStatus(""); setChatBusy(false); }
   };
 
@@ -210,7 +217,7 @@ export default function Home() {
     }
   };
 
-  const newConversation = () => { if (chatBusy) return; setThreadId(crypto.randomUUID()); setMessages([]); setQuestion(""); setCurrentRound(null); setRoundStatus(""); };
+  const newConversation = () => { if (chatBusy) return; setThreadId(createClientId()); setMessages([]); setQuestion(""); setCurrentRound(null); setRoundStatus(""); };
   const saveAndApply = async () => { const result = await runAction("save", () => api("/api/save-and-apply", { method: "POST", body: JSON.stringify(form) })); if (result) { await loadState(form.id); newConversation(); } };
   const saveModelSettings = async () => { const result = await runAction("model", () => api("/api/model-settings", { method: "POST", body: JSON.stringify({ model, api_key: modelApiKey }) })); if (result) { setModelApiKey(""); await loadState(form.id); } };
   const uploadKnowledge = async (file?: File) => {
