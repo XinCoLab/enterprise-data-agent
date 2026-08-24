@@ -336,6 +336,129 @@ def _test_duckdb(payload: ProfilePayload) -> dict:
     return {"ok": ok == 1, "database": str(path), "readonly_transaction": True}
 
 
+def _schema_payload(rows: list[tuple], active: dict) -> dict:
+    """把 information_schema 的逐字段结果整理成前端需要的表结构。"""
+
+    tables: dict[tuple[str, str], dict] = {}
+    for schema, table, table_type, column, data_type, nullable in rows:
+        key = (str(schema), str(table))
+        entry = tables.setdefault(
+            key,
+            {
+                "schema": str(schema),
+                "name": str(table),
+                "kind": str(table_type),
+                "columns": [],
+            },
+        )
+        entry["columns"].append(
+            {
+                "name": str(column),
+                "data_type": str(data_type),
+                "nullable": str(nullable).upper() == "YES",
+            }
+        )
+
+    table_list = sorted(tables.values(), key=lambda item: (item["schema"], item["name"]))
+    return {
+        "backend": active["backend"],
+        "database": active["database"] or active["duckdb_path"],
+        "host": active["host"],
+        "port": active["port"],
+        "username": active["username"],
+        "table_count": len(table_list),
+        "column_count": sum(len(item["columns"]) for item in table_list),
+        "tables": table_list,
+    }
+
+
+def _database_schema() -> dict:
+    """使用当前生效的只读账号读取数据库结构，不读取业务数据。"""
+
+    active = _active_payload()
+    backend = active["backend"]
+    password_key = _password_key(backend)
+    password = _read_env(SECRETS_PATH).get(password_key, "") if password_key else ""
+
+    if backend == "postgresql":
+        connection = psycopg2.connect(
+            host=active["host"],
+            port=active["port"],
+            user=active["username"],
+            password=password,
+            dbname=active["database"],
+            connect_timeout=5,
+            application_name="data-agent-schema-explorer",
+        )
+        query = """
+            SELECT c.table_schema, c.table_name, t.table_type, c.column_name,
+                   CASE WHEN c.data_type = 'USER-DEFINED' THEN c.udt_name ELSE c.data_type END,
+                   c.is_nullable
+            FROM information_schema.columns c
+            JOIN information_schema.tables t
+              ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+            WHERE c.table_schema NOT IN ('pg_catalog', 'information_schema')
+              AND t.table_type IN ('BASE TABLE', 'VIEW')
+            ORDER BY c.table_schema, c.table_name, c.ordinal_position
+        """
+        try:
+            connection.set_session(readonly=True)
+            with connection.cursor() as cursor:
+                cursor.execute(query)
+                rows = cursor.fetchall()
+            connection.rollback()
+        finally:
+            connection.close()
+    elif backend == "mysql":
+        connection = pymysql.connect(
+            host=active["host"],
+            port=active["port"],
+            user=active["username"],
+            password=password,
+            database=active["database"],
+            charset="utf8mb4",
+            connect_timeout=5,
+            read_timeout=7,
+            autocommit=False,
+        )
+        query = """
+            SELECT c.table_schema, c.table_name, t.table_type, c.column_name,
+                   c.column_type, c.is_nullable
+            FROM information_schema.columns c
+            JOIN information_schema.tables t
+              ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+            WHERE c.table_schema = %s
+              AND t.table_type IN ('BASE TABLE', 'VIEW')
+            ORDER BY c.table_schema, c.table_name, c.ordinal_position
+        """
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SET TRANSACTION READ ONLY")
+                cursor.execute(query, (active["database"],))
+                rows = list(cursor.fetchall())
+            connection.rollback()
+        finally:
+            connection.close()
+    else:
+        path = _resolve_local_path(active["duckdb_path"])
+        connection = duckdb.connect(str(path), read_only=True)
+        query = """
+            SELECT c.table_schema, c.table_name, t.table_type, c.column_name,
+                   c.data_type, c.is_nullable
+            FROM information_schema.columns c
+            JOIN information_schema.tables t
+              ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+            WHERE c.table_schema NOT IN ('information_schema', 'pg_catalog')
+            ORDER BY c.table_schema, c.table_name, c.ordinal_position
+        """
+        try:
+            rows = connection.execute(query).fetchall()
+        finally:
+            connection.close()
+
+    return _schema_payload(rows, active)
+
+
 def _profile_document(payload: ProfilePayload) -> dict:
     return {
         "id": payload.id,
@@ -426,6 +549,30 @@ def get_state():
 @app.get("/api/health")
 def health():
     return {"status": "ok", "service": "data-agent"}
+
+
+@app.get("/api/knowledge-graph")
+def knowledge_graph():
+    """把 Runtime 已构建的 Knowledge 导航图提供给前端。"""
+
+    from knowledge_runtime import current_knowledge
+
+    graph = current_knowledge.KNOWLEDGE_NAVIGATION_GRAPH
+    return {
+        "nodes": graph["nodes"],
+        "edges": graph["edges"],
+    }
+
+
+@app.get("/api/database-schema")
+def database_schema():
+    try:
+        return _database_schema()
+    except Exception as error:
+        raise HTTPException(
+            status_code=400,
+            detail=f"读取数据库结构失败：{_safe_error_text(error)}",
+        ) from error
 
 
 

@@ -25,6 +25,38 @@ def test_state_exposes_only_supported_models():
     assert payload["active"]["backend"] in {"postgresql", "mysql", "duckdb"}
 
 
+def test_knowledge_graph_exposes_runtime_nodes_and_edges():
+    response = client.get("/api/knowledge-graph")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["nodes"]
+    assert payload["edges"]
+    assert {"ref", "knowledge_id", "knowledge_type", "title"} <= payload["nodes"][0].keys()
+    assert {"source", "relation", "target"} <= payload["edges"][0].keys()
+
+
+def test_database_schema_endpoint_does_not_expose_secrets(monkeypatch):
+    monkeypatch.setattr(
+        config_server,
+        "_database_schema",
+        lambda: {
+            "backend": "postgresql",
+            "database": "demo",
+            "host": "127.0.0.1",
+            "port": 5432,
+            "username": "reader",
+            "table_count": 1,
+            "column_count": 2,
+            "tables": [{"schema": "public", "name": "events", "kind": "BASE TABLE", "columns": []}],
+        },
+    )
+    response = client.get("/api/database-schema")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["table_count"] == 1
+    assert "password" not in json.dumps(payload).lower()
+
+
 def test_chat_rejects_unknown_model_before_agent_execution():
     response = client.post(
         "/api/chat",
