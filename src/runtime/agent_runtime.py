@@ -302,17 +302,24 @@ def _agent_graph():
     return round_graph
 
 
-def _generate_pause_summary(messages: list[Any], *, model_name: str):
+def _generate_recursion_limit_summary(
+    messages: list[Any],
+    *,
+    model_name: str,
+):
     from langchain_core.messages import AIMessage
-    from prompts.runtime_pause_summary import generate_runtime_pause_summary
+    from prompts.recursion_limit_summary import generate_recursion_limit_summary
 
     fallback = (
         "本次运行已达到最大循环次数，当前进度和工具结果已经保存。"
         "你可以继续原任务，或在当前会话中调整要求。"
     )
     try:
-        raw_reply = generate_runtime_pause_summary(messages, model_name=model_name)
-        content = visible_ai_content(raw_reply.content)
+        model_output = generate_recursion_limit_summary(
+            messages,
+            model_name=model_name,
+        )
+        content = visible_ai_content(model_output.content)
     except Exception:
         content = ""
     tool_markup = ("<|DSML|", "tool_calls>", "invoke name=")
@@ -324,19 +331,19 @@ def _generate_pause_summary(messages: list[Any], *, model_name: str):
 def stream_agent(request: ChatRequest) -> Iterator[str]:
     from langchain_core.messages import AIMessage, HumanMessage
 
-    thread_id, config = build_agent_config(request)
+    thread_id, run_config = build_agent_config(request)
     run_id = str(uuid4())
     created_at = datetime.now(timezone.utc).isoformat()
-    control = ActiveRun(run_id=run_id, thread_id=thread_id)
+    run_control = ActiveRun(run_id=run_id, thread_id=thread_id)
     with ACTIVE_RUNS_LOCK:
-        ACTIVE_RUNS[run_id] = control
+        ACTIVE_RUNS[run_id] = run_control
 
-    started = perf_counter()
-    details = _empty_turn_result()
+    start_time = perf_counter()
+    turn_result = _empty_turn_result()
     status = "error"
-    recorded = False
-    graph = _agent_graph()
-    stream = None
+    run_was_recorded = False
+    round_graph = _agent_graph()
+    graph_stream = None
     try:
         yield encode_event(
             {
@@ -346,79 +353,93 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
                 "model": request.model,
             }
         )
-        input_payload = {
+        graph_input = {
             "messages": [HumanMessage(content=request.question.strip())]
         }
-        completed = False
-        canceled_at_safe_boundary = control.cancel_requested.is_set()
+        has_final_answer = False
+        canceled_at_safe_boundary = run_control.cancel_requested.is_set()
 
         with GRAPH_RUN_LOCK:
-            if not _prepare_checkpoint_for_new_input(graph, config):
+            if not _prepare_checkpoint_for_new_input(round_graph, run_config):
                 raise RuntimeError(
                     "当前会话的上一批工具消息不完整，Runtime 已拒绝写入"
                     "这次新问题。"
                 )
-            for recursion_index in range(_max_recursions(config)):
-                if control.cancel_requested.is_set():
+            for recursion_index in range(_max_recursions(run_config)):
+                if run_control.cancel_requested.is_set():
                     canceled_at_safe_boundary = True
                     break
 
-                stream = graph.stream(
-                    input_payload,
-                    config=config,
+                graph_stream = round_graph.stream(
+                    graph_input,
+                    config=run_config,
                     stream_mode=["tasks", "updates"],
                     version="v2",
                 )
-                input_payload = {}
+                graph_input = {}
 
-                for part in stream:
-                    if part.get("type") == "tasks":
-                        event = task_progress_event(part)
+                for stream_part in graph_stream:
+                    if stream_part.get("type") == "tasks":
+                        event = task_progress_event(stream_part)
                         if event is not None:
                             event["run_id"] = run_id
                             yield encode_event(event)
-                    elif part.get("type") == "updates":
-                        round_event = llm_round_event(part, recursion_index + 1)
+                    elif stream_part.get("type") == "updates":
+                        round_event = llm_round_event(
+                            stream_part,
+                            recursion_index + 1,
+                        )
                         if round_event is not None:
                             round_event["run_id"] = run_id
                             yield encode_event(round_event)
-                        for event in update_progress_events(part):
+                        for event in update_progress_events(stream_part):
                             event["run_id"] = run_id
                             yield encode_event(event)
                         if (
-                            control.cancel_requested.is_set()
-                            and safe_cancel_boundary(part)
+                            run_control.cancel_requested.is_set()
+                            and safe_cancel_boundary(stream_part)
                         ):
                             canceled_at_safe_boundary = True
                             break
 
-                if hasattr(stream, "close"):
-                    stream.close()
-                stream = None
+                if hasattr(graph_stream, "close"):
+                    graph_stream.close()
+                graph_stream = None
 
-                snapshot = graph.get_state(config)
-                messages = list(snapshot.values.get("messages", []))
-                if _tool_protocol_state(messages) != "complete":
+                saved_state = round_graph.get_state(run_config)
+                conversation_messages = list(
+                    saved_state.values.get("messages", [])
+                )
+                if _tool_protocol_state(conversation_messages) != "complete":
                     raise RuntimeError(
                         "单轮 Agent Loop 结束后仍存在未闭合的工具消息。"
                     )
                 if canceled_at_safe_boundary:
                     break
 
-                reply = messages[-1] if messages else None
-                if isinstance(reply, AIMessage) and not reply.tool_calls:
-                    completed = True
+                latest_message = (
+                    conversation_messages[-1]
+                    if conversation_messages
+                    else None
+                )
+                if (
+                    isinstance(latest_message, AIMessage)
+                    and not latest_message.tool_calls
+                ):
+                    has_final_answer = True
                     break
 
-            snapshot = graph.get_state(config)
-            messages = list(snapshot.values.get("messages", []))
+            saved_state = round_graph.get_state(run_config)
+            conversation_messages = list(
+                saved_state.values.get("messages", [])
+            )
 
             if canceled_at_safe_boundary:
                 status = "canceled"
-                details = _turn_result(messages)
-            elif completed:
+                turn_result = _turn_result(conversation_messages)
+            elif has_final_answer:
                 status = "success"
-                details = _turn_result(messages)
+                turn_result = _turn_result(conversation_messages)
             else:
                 yield encode_event(
                     {
@@ -428,63 +449,72 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
                         "message": "本次循环次数已用完，正在整理当前进度…",
                     }
                 )
-                pause_summary = _generate_pause_summary(
-                    messages,
+                recursion_limit_summary = _generate_recursion_limit_summary(
+                    conversation_messages,
                     model_name=request.model,
                 )
-                graph.update_state(config, {"messages": [pause_summary]})
-                snapshot = graph.get_state(config)
-                details = _turn_result(
-                    list(snapshot.values.get("messages", []))
+                round_graph.update_state(
+                    run_config,
+                    {"messages": [recursion_limit_summary]},
+                )
+                saved_state = round_graph.get_state(run_config)
+                turn_result = _turn_result(
+                    list(saved_state.values.get("messages", []))
                 )
                 status = (
                     "canceled"
-                    if control.cancel_requested.is_set()
+                    if run_control.cancel_requested.is_set()
                     else "paused"
                 )
 
         if status == "canceled":
-            details["answer"] = (
+            turn_result["answer"] = (
                 "本次分析已在消息完整的安全位置停止。已完成的 Knowledge "
                 "与 SQL 结果仍保留在当前会话中。"
             )
 
-        elapsed_ms = round((perf_counter() - started) * 1000)
+        elapsed_ms = round((perf_counter() - start_time) * 1000)
         _record_run(
             run_id=run_id,
             thread_id=thread_id,
             model=request.model,
             status=status,
             latency_ms=elapsed_ms,
-            details=details,
+            details=turn_result,
             created_at=created_at,
         )
-        recorded = True
-        response = _run_response(
+        run_was_recorded = True
+        final_response = _run_response(
             run_id=run_id,
             thread_id=thread_id,
             model=request.model,
             status=status,
             latency_ms=elapsed_ms,
-            details=details,
+            details=turn_result,
         )
-        yield encode_event({"type": "final", "run_id": run_id, "response": response})
+        yield encode_event(
+            {
+                "type": "final",
+                "run_id": run_id,
+                "response": final_response,
+            }
+        )
     except GeneratorExit:
-        control.cancel_requested.set()
+        run_control.cancel_requested.set()
         raise
     except Exception as error:
-        elapsed_ms = round((perf_counter() - started) * 1000)
-        if not recorded:
+        elapsed_ms = round((perf_counter() - start_time) * 1000)
+        if not run_was_recorded:
             _record_run(
                 run_id=run_id,
                 thread_id=thread_id,
                 model=request.model,
                 status="error",
                 latency_ms=elapsed_ms,
-                details=details,
+                details=turn_result,
                 created_at=created_at,
             )
-            recorded = True
+            run_was_recorded = True
         yield encode_event(
             {
                 "type": "error",
@@ -493,8 +523,8 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
             }
         )
     finally:
-        if stream is not None and hasattr(stream, "close"):
-            stream.close()
+        if graph_stream is not None and hasattr(graph_stream, "close"):
+            graph_stream.close()
         with ACTIVE_RUNS_LOCK:
             ACTIVE_RUNS.pop(run_id, None)
 
@@ -502,56 +532,68 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
 def run_agent(request: ChatRequest) -> dict:
     from langchain_core.messages import AIMessage, HumanMessage
 
-    thread_id, config = build_agent_config(request)
+    thread_id, run_config = build_agent_config(request)
     run_id = str(uuid4())
-    started = perf_counter()
+    start_time = perf_counter()
     status = "success"
-    graph = _agent_graph()
-    input_payload = {
+    round_graph = _agent_graph()
+    graph_input = {
         "messages": [HumanMessage(content=request.question.strip())]
     }
-    completed = False
+    has_final_answer = False
 
     with GRAPH_RUN_LOCK:
-        if not _prepare_checkpoint_for_new_input(graph, config):
+        if not _prepare_checkpoint_for_new_input(round_graph, run_config):
             raise RuntimeError(
                 "当前会话的上一批工具消息不完整，Runtime 已拒绝写入"
                 "这次新问题。"
             )
-        for _recursion_index in range(_max_recursions(config)):
-            result = graph.invoke(input_payload, config=config)
-            input_payload = {}
-            messages = list(result.get("messages", []))
-            if _tool_protocol_state(messages) != "complete":
+        for _recursion_index in range(_max_recursions(run_config)):
+            round_result = round_graph.invoke(graph_input, config=run_config)
+            graph_input = {}
+            conversation_messages = list(round_result.get("messages", []))
+            if _tool_protocol_state(conversation_messages) != "complete":
                 raise RuntimeError(
                     "单轮 Agent Loop 结束后仍存在未闭合的工具消息。"
                 )
-            reply = messages[-1] if messages else None
-            if isinstance(reply, AIMessage) and not reply.tool_calls:
-                completed = True
+            latest_message = (
+                conversation_messages[-1]
+                if conversation_messages
+                else None
+            )
+            if (
+                isinstance(latest_message, AIMessage)
+                and not latest_message.tool_calls
+            ):
+                has_final_answer = True
                 break
 
-        if completed:
+        if has_final_answer:
             status = "success"
-            details = _turn_result(messages)
+            turn_result = _turn_result(conversation_messages)
         else:
-            pause_summary = _generate_pause_summary(
-                messages,
+            recursion_limit_summary = _generate_recursion_limit_summary(
+                conversation_messages,
                 model_name=request.model,
             )
-            graph.update_state(config, {"messages": [pause_summary]})
-            snapshot = graph.get_state(config)
-            details = _turn_result(list(snapshot.values.get("messages", [])))
+            round_graph.update_state(
+                run_config,
+                {"messages": [recursion_limit_summary]},
+            )
+            saved_state = round_graph.get_state(run_config)
+            turn_result = _turn_result(
+                list(saved_state.values.get("messages", []))
+            )
             status = "paused"
 
-    elapsed_ms = round((perf_counter() - started) * 1000)
+    elapsed_ms = round((perf_counter() - start_time) * 1000)
     _record_run(
         run_id=run_id,
         thread_id=thread_id,
         model=request.model,
         status=status,
         latency_ms=elapsed_ms,
-        details=details,
+        details=turn_result,
     )
     return _run_response(
         run_id=run_id,
@@ -559,5 +601,5 @@ def run_agent(request: ChatRequest) -> dict:
         model=request.model,
         status=status,
         latency_ms=elapsed_ms,
-        details=details,
+        details=turn_result,
     )

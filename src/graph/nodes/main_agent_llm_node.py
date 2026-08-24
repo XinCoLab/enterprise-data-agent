@@ -61,10 +61,10 @@ def _requested_model(config: RunnableConfig | None) -> str:
     return model_name
 
 
-def _invalid_tool_json_fallback(reply: AIMessage) -> AIMessage | None:
+def _invalid_tool_json_fallback(model_output: AIMessage) -> AIMessage | None:
     """Convert provider-parsed malformed Tool JSON into a terminal response."""
 
-    invalid_calls = list(getattr(reply, "invalid_tool_calls", []) or [])
+    invalid_calls = list(getattr(model_output, "invalid_tool_calls", []) or [])
     if not invalid_calls:
         return None
     return AIMessage(
@@ -100,8 +100,8 @@ def main_agent_llm_node(state: Text2SQLState, config: RunnableConfig | None = No
         runtime_subglobal_graph=subglobal_graph_text,
     )
     model_input = inject_runtime_database_context(model_input)
-    reply = _model_with_tools(_requested_model(config)).invoke(model_input)
-    invalid_json_fallback = _invalid_tool_json_fallback(reply)
+    model_output = _model_with_tools(_requested_model(config)).invoke(model_input)
+    invalid_json_fallback = _invalid_tool_json_fallback(model_output)
     if invalid_json_fallback is not None:
         return {"messages": [invalid_json_fallback]}
     global_graph_included = knowledge_view_mode in {"GLOBAL", "REGLOBAL"}
@@ -122,12 +122,12 @@ def main_agent_llm_node(state: Text2SQLState, config: RunnableConfig | None = No
         "navigation_context_chars": navigation_context_chars,
         "navigation_context_token_estimate": round(navigation_context_chars / 4),
     }
-    reply = reply.model_copy(
+    model_output = model_output.model_copy(
         update={
             "response_metadata": {
-                **(reply.response_metadata or {}),
+                **(model_output.response_metadata or {}),
                 "knowledge_view": knowledge_view_trace,
             }
         }
     )
-    return {"messages": [reply]}
+    return {"messages": [model_output]}

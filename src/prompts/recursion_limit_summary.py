@@ -1,4 +1,4 @@
-"""Temporary Runtime prompt used only after an Agent run exhausts its loop."""
+"""Generate a fallback summary after an Agent run exhausts its recursion limit."""
 
 import json
 
@@ -7,10 +7,10 @@ from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, ToolMes
 from model_clients.llm_api_clients import get_main_llm
 
 
-RUNTIME_PAUSE_SUMMARY_PROMPT = """[Runtime pause event]
+RECURSION_LIMIT_SUMMARY_PROMPT = """[Recursion limit reached]
 
-The Agent has exhausted the recursion budget for this run. This is a Runtime
-pause, not evidence that the database or a Tool failed.
+The Agent has exhausted the recursion budget for this run. This is not evidence
+that the database or a Tool failed.
 
 Using only the existing conversation, Tool Calls, and Tool Results:
 - summarize what has already been completed;
@@ -26,12 +26,12 @@ Using only the existing conversation, Tool Calls, and Tool Results:
 """
 
 
-def generate_runtime_pause_summary(
+def generate_recursion_limit_summary(
     messages: list[AnyMessage],
     *,
     model_name: str,
 ) -> AnyMessage:
-    """Generate one Tool-free pause report without persisting its prompt."""
+    """Summarize completed work and the next step without calling Tools."""
 
     transcript: list[str] = []
     for message in messages:
@@ -62,7 +62,7 @@ def generate_runtime_pause_summary(
     model = get_main_llm(model_name)
     return model.invoke(
         [
-            SystemMessage(content=RUNTIME_PAUSE_SUMMARY_PROMPT),
+            SystemMessage(content=RECURSION_LIMIT_SUMMARY_PROMPT),
             HumanMessage(
                 content="[Existing run transcript]\n\n" + "\n\n".join(transcript)
             ),

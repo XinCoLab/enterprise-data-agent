@@ -303,7 +303,7 @@ def test_streaming_runtime_counts_one_complete_tool_cycle_as_one_recursion(
     assert fake_graph.emitted_terminal_answer is True
 
 
-def test_max_recursions_generates_tool_free_pause_summary_after_a_full_round(
+def test_max_recursions_generates_tool_free_fallback_summary(
     tmp_path: Path,
     monkeypatch,
 ):
@@ -316,7 +316,7 @@ def test_max_recursions_generates_tool_free_pause_summary_after_a_full_round(
     monkeypatch.setattr(agent_runtime, "_agent_graph", lambda: fake_graph)
     monkeypatch.setattr(
         agent_runtime,
-        "_generate_pause_summary",
+        "_generate_recursion_limit_summary",
         lambda _messages, **_kwargs: AIMessage(content="Pause report"),
     )
     monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", settings_path)
@@ -337,12 +337,12 @@ def test_max_recursions_generates_tool_free_pause_summary_after_a_full_round(
     assert fake_graph.emitted_terminal_answer is False
 
 
-def test_pause_summary_never_persists_new_tool_calls(monkeypatch):
-    from prompts import runtime_pause_summary
+def test_recursion_limit_summary_never_persists_new_tool_calls(monkeypatch):
+    from prompts import recursion_limit_summary
 
     monkeypatch.setattr(
-        runtime_pause_summary,
-        "generate_runtime_pause_summary",
+        recursion_limit_summary,
+        "generate_recursion_limit_summary",
         lambda _messages, **_kwargs: AIMessage(
             content='<|DSML|tool_calls><|DSML|invoke name="read_knowledge">',
             tool_calls=[
@@ -355,14 +355,14 @@ def test_pause_summary_never_persists_new_tool_calls(monkeypatch):
         ),
     )
 
-    reply = agent_runtime._generate_pause_summary(
+    model_output = agent_runtime._generate_recursion_limit_summary(
         [HumanMessage(content="复杂分析任务")],
         model_name="deepseek-v4-pro",
     )
 
-    assert reply.content
-    assert "DSML" not in reply.content
-    assert reply.tool_calls == []
+    assert model_output.content
+    assert "DSML" not in model_output.content
+    assert model_output.tool_calls == []
 
 
 def test_agent_config_separates_product_recursions_from_langgraph_guard(

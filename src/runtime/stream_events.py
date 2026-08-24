@@ -87,12 +87,12 @@ def llm_round_event(part: dict, round_number: int) -> dict | None:
     if not isinstance(main_update, dict):
         return None
     messages = main_update.get("messages", [])
-    reply = messages[-1] if messages else None
-    if not isinstance(reply, AIMessage):
+    model_output = messages[-1] if messages else None
+    if not isinstance(model_output, AIMessage):
         return None
 
     tool_calls = []
-    for call in reply.tool_calls:
+    for call in model_output.tool_calls:
         arguments = call.get("args", {})
         if not isinstance(arguments, dict):
             arguments = {"value": str(arguments)}
@@ -107,7 +107,7 @@ def llm_round_event(part: dict, round_number: int) -> dict | None:
         "type": "round",
         "stage": "Main Agent LLM",
         "round": round_number,
-        "content": visible_ai_content(reply.content),
+        "content": visible_ai_content(model_output.content),
         "tool_calls": tool_calls,
         "message": (
             "本轮模型输出已生成，正在执行工具。"
@@ -132,7 +132,7 @@ def update_progress_events(part: dict) -> list[dict]:
 
 
 def safe_cancel_boundary(part: dict) -> bool:
-    """Stop only after a complete Tool round or terminal Assistant reply."""
+    """Stop only after Tool execution or a terminal Assistant message."""
 
     from langchain_core.messages import AIMessage
 
@@ -145,5 +145,8 @@ def safe_cancel_boundary(part: dict) -> bool:
     if not isinstance(main_update, dict):
         return False
     messages = main_update.get("messages", [])
-    reply = messages[-1] if messages else None
-    return isinstance(reply, AIMessage) and not reply.tool_calls
+    latest_message = messages[-1] if messages else None
+    return (
+        isinstance(latest_message, AIMessage)
+        and not latest_message.tool_calls
+    )
