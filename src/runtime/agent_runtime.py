@@ -20,6 +20,7 @@ from api.schemas import ChatRequest
 from config.project_paths import CONFIG_ROOT
 from runtime.stream_events import (
     encode_event,
+    knowledge_trace_events,
     llm_round_event,
     safe_cancel_boundary,
     task_progress_event,
@@ -392,6 +393,9 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
                         if round_event is not None:
                             round_event["run_id"] = run_id
                             yield encode_event(round_event)
+                        for event in knowledge_trace_events(stream_part):
+                            event["run_id"] = run_id
+                            yield encode_event(event)
                         for event in update_progress_events(stream_part):
                             event["run_id"] = run_id
                             yield encode_event(event)
