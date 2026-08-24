@@ -530,32 +530,54 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
 
 
 def run_agent(request: ChatRequest) -> dict:
+    """同步执行一个用户回合，直到得到最终回答或达到循环上限。"""
+
     from langchain_core.messages import AIMessage, HumanMessage
 
+    # thread_id 用于从 Checkpointer 找回同一会话的历史状态；run_id 只标识本次运行。
     thread_id, run_config = build_agent_config(request)
     run_id = str(uuid4())
     start_time = perf_counter()
     status = "success"
+
+    # round_graph 定义“一轮”固定流程：
+    # LLM ->（如果有 Tool Call）安全检查 -> 工具执行 -> END。
+    # 外层 for 循环负责决定是否再启动下一轮。
     round_graph = _agent_graph()
+
+    # 只有第一轮需要把本次用户问题写入图状态。
     graph_input = {
         "messages": [HumanMessage(content=request.question.strip())]
     }
     has_final_answer = False
 
+    # 同一个 Checkpointer 当前按串行方式运行，防止并发修改同一份会话状态。
     with GRAPH_RUN_LOCK:
+        # 如果上次运行恰好停在 Tool Call 与 ToolMessage 之间，先尝试补完工具轮次，
+        # 避免向一段不完整的消息协议后面直接追加新的 HumanMessage。
         if not _prepare_checkpoint_for_new_input(round_graph, run_config):
             raise RuntimeError(
                 "当前会话的上一批工具消息不完整，Runtime 已拒绝写入"
                 "这次新问题。"
             )
         for _recursion_index in range(_max_recursions(run_config)):
+            # 一次 invoke 会完整执行一轮 round_graph，并返回更新后的图状态。
             round_result = round_graph.invoke(graph_input, config=run_config)
+
+            # 后续轮次不再添加新的用户消息。空字典不是清空状态：LangGraph 会根据
+            # run_config 中的 thread_id，从 Checkpointer 继续读取上一轮保存的 messages。
             graph_input = {}
             conversation_messages = list(round_result.get("messages", []))
+
+            # 一轮结束时，每个 AI Tool Call 都必须已经有对应的 ToolMessage，
+            # 否则下一次调用模型会违反消息协议。
             if _tool_protocol_state(conversation_messages) != "complete":
                 raise RuntimeError(
                     "单轮 Agent Loop 结束后仍存在未闭合的工具消息。"
                 )
+
+            # 最后一条消息如果是没有 Tool Call 的 AIMessage，说明模型已经给出
+            # 最终回答；否则工具结果已经保存，外层循环会继续启动下一轮。
             latest_message = (
                 conversation_messages[-1]
                 if conversation_messages
@@ -572,6 +594,8 @@ def run_agent(request: ChatRequest) -> dict:
             status = "success"
             turn_result = _turn_result(conversation_messages)
         else:
+            # 循环次数用完仍没有最终回答：额外生成一次兜底总结并写回会话，
+            # 让用户知道已经完成什么、卡在哪里，并可在同一会话中继续。
             recursion_limit_summary = _generate_recursion_limit_summary(
                 conversation_messages,
                 model_name=request.model,
@@ -586,6 +610,7 @@ def run_agent(request: ChatRequest) -> dict:
             )
             status = "paused"
 
+    # 以下只负责记录运行信息并整理 HTTP 返回结构，不再执行 Agent 逻辑。
     elapsed_ms = round((perf_counter() - start_time) * 1000)
     _record_run(
         run_id=run_id,
