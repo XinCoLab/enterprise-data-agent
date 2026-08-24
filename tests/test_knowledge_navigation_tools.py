@@ -18,7 +18,7 @@ from tools.read_knowledge import read_knowledge
 from tools.search_knowledge import search_knowledge
 
 
-BUNDLED_DEMO_ROOT = Path(__file__).resolve().parents[2] / "knowledge"
+BUNDLED_DEMO_ROOT = Path(__file__).resolve().parents[1] / "knowledge"
 
 
 class BundledColdChainDemoCatalogTest(unittest.TestCase):

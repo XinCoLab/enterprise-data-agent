@@ -1,6 +1,6 @@
 import unittest
 
-from run_livesqlbench_smoke import _results_match
+from benchmarks.run_livesqlbench_smoke import _results_match
 
 
 class LiveSQLBenchResultMatchingTest(unittest.TestCase):
