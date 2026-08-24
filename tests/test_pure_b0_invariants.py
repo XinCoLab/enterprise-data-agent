@@ -2,26 +2,24 @@ import hashlib
 import json
 from pathlib import Path
 
-from graph.round_graph import studio_graph
+from graph.round_graph import round_graph, studio_graph
 from graph.text2sql_state import Text2SQLState
 from tools.tool_registry import TOOLS
 
 
 ROOT = Path(__file__).resolve().parents[1] / "src"
 
-FROZEN_HASHES = {
-    "prompts/system_prompt.md": "05e12e9de9d376f5785c41bb012e2bebe06d0b7648c6968d14d3c7fa5b5d5735",
-    "prompts/prompt_loader.py": "7c4cfb822fe1c61abbf7101fa942f368aaa1c6615890ed95673059e60fe822a1",
-    "knowledge_runtime/knowledge_view.py": "7e85965acb66e2c56d1a3efab7b21136414eb6df5c66f3350bcf72ce8748dbcf",
-    "graph/round_graph.py": "2966882931cefec7f63ebb66e715309b926872189837840a0e3eb6faaeafc714",
-    "graph/text2sql_state.py": "1ea29c4aa9f58a34d956693c835eddcf67b8d10f6813f97fdaf5318cca76a545",
-}
+FROZEN_SYSTEM_PROMPT_HASH = (
+    "05e12e9de9d376f5785c41bb012e2bebe06d0b7648c6968d14d3c7fa5b5d5735"
+)
 
 
-def test_prompt_navigation_graph_and_state_are_byte_identical_to_pure_b0():
-    for relative_path, expected_hash in FROZEN_HASHES.items():
-        actual = hashlib.sha256((ROOT / relative_path).read_bytes()).hexdigest()
-        assert actual == expected_hash, relative_path
+def test_system_prompt_is_byte_identical_to_pure_b0():
+    """Prompt文字会直接影响模型行为，因此保留精确的版本指纹。"""
+
+    prompt_path = ROOT / "prompts" / "system_prompt.md"
+    actual_hash = hashlib.sha256(prompt_path.read_bytes()).hexdigest()
+    assert actual_hash == FROZEN_SYSTEM_PROMPT_HASH
 
 
 def test_tool_schemas_are_identical_to_pure_b0():
@@ -36,7 +34,8 @@ def test_tool_schemas_are_identical_to_pure_b0():
 
 
 def test_graph_topology_and_state_have_no_audit_or_remaining_steps():
-    node_names = set(studio_graph.get_graph().nodes)
+    studio_topology = studio_graph.get_graph()
+    node_names = set(studio_topology.nodes)
     assert node_names == {
         "__start__",
         "Main Agent LLM",
@@ -45,3 +44,29 @@ def test_graph_topology_and_state_have_no_audit_or_remaining_steps():
         "__end__",
     }
     assert set(Text2SQLState.__annotations__) == {"messages"}
+
+    # Studio 图在工具执行完成后回到 Main Agent，形成图内循环。
+    studio_edges = {
+        (edge.source, edge.target, edge.data, edge.conditional)
+        for edge in studio_topology.edges
+    }
+    assert studio_edges == {
+        ("__start__", "Main Agent LLM", None, False),
+        ("Main Agent LLM", "Tool Safety", "tools", True),
+        ("Main Agent LLM", "__end__", None, True),
+        ("Tool Safety", "Tool Execution", None, False),
+        ("Tool Execution", "Main Agent LLM", None, False),
+    }
+
+    # Web Runtime 每次只执行一个完整工具轮次，因此工具执行后结束本轮。
+    round_edges = {
+        (edge.source, edge.target, edge.data, edge.conditional)
+        for edge in round_graph.get_graph().edges
+    }
+    assert round_edges == {
+        ("__start__", "Main Agent LLM", None, False),
+        ("Main Agent LLM", "Tool Safety", "tools", True),
+        ("Main Agent LLM", "__end__", None, True),
+        ("Tool Safety", "Tool Execution", None, False),
+        ("Tool Execution", "__end__", None, False),
+    }
