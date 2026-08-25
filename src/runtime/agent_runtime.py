@@ -127,6 +127,7 @@ def _turn_result(messages: list) -> dict:
     tool_results: dict[str, dict] = {}
     final_answer = ""
     navigation_trace = None
+    artifacts: list[dict[str, str]] = []
 
     for message in current:
         if isinstance(message, AIMessage):
@@ -149,6 +150,20 @@ def _turn_result(messages: list) -> dict:
             except (TypeError, json.JSONDecodeError):
                 payload = {"raw": str(message.content)[:1000]}
             tool_results[message.tool_call_id] = payload
+            artifact = payload.get("artifact")
+            if (
+                isinstance(artifact, dict)
+                and artifact.get("kind") == "report"
+                and isinstance(artifact.get("preview_url"), str)
+            ):
+                artifacts.append(
+                    {
+                        "id": str(artifact.get("id", "")),
+                        "kind": "report",
+                        "title": str(artifact.get("title", "报告")),
+                        "preview_url": artifact["preview_url"],
+                    }
+                )
 
     sql_queries = [
         {
@@ -166,12 +181,33 @@ def _turn_result(messages: list) -> dict:
         and isinstance(item["result"].get("rows"), list)
     ]
     tool_counts = Counter(call["name"] for call in tool_calls)
+    if artifacts:
+        final_answer = re.sub(
+            r"(?:Dashboard\s*已生成[，,。]?\s*)?"
+            r"预览地址\s*[:：]\s*`?"
+            r"/api/artifacts/[A-Za-z0-9_-]+/view`?[。.]?",
+            "Dashboard 已生成。",
+            final_answer,
+            flags=re.IGNORECASE,
+        )
+        final_answer = re.sub(
+            r"`?/api/artifacts/[A-Za-z0-9_-]+/view`?",
+            "",
+            final_answer,
+        )
+        final_answer = re.sub(r"\n{3,}", "\n\n", final_answer).strip()
+    if artifacts and any(
+        marker in final_answer.lower()
+        for marker in ("<!doctype html", "<html", "<style", "<script")
+    ):
+        final_answer = "报告已生成。"
     return {
         "answer": final_answer,
         "tool_counts": dict(sorted(tool_counts.items())),
         "sql_queries": sql_queries,
         "result_preview": successful_results[-1] if successful_results else None,
         "knowledge_view": navigation_trace,
+        "artifacts": artifacts,
     }
 
 
@@ -182,6 +218,7 @@ def _empty_turn_result() -> dict:
         "sql_queries": [],
         "result_preview": None,
         "knowledge_view": None,
+        "artifacts": [],
     }
 
 

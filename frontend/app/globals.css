@@ -293,6 +293,11 @@ th { background:#f7f8fa; color:#596476; font-weight:600; }
 .toast.error { border-color:#e6b2b2; color:var(--red); }
 .toast.info { border-color:#cbd7e9; color:#40506b; }
 .toast button { border:0; background:transparent; color:currentColor; font-size:16px; line-height:1; }
+.artifact-preview { margin-top:18px; overflow:hidden; border:1px solid var(--line); border-radius:12px; background:#fff; box-shadow:0 12px 34px rgba(35,50,80,.08); }
+.artifact-preview header { height:54px; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:0 16px; border-bottom:1px solid var(--line); }
+.artifact-preview h3 { margin:0; font-size:16px; }
+.artifact-preview a { color:var(--blue); font-size:12px; text-decoration:none; }
+.artifact-preview iframe { width:100%; height:620px; display:block; border:0; background:#f5f7fb; }
 @media (prefers-reduced-motion:reduce) {
   .round-status-text { color:var(--muted); background:none; animation:none; }
   .round-status-dot { animation:none; }

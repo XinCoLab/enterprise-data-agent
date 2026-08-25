@@ -95,7 +95,7 @@ class GenericPromptTest(unittest.TestCase):
 
 
 class GenericToolProfileTest(unittest.TestCase):
-    def test_agent_exposes_only_the_minimal_four_tools(self):
+    def test_agent_exposes_data_and_visualization_tools(self):
         self.assertEqual(
             [tool.name for tool in TOOLS],
             [
@@ -103,6 +103,10 @@ class GenericToolProfileTest(unittest.TestCase):
                 "search_knowledge",
                 "read_knowledge",
                 "execute_readonly_sql",
+                "create_metric_cards",
+                "create_chart",
+                "compose_dashboard",
+                "export_report",
             ],
         )
 
@@ -135,7 +139,7 @@ class GenericToolProfileTest(unittest.TestCase):
             module_name = inspect.getmodule(registered_tool.func).__name__
             self.assertEqual(module_name.rsplit(".", 1)[-1], registered_tool.name)
 
-    def test_tools_package_contains_only_four_llm_tools_and_registry(self):
+    def test_tools_package_matches_the_active_registry(self):
         tool_files = {
             path.name
             for path in (AI_APP_LAB_ROOT / "src" / "tools").glob("*.py")
@@ -149,6 +153,10 @@ class GenericToolProfileTest(unittest.TestCase):
                 "search_knowledge.py",
                 "read_knowledge.py",
                 "execute_readonly_sql.py",
+                "create_metric_cards.py",
+                "create_chart.py",
+                "compose_dashboard.py",
+                "export_report.py",
             },
         )
 

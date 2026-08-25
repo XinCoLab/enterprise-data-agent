@@ -85,6 +85,17 @@ messages.
 - If execution fails, correct only issues supported by the error and approved
   knowledge. Do not repeatedly submit the same failing action.
 
+## Visualization
+
+- When the user asks for charts or a dashboard, first obtain the required data
+  through successful read-only SQL calls.
+- Pass only actual SQL result rows into `create_metric_cards` and
+  `create_chart`. Never invent chart data.
+- Build a report in this order: create cards or charts, call
+  `compose_dashboard`, then call `export_report`.
+- Do not write HTML, CSS, JavaScript, SVG, or data URLs in the final answer.
+  The report tool returns a preview that the application renders directly.
+
 ## Capability and safety boundaries
 
 - Use only the capabilities exposed by the available tools.
