@@ -107,6 +107,45 @@ def test_model_settings_store_key_without_returning_it(tmp_path: Path, monkeypat
     assert f"DEEPSEEK_API_KEY={secret}" in secrets_path.read_text(encoding="utf-8")
 
 
+def test_delete_profile_removes_document_and_saved_secret(tmp_path: Path, monkeypatch):
+    profiles_root = tmp_path / "profiles"
+    secrets_root = tmp_path / "profile_secrets"
+    profiles_root.mkdir()
+    secrets_root.mkdir()
+    profile_path = profiles_root / "old-profile.json"
+    secret_path = secrets_root / "old-profile.env"
+    profile_path.write_text("{}", encoding="utf-8")
+    secret_path.write_text("DATA_AGENT_MYSQL_PASSWORD=secret", encoding="utf-8")
+    active_path = tmp_path / ".active_profile"
+    active_path.write_text("other-profile", encoding="utf-8")
+    monkeypatch.setattr(config_server, "PROFILES_ROOT", profiles_root)
+    monkeypatch.setattr(config_server, "PROFILE_SECRETS_ROOT", secrets_root)
+    monkeypatch.setattr(config_server, "ACTIVE_PROFILE_PATH", active_path)
+
+    response = client.delete("/api/profiles/old-profile")
+
+    assert response.status_code == 200
+    assert not profile_path.exists()
+    assert not secret_path.exists()
+
+
+def test_delete_profile_rejects_active_profile(tmp_path: Path, monkeypatch):
+    profiles_root = tmp_path / "profiles"
+    profiles_root.mkdir()
+    profile_path = profiles_root / "active-profile.json"
+    profile_path.write_text("{}", encoding="utf-8")
+    active_path = tmp_path / ".active_profile"
+    active_path.write_text("active-profile", encoding="utf-8")
+    monkeypatch.setattr(config_server, "PROFILES_ROOT", profiles_root)
+    monkeypatch.setattr(config_server, "PROFILE_SECRETS_ROOT", tmp_path / "profile_secrets")
+    monkeypatch.setattr(config_server, "ACTIVE_PROFILE_PATH", active_path)
+
+    response = client.delete("/api/profiles/active-profile")
+
+    assert response.status_code == 409
+    assert profile_path.exists()
+
+
 def test_apply_payload_updates_database_environment_immediately(
     tmp_path: Path,
     monkeypatch,

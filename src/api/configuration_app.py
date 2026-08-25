@@ -711,6 +711,41 @@ def save_and_apply(payload: ProfilePayload):
         raise HTTPException(status_code=400, detail=f"保存失败：{error}") from error
 
 
+@app.delete("/api/profiles/{profile_id}")
+def delete_profile(profile_id: str):
+    """Delete one inactive database profile and its separately stored secret."""
+
+    if not PROFILE_ID.fullmatch(profile_id):
+        raise HTTPException(status_code=400, detail="配置方案 ID 不合法。")
+    active_profile_id = (
+        ACTIVE_PROFILE_PATH.read_text(encoding="utf-8").strip()
+        if ACTIVE_PROFILE_PATH.is_file()
+        else ""
+    )
+    if profile_id == active_profile_id:
+        raise HTTPException(
+            status_code=409,
+            detail="当前生效配置不能删除，请先保存并应用其他配置。",
+        )
+
+    profile_path = PROFILES_ROOT / f"{profile_id}.json"
+    if not profile_path.is_file():
+        raise HTTPException(status_code=404, detail="配置方案不存在。")
+    try:
+        profile_path.unlink()
+        _profile_secret_path(profile_id).unlink(missing_ok=True)
+    except OSError as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"删除配置失败：{_safe_error_text(error)}",
+        ) from error
+    return {
+        "status": "success",
+        "message": "数据源配置已删除。",
+        "profile_id": profile_id,
+    }
+
+
 @app.post("/api/apply-profile")
 def apply_profile(reference: ProfileReference):
     profile = _load_profile(reference.profile_id)
