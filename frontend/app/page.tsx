@@ -108,16 +108,9 @@ function ResultTable({ result }: { result?: SqlResult | null }) {
   return <div className="result-block"><div className="result-heading"><strong>该 SQL 的查询结果</strong><span>{result.returned_rows ?? rows.length} 行{result.truncated ? " · 已截断" : ""}</span></div><div className="table-scroll"><table><thead><tr>{result.columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{rows.length ? rows.map((row, rowIndex) => <tr key={rowIndex}>{result.columns!.map((column) => <td key={column}>{String(row[column] ?? "NULL")}</td>)}</tr>) : <tr><td colSpan={result.columns.length}>结果为空</td></tr>}</tbody></table></div></div>;
 }
 
-const toolNames: Record<string, string> = {
-  browse_knowledge: "浏览 Knowledge 目录",
-  search_knowledge: "搜索 Knowledge",
-  read_knowledge: "读取 KnowledgeCard",
-  execute_readonly_sql: "执行只读 SQL",
-};
-
 function ToolCallCard({ call }: { call: ToolCallView }) {
   const sql = typeof call.arguments.sql === "string" ? call.arguments.sql : "";
-  return <div className="round-tool-call"><div className="round-tool-heading"><strong>{toolNames[call.name] || call.name}</strong><code>{call.name}</code></div><pre><code>{sql || JSON.stringify(call.arguments, null, 2)}</code></pre></div>;
+  return <div className="round-tool-call"><div className="round-tool-heading"><code>{call.name}</code></div><pre><code>{sql || JSON.stringify(call.arguments, null, 2)}</code></pre></div>;
 }
 
 export default function Home() {
@@ -291,9 +284,10 @@ export default function Home() {
     setRoundStatus("");
   };
   const openConversation = (conversation: ConversationHistoryItem) => {
-    if (chatBusy || conversation.threadId === threadId) return;
+    if (chatBusy) return;
     setConversationMenu(null);
     setPage("analysis");
+    if (conversation.threadId === threadId) return;
     setThreadId(conversation.threadId);
     setMessages(conversation.messages);
     setQuestion("");
@@ -313,6 +307,12 @@ export default function Home() {
     if (conversation.threadId === threadId) newConversation();
   };
   const saveAndApply = async () => { const result = await runAction("save", () => api("/api/save-and-apply", { method: "POST", body: JSON.stringify(form) })); if (result) { await loadState(form.id); setRuntimeRevision((current) => current + 1); newConversation(); } };
+  const deleteProfile = async () => {
+    if (!selectedProfile || selectedProfile.id === state?.active.id) return;
+    if (!window.confirm(`删除数据源配置“${selectedProfile.label}”？`)) return;
+    const result = await runAction("delete-profile", () => api(`/api/profiles/${encodeURIComponent(selectedProfile.id)}`, { method: "DELETE" }));
+    if (result) await loadState();
+  };
   const saveModelSettings = async () => { const result = await runAction("model", () => api("/api/model-settings", { method: "POST", body: JSON.stringify({ model, api_key: modelApiKey }) })); if (result) { setModelApiKey(""); await loadState(form.id); } };
   const uploadKnowledge = async (file?: File) => {
     if (!file) return;
@@ -346,7 +346,7 @@ export default function Home() {
       {messages.length === 0 ? <div className="empty-state"><h2>开始一次数据分析</h2></div> : messages.map((message) => <article className={`message ${message.role}`} key={message.id}>
         {message.role === "assistant" ? <AnswerBody content={message.content} /> : <p>{message.content}</p>}
         {message.details && <details className="run-details"><summary>查看 SQL 与运行信息</summary><div className="metric-row"><span>{(message.details.latency_ms / 1000).toFixed(1)} 秒</span><span>{message.details.sql_queries.length} 次 SQL</span><span>{message.details.knowledge_view?.knowledge_view_mode || "-"} View</span>{message.details.status === "paused" && <span className="warning-text">已暂停</span>}</div>{message.details.sql_queries.map((query, queryIndex) => <div className="sql-card" key={query.tool_call_id || queryIndex}><div>SQL {queryIndex + 1}</div><pre><code>{query.sql}</code></pre><ResultTable result={query.result} /></div>)}</details>}
-      </article>)}{chatBusy && <article className="message assistant pending">{currentRound && <><div className="message-label">第 {currentRound.number} 轮</div><div className="current-round">{currentRound.content ? <><div className="round-section-title">模型本轮输出</div><AnswerBody content={currentRound.content} /></> : <p className="round-empty">本轮没有文本输出，模型直接发起了 Tool Call。</p>}{currentRound.toolCalls.length > 0 && <div className="round-tools"><div className="round-section-title">本轮 Tool Call</div>{currentRound.toolCalls.map((call, index) => <ToolCallCard call={call} key={`${call.name}-${index}`} />)}</div>}</div></>}<div className="round-status"><span className="round-status-dot" /><span className="round-status-text">{roundStatus || "正在分析现有信息并决定下一步…"}</span></div>{stopRequested && <small>停止将在当前模型或工具调用结束后的安全位置生效。</small>}</article>}
+      </article>)}{chatBusy && <article className="message assistant pending"><div className="round-status"><span className="round-status-dot" /><span className="round-status-text">{roundStatus || "正在分析现有信息并决定下一步…"}</span></div>{currentRound && <div className="current-round">{currentRound.content && <AnswerBody content={currentRound.content} />}{currentRound.toolCalls.length > 0 && <div className="round-tools">{currentRound.toolCalls.map((call, index) => <ToolCallCard call={call} key={`${call.name}-${index}`} />)}</div>}</div>}{stopRequested && <small>停止将在当前模型或工具调用结束后的安全位置生效。</small>}</article>}
     </div>{liveKnowledgeTrace && !liveKnowledgeMinimized && <div className={`live-knowledge-overlay ${liveKnowledgeClosing ? "closing" : ""}`} aria-live="polite"><div className="live-knowledge-stage"><button className="live-knowledge-minimize" type="button" onClick={() => setLiveKnowledgeMinimized(true)} aria-label="收起 Knowledge 导航">×</button><KnowledgeGraph revision={runtimeRevision} live liveTrace={liveKnowledgeTrace} /></div></div>}{liveKnowledgeTrace && liveKnowledgeMinimized && <button className="live-knowledge-reopen" type="button" onClick={() => setLiveKnowledgeMinimized(false)}><span />查看 Knowledge 导航</button>}<div className="composer"><textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendQuestion(); } }} placeholder="询问 DataAgent" /><button className={`send-button ${chatBusy ? "stop-button" : ""}`} aria-label={chatBusy ? "停止分析" : "发送"} disabled={chatBusy ? !activeRunId || stopRequested : !question.trim()} onClick={chatBusy ? stopRun : () => sendQuestion()}>{chatBusy ? <span className="stop-symbol" /> : <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 15V5M6 9l4-4 4 4" /></svg>}</button></div></section>}
 
     {page === "database" && <section className="content-page database-page"><aside className="profile-panel"><div className="panel-heading"><h2>配置方案</h2><button onClick={() => setForm(emptyProfile())}>新建</button></div>{state.profiles.map((profile) => <button className={`profile-item ${profile.id === form.id ? "active" : ""}`} key={profile.id} onClick={() => setForm({ ...profile, password: "" })}><strong>{profile.label}</strong><span>{backendName(profile.backend)} · {profile.database || "本地文件"}</span></button>)}</aside>
@@ -354,7 +354,7 @@ export default function Home() {
         <label><span>方案名称</span><input value={form.label} onChange={(event) => update("label", event.target.value)} /></label><label><span>方案 ID</span><input disabled={Boolean(selectedProfile)} value={form.id} onChange={(event) => update("id", event.target.value.toLowerCase())} /></label>
         <label className="wide"><span>数据库类型</span><select value={form.backend} onChange={(event) => { const backend = event.target.value as Backend; setForm((current) => ({ ...current, backend, port: backend === "mysql" ? 3306 : backend === "postgresql" ? 5432 : 0 })); }}><option value="postgresql">PostgreSQL</option><option value="mysql">MySQL</option><option value="duckdb">DuckDB</option></select></label>
         {form.backend === "duckdb" ? <label className="wide"><span>DuckDB 文件</span><input value={form.duckdb_path} onChange={(event) => update("duckdb_path", event.target.value)} /></label> : <><label><span>Host</span><input value={form.host} onChange={(event) => update("host", event.target.value)} placeholder="host.docker.internal" /></label><label><span>Port</span><input type="number" value={form.port || ""} onChange={(event) => update("port", Number(event.target.value))} /></label><label><span>只读用户名</span><input value={form.username} onChange={(event) => update("username", event.target.value)} /></label><label><span>密码 {form.password_saved ? "（已保存）" : ""}</span><input type="password" value={form.password || ""} onChange={(event) => update("password", event.target.value)} placeholder={form.password_saved ? "留空继续使用" : ""} /></label><label className="wide"><span>数据库名称</span><input value={form.database} onChange={(event) => update("database", event.target.value)} placeholder="例如：cold_chain_pharma_compliance" /><small>填写 PostgreSQL 或 MySQL 中实际存在的数据库名称。</small></label></>}
-      </div><div className="form-actions"><button className="button secondary" disabled={Boolean(busy)} onClick={() => runAction("test", () => api("/api/test-database", { method: "POST", body: JSON.stringify(form) }))}>测试连接</button><button className="button primary" disabled={Boolean(busy)} onClick={saveAndApply}>保存并应用</button></div></div><div className="connection-overview"><div><span>数据库</span><strong>{backendName(form.backend)}</strong></div><div><span>连接地址</span><strong>{form.backend === "duckdb" ? "本地文件" : `${form.host || "-"}:${form.port || "-"}`}</strong></div><div><span>访问账号</span><strong>{form.username || "-"}</strong></div><div><span>访问模式</span><strong>只读事务</strong></div></div></div>
+      </div><div className="form-actions">{selectedProfile && <button className="button danger" title={selectedProfile.id === state.active.id ? "当前生效配置不能删除" : "删除数据源配置"} disabled={Boolean(busy) || selectedProfile.id === state.active.id} onClick={deleteProfile}>删除配置</button>}<button className="button secondary" disabled={Boolean(busy)} onClick={() => runAction("test", () => api("/api/test-database", { method: "POST", body: JSON.stringify(form) }))}>测试连接</button><button className="button primary" disabled={Boolean(busy)} onClick={saveAndApply}>保存并应用</button></div></div><div className="connection-overview"><div><span>数据库</span><strong>{backendName(form.backend)}</strong></div><div><span>连接地址</span><strong>{form.backend === "duckdb" ? "本地文件" : `${form.host || "-"}:${form.port || "-"}`}</strong></div><div><span>访问账号</span><strong>{form.username || "-"}</strong></div><div><span>访问模式</span><strong>只读事务</strong></div></div></div>
       <DatabaseExplorer revision={runtimeRevision} />
     </section>}
 

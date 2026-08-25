@@ -37,6 +37,8 @@ test("keeps database configuration domain-neutral", async () => {
   assert.match(source, /<option value="mysql">MySQL<\/option>/);
   assert.match(source, /database: ""/);
   assert.match(source, />数据库名称</);
+  assert.match(source, /deleteProfile/);
+  assert.match(source, />删除配置</);
   assert.match(source, /填写 PostgreSQL 或 MySQL 中实际存在的数据库名称/);
 });
 
@@ -64,6 +66,8 @@ test("exposes analysis, knowledge and model controls", async () => {
   assert.doesNotMatch(source, />运行</);
   assert.doesNotMatch(source, /输入业务问题。Agent 会查找/);
   assert.doesNotMatch(source, /输入数据分析问题，Enter 发送/);
+  assert.doesNotMatch(source, /模型本轮输出/);
+  assert.doesNotMatch(source, /本轮 Tool Call/);
 });
 
 test("renders the interactive Knowledge graph from runtime data", async () => {
@@ -108,8 +112,9 @@ test("streams Agent progress and exposes cooperative cancellation", async () => 
   assert.match(source, /\/api\/runs\/\$\{runId\}\/cancel/);
   assert.match(source, /停止将在当前模型或工具调用结束后的安全位置生效/);
   assert.match(source, /currentRound/);
-  assert.match(source, /模型本轮输出/);
-  assert.match(source, /本轮 Tool Call/);
+  assert.doesNotMatch(source, /本轮没有文本输出/);
+  assert.doesNotMatch(source, /模型本轮输出/);
+  assert.doesNotMatch(source, /本轮 Tool Call/);
   assert.doesNotMatch(source, /activityLog/);
 });
 
