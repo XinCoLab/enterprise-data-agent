@@ -50,7 +50,20 @@ test("exposes analysis, knowledge and model controls", async () => {
   assert.match(source, /保存后立即生效/);
   assert.doesNotMatch(source, /保存后重启生效/);
   assert.match(source, />Knowledge</);
-  assert.match(source, />运行</);
+  assert.match(source, /开始新分析/);
+  assert.match(source, /conversation-history/);
+  assert.match(source, /setPage\("analysis"\)/);
+  assert.doesNotMatch(source, /page === "analysis" && <div className="conversation-history"/);
+  assert.match(source, /renameConversation/);
+  assert.match(source, /deleteConversation/);
+  assert.match(source, />重命名</);
+  assert.match(source, />删除</);
+  assert.match(source, /placeholder="询问 DataAgent"/);
+  assert.match(source, /className="stop-symbol"/);
+  assert.doesNotMatch(source, /message\.role === "user" \? "你" : "DataAgent"/);
+  assert.doesNotMatch(source, />运行</);
+  assert.doesNotMatch(source, /输入业务问题。Agent 会查找/);
+  assert.doesNotMatch(source, /输入数据分析问题，Enter 发送/);
 });
 
 test("renders the interactive Knowledge graph from runtime data", async () => {

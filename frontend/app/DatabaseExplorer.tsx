@@ -52,7 +52,7 @@ export default function DatabaseExplorer({ revision }: { revision: number }) {
 
   return <section className="database-explorer">
     <div className="database-explorer-heading">
-      <div><h2>Schema Explorer</h2><p>当前生效数据库结构</p></div>
+      <div><h2>Schema Explorer</h2></div>
       <button type="button" onClick={() => setRefreshIndex((current) => current + 1)} disabled={loading}>刷新</button>
     </div>
     {loading && !payload ? <div className="database-explorer-state">正在读取数据库结构…</div> : error ? <div className="database-explorer-state error">{error}</div> : payload && <>
