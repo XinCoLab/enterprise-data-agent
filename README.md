@@ -6,11 +6,23 @@ It is designed for situations where knowing the database schema is not enough: t
 
 ## Product preview
 
-> **Demo assets placeholder**
->
-> - Product screenshot or short GIF: to be added
-> - Example business question: to be added
-> - Answer and SQL preview: to be added
+### Agent Runtime and tool architecture
+
+![Agent Runtime and tool architecture](docs/images/agent-architecture.png)
+
+### Knowledge graph and dynamic navigation
+
+![Knowledge graph](docs/images/knowledge-graph.png)
+
+![Dynamic Knowledge navigation](docs/images/dynamic-knowledge-navigation.png)
+
+### Evidence-backed analysis and report generation
+
+![SQL execution trace](docs/images/sql-execution-trace.png)
+
+![Risk analysis result](docs/images/risk-analysis-result.png)
+
+![Generated risk dashboard](docs/images/generated-risk-dashboard.png)
 
 ## Highlights
 

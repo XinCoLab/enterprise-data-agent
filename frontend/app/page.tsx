@@ -11,7 +11,8 @@ type Profile = { id: string; label: string; description: string; backend: Backen
 type KnowledgeSummary = { path: string; card_count?: number; types?: Record<string, number>; error?: string };
 type ApiState = { active: Profile; profiles: Profile[]; model: Model; models: Model[]; knowledge: KnowledgeSummary; model_configured: boolean };
 type SqlResult = { columns?: string[]; rows?: Record<string, unknown>[]; returned_rows?: number; truncated?: boolean; status?: string; error_type?: string; message?: string };
-type ChatResponse = { run_id: string; status: "success" | "paused" | "canceled"; thread_id: string; model: Model; latency_ms: number; answer: string; tool_counts: Record<string, number>; sql_queries: { tool_call_id: string; sql: string; result?: SqlResult }[]; result_preview?: SqlResult | null; knowledge_view?: { knowledge_view_mode?: string } | null };
+type ArtifactView = { id: string; kind: "report"; title: string; preview_url: string };
+type ChatResponse = { run_id: string; status: "success" | "paused" | "canceled"; thread_id: string; model: Model; latency_ms: number; answer: string; tool_counts: Record<string, number>; sql_queries: { tool_call_id: string; sql: string; result?: SqlResult }[]; result_preview?: SqlResult | null; knowledge_view?: { knowledge_view_mode?: string } | null; artifacts?: ArtifactView[] };
 type ToolCallView = { name: string; arguments: Record<string, unknown> };
 type LlmRoundView = { number: number; content: string; toolCalls: ToolCallView[] };
 type ChatStreamEvent = { type: "started" | "round" | "progress" | "knowledge_trace" | "final" | "error"; run_id: string; thread_id?: string; message?: string; round?: number; content?: string; tool_calls?: ToolCallView[]; response?: ChatResponse; action?: "open" | "close"; stage?: string; mode?: string; active_ids?: string[] };
@@ -110,7 +111,13 @@ function ResultTable({ result }: { result?: SqlResult | null }) {
 
 function ToolCallCard({ call }: { call: ToolCallView }) {
   const sql = typeof call.arguments.sql === "string" ? call.arguments.sql : "";
-  return <div className="round-tool-call"><div className="round-tool-heading"><code>{call.name}</code></div><pre><code>{sql || JSON.stringify(call.arguments, null, 2)}</code></pre></div>;
+  const title = typeof call.arguments.title === "string" ? call.arguments.title : "";
+  const visualTool = ["create_metric_cards", "create_chart", "compose_dashboard", "export_report"].includes(call.name);
+  return <div className="round-tool-call"><div className="round-tool-heading"><code>{call.name}</code></div><pre><code>{sql || (visualTool ? title || "生成可视化" : JSON.stringify(call.arguments, null, 2))}</code></pre></div>;
+}
+
+function ArtifactPreview({ artifact }: { artifact: ArtifactView }) {
+  return <section className="artifact-preview"><header><h3>{artifact.title}</h3><a href={artifact.preview_url} target="_blank" rel="noreferrer">新窗口打开</a></header><iframe title={artifact.title} src={artifact.preview_url} sandbox="allow-scripts" /></section>;
 }
 
 export default function Home() {
@@ -245,7 +252,7 @@ export default function Home() {
           hideLiveKnowledge();
           finalReceived = true;
           setThreadId(event.response.thread_id);
-          setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant", content: event.response!.answer || "分析完成，但没有生成可展示的回答。", details: event.response }]);
+          setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant", content: event.response!.answer || (event.response!.artifacts?.length ? "报告已生成。" : "分析完成，但没有生成可展示的回答。"), details: event.response }]);
         } else if (event.type === "error") {
           hideLiveKnowledge();
           throw new Error(event.message || "分析执行失败。");
@@ -344,7 +351,7 @@ export default function Home() {
 
     {page === "analysis" && <section className="analysis-page"><div className="conversation">
       {messages.length === 0 ? <div className="empty-state"><h2>开始一次数据分析</h2></div> : messages.map((message) => <article className={`message ${message.role}`} key={message.id}>
-        {message.role === "assistant" ? <AnswerBody content={message.content} /> : <p>{message.content}</p>}
+        {message.role === "assistant" ? <><AnswerBody content={message.content} />{message.details?.artifacts?.map((artifact) => <ArtifactPreview artifact={artifact} key={artifact.id} />)}</> : <p>{message.content}</p>}
         {message.details && <details className="run-details"><summary>查看 SQL 与运行信息</summary><div className="metric-row"><span>{(message.details.latency_ms / 1000).toFixed(1)} 秒</span><span>{message.details.sql_queries.length} 次 SQL</span><span>{message.details.knowledge_view?.knowledge_view_mode || "-"} View</span>{message.details.status === "paused" && <span className="warning-text">已暂停</span>}</div>{message.details.sql_queries.map((query, queryIndex) => <div className="sql-card" key={query.tool_call_id || queryIndex}><div>SQL {queryIndex + 1}</div><pre><code>{query.sql}</code></pre><ResultTable result={query.result} /></div>)}</details>}
       </article>)}{chatBusy && <article className="message assistant pending"><div className="round-status"><span className="round-status-dot" /><span className="round-status-text">{roundStatus || "正在分析现有信息并决定下一步…"}</span></div>{currentRound && <div className="current-round">{currentRound.content && <AnswerBody content={currentRound.content} />}{currentRound.toolCalls.length > 0 && <div className="round-tools">{currentRound.toolCalls.map((call, index) => <ToolCallCard call={call} key={`${call.name}-${index}`} />)}</div>}</div>}{stopRequested && <small>停止将在当前模型或工具调用结束后的安全位置生效。</small>}</article>}
     </div>{liveKnowledgeTrace && !liveKnowledgeMinimized && <div className={`live-knowledge-overlay ${liveKnowledgeClosing ? "closing" : ""}`} aria-live="polite"><div className="live-knowledge-stage"><button className="live-knowledge-minimize" type="button" onClick={() => setLiveKnowledgeMinimized(true)} aria-label="收起 Knowledge 导航">×</button><KnowledgeGraph revision={runtimeRevision} live liveTrace={liveKnowledgeTrace} /></div></div>}{liveKnowledgeTrace && liveKnowledgeMinimized && <button className="live-knowledge-reopen" type="button" onClick={() => setLiveKnowledgeMinimized(false)}><span />查看 Knowledge 导航</button>}<div className="composer"><textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendQuestion(); } }} placeholder="询问 DataAgent" /><button className={`send-button ${chatBusy ? "stop-button" : ""}`} aria-label={chatBusy ? "停止分析" : "发送"} disabled={chatBusy ? !activeRunId || stopRequested : !question.trim()} onClick={chatBusy ? stopRun : () => sendQuestion()}>{chatBusy ? <span className="stop-symbol" /> : <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 15V5M6 9l4-4 4 4" /></svg>}</button></div></section>}
