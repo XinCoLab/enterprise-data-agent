@@ -530,9 +530,9 @@ export default function KnowledgeGraph({ revision, live = false, liveTrace = nul
 
   return <section className={`knowledge-graph-panel ${live ? "live-knowledge-graph" : ""}`}>
     <div className="knowledge-graph-heading">
-      <div><h2>{live ? "Knowledge Navigation" : "Knowledge Graph"}</h2><p>{live ? (liveTrace?.message || "正在定位业务知识") : `${payload.nodes.length} 个节点 · ${payload.edges.length} 条连接`}</p></div>
+      <div><h2>{live ? "Knowledge Navigation" : "Knowledge Graph"}</h2>{live && <p>{liveTrace?.message || "正在定位业务知识"}</p>}</div>
       {live ? <div className="live-knowledge-mode"><i />{liveTrace?.mode || "GLOBAL"}</div> : <div className="knowledge-graph-actions">
-        <label className="knowledge-graph-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="查找节点" /></label>
+        <label className="knowledge-graph-search"><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="查找节点" /></label>
         <button type="button" onClick={() => controllerRef.current?.zoom(1.18)} aria-label="放大">＋</button>
         <button type="button" onClick={() => controllerRef.current?.zoom(0.84)} aria-label="缩小">−</button>
         <button type="button" onClick={() => controllerRef.current?.reset()}>复位</button>
