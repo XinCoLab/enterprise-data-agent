@@ -2,6 +2,7 @@ import io
 import json
 import os
 from pathlib import Path
+import threading
 from types import SimpleNamespace
 import zipfile
 
@@ -460,6 +461,33 @@ def test_cancel_endpoint_is_idempotent_for_finished_or_unknown_run():
     response = client.post("/api/runs/not-running/cancel")
     assert response.status_code == 200
     assert response.json()["status"] == "not_running"
+
+
+def test_graph_run_lock_supports_streaming_worker_handoffs():
+    """The stream lock must not require release by its acquiring thread."""
+
+    lock = agent_runtime.GRAPH_RUN_LOCK
+    assert type(lock) is type(threading.Lock())
+
+    errors: list[Exception] = []
+
+    def acquire_on_first_worker():
+        lock.acquire()
+
+    def release_on_second_worker():
+        try:
+            lock.release()
+        except Exception as error:  # pragma: no cover - regression evidence
+            errors.append(error)
+
+    first_worker = threading.Thread(target=acquire_on_first_worker)
+    first_worker.start()
+    first_worker.join()
+    second_worker = threading.Thread(target=release_on_second_worker)
+    second_worker.start()
+    second_worker.join()
+
+    assert errors == []
 
 
 def _archive(files: dict[str, str]) -> bytes:

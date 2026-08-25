@@ -31,7 +31,12 @@ from runtime.stream_events import (
 SETTINGS_PATH = CONFIG_ROOT / "settings.env"
 SECRETS_PATH = CONFIG_ROOT / "secrets.env"
 RECENT_RUNS: deque[dict] = deque(maxlen=50)
-GRAPH_RUN_LOCK = threading.RLock()
+# StreamingResponse may resume this synchronous generator on a different
+# AnyIO worker thread after each ``yield``.  A re-entrant lock is owned by the
+# thread that acquired it, so releasing it after such a worker handoff raises
+# ``RuntimeError: cannot release un-acquired lock``.  A plain Lock preserves
+# the current serial graph-execution rule without tying release to one thread.
+GRAPH_RUN_LOCK = threading.Lock()
 ACTIVE_RUNS_LOCK = threading.Lock()
 THREAD_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 RUN_ID = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
