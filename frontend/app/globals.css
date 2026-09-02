@@ -42,7 +42,9 @@ code,pre,.mono { font-family:"Cascadia Code",Consolas,monospace; }
 .conversation-menu button svg { flex:0 0 auto; width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; stroke-linejoin:round; }
 .conversation-menu button span { min-width:0; }
 .conversation-menu button.delete { color:#c73535; }
-.account-shell { flex:0 0 auto; min-height:64px; display:grid; grid-template-columns:36px minmax(0,1fr) 20px; align-items:center; gap:10px; margin-top:auto; padding:12px 10px 4px; border-top:1px solid #e7e7e9; }
+.account-panel { position:relative; flex:0 0 auto; margin-top:auto; }
+.account-shell { width:100%; min-height:64px; display:grid; grid-template-columns:36px minmax(0,1fr) 20px; align-items:center; gap:10px; padding:12px 10px 4px; border:0; border-top:1px solid #e7e7e9; background:transparent; color:inherit; text-align:left; }
+.account-shell:hover { background:#ececee; }
 .account-avatar-wrap { position:relative; width:34px; height:34px; }
 .account-avatar { width:34px; height:34px; display:grid; place-items:center; border:1px solid #d7d7da; border-radius:50%; background:#ededee; color:#202024; font-size:13px; font-weight:700; }
 .account-online { position:absolute; right:-1px; bottom:-1px; width:10px; height:10px; border:2px solid #f7f7f8; border-radius:50%; background:#25a45b; }
@@ -52,6 +54,16 @@ code,pre,.mono { font-family:"Cascadia Code",Consolas,monospace; }
 .account-copy strong { color:#252529; font-size:13px; font-weight:600; }
 .account-copy span { color:#85858a; font-size:11px; }
 .account-more { width:18px; height:6px; fill:#77777d; }
+.account-menu { position:absolute; z-index:30; right:0; bottom:calc(100% + 8px); left:0; display:grid; gap:3px; padding:7px; border:1px solid #dedee1; border-radius:13px; background:#fff; box-shadow:0 16px 42px rgba(0,0,0,.16); }
+.account-menu-label { padding:4px 9px 5px; color:#85858a; font-size:11px; font-weight:600; }
+.account-menu button { min-width:0; min-height:54px; display:grid; grid-template-columns:30px minmax(0,1fr) 18px; align-items:center; gap:9px; padding:7px 8px; border:0; border-radius:9px; background:#fff; color:#303034; text-align:left; }
+.account-menu button:hover,.account-menu button.active { background:#f0f0f2; }
+.account-option-avatar { width:30px; height:30px; display:grid; place-items:center; border:1px solid #d7d7da; border-radius:50%; background:#ededee; color:#202024; font-size:12px; font-weight:700; }
+.account-option-copy { min-width:0; display:grid; gap:1px; }
+.account-option-copy strong,.account-option-copy small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.account-option-copy strong { font-size:12px; font-weight:600; }
+.account-option-copy small { color:#85858a; font-size:10px; }
+.account-option-check { color:var(--blue); font-size:13px; font-weight:700; text-align:center; }
 .main-area { min-width:0; }
 .app-header { height:64px; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:0 24px; border-bottom:1px solid var(--line); background:rgba(255,255,255,.96); }
 .app-header h1 { margin:0; font-size:19px; line-height:1.2; letter-spacing:-.01em; }

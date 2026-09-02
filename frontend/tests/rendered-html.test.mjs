@@ -60,7 +60,7 @@ test("exposes analysis, knowledge and model controls", async () => {
   assert.match(source, /deleteConversation/);
   assert.match(source, />重命名</);
   assert.match(source, />删除</);
-  assert.match(source, /placeholder="询问 DataAgent"/);
+  assert.match(source, /placeholder=\{chatUnavailableReason \|\| "询问 DataAgent"\}/);
   assert.match(source, /className="stop-symbol"/);
   assert.doesNotMatch(source, /message\.role === "user" \? "你" : "DataAgent"/);
   assert.doesNotMatch(source, />运行</);
@@ -82,7 +82,9 @@ test("uses the product wordmark and supplied sidebar icons", async () => {
   assert.match(styles, /\/icons\/model\.svg/);
   assert.match(source, /conversation-section-label">最近/);
   assert.match(source, /className="account-shell"/);
-  assert.match(source, /<strong>XinCo<\/strong><span>本地管理员<\/span>/);
+  assert.match(source, /aria-label="切换模拟账号"/);
+  assert.match(source, /state\.workspace\.display_name/);
+  assert.match(source, /state\.workspace\.role_label/);
 });
 
 test("loads and manages persistent conversation history", async () => {
@@ -102,7 +104,7 @@ test("renders the interactive Knowledge graph from runtime data", async () => {
   const pageSource = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   const graphSource = await readFile(new URL("../app/KnowledgeGraph.tsx", import.meta.url), "utf8");
 
-  assert.match(pageSource, /<KnowledgeGraph revision=\{runtimeRevision\} \/>/);
+  assert.match(pageSource, /<KnowledgeGraph key=\{`knowledge-\$\{devUser\}`\} revision=\{runtimeRevision\} devUser=\{devUser\} \/>/);
   assert.match(pageSource, /setRuntimeRevision/);
   assert.match(graphSource, /\/api\/knowledge-graph/);
   assert.match(graphSource, /cache: "no-store"/);
@@ -127,7 +129,7 @@ test("shows the active database schema beside its connection settings", async ()
   const pageSource = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   const explorerSource = await readFile(new URL("../app/DatabaseExplorer.tsx", import.meta.url), "utf8");
 
-  assert.match(pageSource, /<DatabaseExplorer revision=\{runtimeRevision\} \/>/);
+  assert.match(pageSource, /<DatabaseExplorer key=\{`database-\$\{devUser\}`\} revision=\{runtimeRevision\} devUser=\{devUser\} \/>/);
   assert.match(explorerSource, /\/api\/database-schema/);
   assert.match(explorerSource, /Schema Explorer/);
   assert.match(explorerSource, /column\.data_type/);
@@ -151,4 +153,23 @@ test("keeps every SQL beside its own Tool Result", async () => {
 
   assert.match(source, /<ResultTable result=\{query\.result\} \/>/);
   assert.doesNotMatch(source, /<ResultTable result=\{message\.details\.result_preview\} \/>/);
+});
+
+test("switches simulated accounts through one workspace-aware request client", async () => {
+  const pageSource = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  const clientSource = await readFile(new URL("../app/api-client.ts", import.meta.url), "utf8");
+  const explorerSource = await readFile(new URL("../app/DatabaseExplorer.tsx", import.meta.url), "utf8");
+  const graphSource = await readFile(new URL("../app/KnowledgeGraph.tsx", import.meta.url), "utf8");
+
+  assert.match(clientSource, /DEV_USER_HEADER = "X-Dev-User"/);
+  assert.match(clientSource, /headers\.set\(DEV_USER_HEADER, devUser\)/);
+  assert.match(pageSource, /\/api\/accounts/);
+  assert.match(pageSource, /switchDevAccount/);
+  assert.match(pageSource, /setMessages\(\[\]\)/);
+  assert.match(pageSource, /loadConversations\(account\.login_id\)/);
+  assert.match(pageSource, /fetchForUser\("\/api\/chat\/stream", devUser/);
+  assert.match(pageSource, /fetchForUser\("\/api\/import-knowledge", devUser/);
+  assert.match(explorerSource, /fetchJsonForUser<SchemaPayload>\("\/api\/database-schema", devUser/);
+  assert.match(graphSource, /fetchJsonForUser<GraphPayload>\("\/api\/knowledge-graph", devUser/);
+  assert.doesNotMatch(graphSource, /cachedGraphPayload/);
 });

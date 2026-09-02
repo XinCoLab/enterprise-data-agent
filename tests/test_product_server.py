@@ -13,6 +13,7 @@ from api import configuration_app as config_server
 from api.app import app
 from api.schemas import ChatRequest, ProfilePayload
 from runtime import agent_runtime
+from security.workspace_access import resolve_current_user
 
 
 client = TestClient(app)
@@ -320,7 +321,7 @@ def test_streaming_run_cancels_only_after_tool_results_complete_protocol(
         model="deepseek-v4-pro",
     )
 
-    events = agent_runtime.stream_agent(request)
+    events = agent_runtime.stream_agent(request, resolve_current_user(None))
     started = json.loads(next(events))
     assert started["type"] == "started"
     first_progress = json.loads(next(events))
@@ -365,7 +366,10 @@ def test_streaming_runtime_counts_one_complete_tool_cycle_as_one_recursion(
         model="deepseek-v4-pro",
     )
 
-    events = [json.loads(line) for line in agent_runtime.stream_agent(request)]
+    events = [
+        json.loads(line)
+        for line in agent_runtime.stream_agent(request, resolve_current_user(None))
+    ]
 
     rounds = [event["round"] for event in events if event["type"] == "round"]
     final = next(event for event in events if event["type"] == "final")
@@ -398,7 +402,10 @@ def test_max_recursions_generates_tool_free_fallback_summary(
         model="deepseek-v4-pro",
     )
 
-    events = [json.loads(line) for line in agent_runtime.stream_agent(request)]
+    events = [
+        json.loads(line)
+        for line in agent_runtime.stream_agent(request, resolve_current_user(None))
+    ]
 
     final = next(event for event in events if event["type"] == "final")
     response = final["response"]
@@ -450,7 +457,8 @@ def test_agent_config_separates_product_recursions_from_langgraph_guard(
     monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", settings_path)
 
     _thread_id, config = agent_runtime.build_agent_config(
-        ChatRequest(question="test", thread_id="budget-config")
+        ChatRequest(question="test", thread_id="budget-config"),
+        resolve_current_user(None),
     )
 
     assert config["configurable"]["max_recursions"] == 10

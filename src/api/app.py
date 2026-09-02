@@ -8,6 +8,7 @@
 from fastapi import FastAPI
 
 from api.configuration_app import app as configuration_app
+from api.routers.accounts import router as accounts_router
 from api.routers.artifacts import router as artifacts_router
 from api.routers.chat import router as chat_router
 from api.routers.conversations import router as conversations_router
@@ -23,6 +24,7 @@ create_chat_history_tables()
 app.include_router(chat_router)
 app.include_router(artifacts_router)
 app.include_router(conversations_router)
+app.include_router(accounts_router)
 
 # 配置接口和编译后的前端属于另一个子系统，最后挂载，避免遮住上面的 Agent 路由。
 app.mount("/", configuration_app)

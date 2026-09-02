@@ -19,10 +19,13 @@ from fastapi import HTTPException
 from api.schemas import ChatRequest
 
 from memory.conversation_history_database import (
+    DEFAULT_WORKSPACE_ID,
+    read_conversation_workspace_id,
     save_assistant_message,
     save_user_message,
 )
 from config.project_paths import CONFIG_ROOT
+from security.workspace_access import CurrentUser, resolve_current_user
 from runtime.translate_graph_events import (
     encode_event,
     extract_visible_ai_content,
@@ -53,26 +56,42 @@ class ActiveRun:
 
     run_id: str
     thread_id: str
+    workspace_id: str
+    user_id: str
     cancel_requested: threading.Event = field(default_factory=threading.Event)
 
 
 ACTIVE_RUNS: dict[str, ActiveRun] = {}
 
 
-def list_recent_runs() -> list[dict]:
-    """Return a stable snapshot for the HTTP layer."""
+def list_recent_runs(current_user: CurrentUser | None = None) -> list[dict]:
+    """Return runs from the current workspace only."""
 
-    return list(RECENT_RUNS)
+    selected_user = current_user or resolve_current_user(None)
+    return [
+        run
+        for run in RECENT_RUNS
+        if run["workspace_id"] == selected_user.workspace_id
+    ]
 
 
-def request_cancel(run_id: str) -> dict[str, str]:
+def request_cancel(
+    run_id: str,
+    current_user: CurrentUser | None = None,
+) -> dict[str, str]:
     """Ask an active run to stop at its next complete message boundary."""
 
+    selected_user = current_user or resolve_current_user(None)
     if not RUN_ID.fullmatch(run_id):
         raise ValueError("run_id 格式不合法。")
     with ACTIVE_RUNS_LOCK:
         control = ACTIVE_RUNS.get(run_id)
-        if control is None:
+        if control is None or control.workspace_id != selected_user.workspace_id:
+            return {
+                "status": "not_running",
+                "message": "任务已结束或不存在。",
+            }
+        if control.user_id != selected_user.user_id and selected_user.role != "admin":
             return {
                 "status": "not_running",
                 "message": "任务已结束或不存在。",
@@ -227,7 +246,11 @@ def _empty_turn_result() -> dict:
     }
 
 
-def build_agent_config(request: ChatRequest) -> tuple[str, dict]:
+def build_agent_config(
+    request: ChatRequest,
+    current_user: CurrentUser | None = None,
+) -> tuple[str, dict]:
+    selected_user = current_user or resolve_current_user(None)
     thread_id = request.thread_id.strip() or str(uuid4())
     if not THREAD_ID.fullmatch(thread_id):
         raise HTTPException(status_code=400, detail="thread_id 格式不合法。")
@@ -238,7 +261,16 @@ def build_agent_config(request: ChatRequest) -> tuple[str, dict]:
     )
     return thread_id, {
         "configurable": {
-            "thread_id": thread_id,
+            # workspace-a keeps the old raw ID so existing local checkpoints
+            # remain readable. Every additional workspace receives its own
+            # internal ID, so an orphan checkpoint can never leak across users.
+            "thread_id": checkpoint_thread_id(
+                thread_id,
+                selected_user.workspace_id,
+            ),
+            "conversation_thread_id": thread_id,
+            "workspace_id": selected_user.workspace_id,
+            "user_id": selected_user.user_id,
             "model": request.model,
             "max_recursions": max_recursions,
         },
@@ -249,6 +281,45 @@ def build_agent_config(request: ChatRequest) -> tuple[str, dict]:
             int(settings.get("LANGGRAPH_DEFAULT_RECURSION_LIMIT", "6")),
         ),
     }
+
+
+def checkpoint_thread_id(thread_id: str, workspace_id: str) -> str:
+    """Return the private LangGraph thread ID for one workspace."""
+
+    if workspace_id == DEFAULT_WORKSPACE_ID:
+        return thread_id
+    return f"{workspace_id}--{thread_id}"
+
+
+def delete_saved_agent_state(
+    thread_id: str,
+    current_user: CurrentUser,
+) -> None:
+    """Delete the LangGraph checkpoint that belongs to this workspace."""
+
+    from memory.conversation_checkpointer import CHECKPOINTER
+
+    private_thread_id = checkpoint_thread_id(
+        thread_id,
+        current_user.workspace_id,
+    )
+    with GRAPH_RUN_LOCK:
+        ensure_thread_workspace(thread_id, current_user)
+        CHECKPOINTER.delete_thread(private_thread_id)
+
+
+def ensure_thread_workspace(
+    thread_id: str,
+    current_user: CurrentUser,
+) -> None:
+    """Block a foreign thread before reading its LangGraph checkpoint."""
+
+    owner_workspace = read_conversation_workspace_id(thread_id)
+    if (
+        owner_workspace is not None
+        and owner_workspace != current_user.workspace_id
+    ):
+        raise HTTPException(status_code=404, detail="会话不存在。")
 
 
 def _max_recursions(config: dict) -> int:
@@ -305,6 +376,8 @@ def _record_run(
     *,
     run_id: str,
     thread_id: str,
+    workspace_id: str,
+    user_id: str,
     model: str,
     status: str,
     latency_ms: int,
@@ -316,6 +389,8 @@ def _record_run(
             "run_id": run_id,
             "created_at": created_at or datetime.now(timezone.utc).isoformat(),
             "thread_id": thread_id,
+            "workspace_id": workspace_id,
+            "user_id": user_id,
             "model": model,
             "status": status,
             "latency_ms": latency_ms,
@@ -376,13 +451,23 @@ def _generate_recursion_limit_summary(
     return AIMessage(content=content or fallback)
 
 
-def stream_agent(request: ChatRequest) -> Iterator[str]:
+def stream_agent(
+    request: ChatRequest,
+    current_user: CurrentUser | None = None,
+) -> Iterator[str]:
     from langchain_core.messages import AIMessage, HumanMessage
 
-    thread_id, run_config = build_agent_config(request)
+    selected_user = current_user or resolve_current_user(None)
+    thread_id, run_config = build_agent_config(request, selected_user)
+    ensure_thread_workspace(thread_id, selected_user)
     run_id = str(uuid4())
     created_at = datetime.now(timezone.utc).isoformat()
-    run_control = ActiveRun(run_id=run_id, thread_id=thread_id)
+    run_control = ActiveRun(
+        run_id=run_id,
+        thread_id=thread_id,
+        workspace_id=selected_user.workspace_id,
+        user_id=selected_user.user_id,
+    )
 
 
     with ACTIVE_RUNS_LOCK:
@@ -410,6 +495,7 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
         canceled_at_safe_boundary = run_control.cancel_requested.is_set()
 
         with GRAPH_RUN_LOCK:
+            ensure_thread_workspace(thread_id, selected_user)
             if not _prepare_checkpoint_for_new_input(round_graph, run_config):
                 raise RuntimeError(
                     "当前会话的上一批工具消息不完整，Runtime 已拒绝写入"
@@ -419,6 +505,8 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
             save_user_message(
                 thread_id=thread_id,
                 content=request.question,
+                workspace_id=selected_user.workspace_id,
+                created_by_user_id=selected_user.user_id,
             )
 
             for recursion_index in range(_max_recursions(run_config)):
@@ -536,6 +624,8 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
         _record_run(
             run_id=run_id,
             thread_id=thread_id,
+            workspace_id=selected_user.workspace_id,
+            user_id=selected_user.user_id,
             model=request.model,
             status=status,
             latency_ms=elapsed_ms,
@@ -555,6 +645,7 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
             thread_id=thread_id,
             content=final_response["answer"],
             details=final_response,
+            workspace_id=selected_user.workspace_id,
         )
         yield encode_event(
             {
@@ -572,6 +663,8 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
             _record_run(
                 run_id=run_id,
                 thread_id=thread_id,
+                workspace_id=selected_user.workspace_id,
+                user_id=selected_user.user_id,
                 model=request.model,
                 status="error",
                 latency_ms=elapsed_ms,
@@ -593,13 +686,18 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
             ACTIVE_RUNS.pop(run_id, None)
 
 
-def run_agent(request: ChatRequest) -> dict:
+def run_agent(
+    request: ChatRequest,
+    current_user: CurrentUser | None = None,
+) -> dict:
     """同步执行一个用户回合，直到得到最终回答或达到循环上限。"""
 
     from langchain_core.messages import AIMessage, HumanMessage
 
+    selected_user = current_user or resolve_current_user(None)
     # thread_id 用于从 Checkpointer 找回同一会话的历史状态；run_id 只标识本次运行。
-    thread_id, run_config = build_agent_config(request)
+    thread_id, run_config = build_agent_config(request, selected_user)
+    ensure_thread_workspace(thread_id, selected_user)
     run_id = str(uuid4())
     start_time = perf_counter()
     status = "success"
@@ -617,6 +715,7 @@ def run_agent(request: ChatRequest) -> dict:
 
     # 同一个 Checkpointer 当前按串行方式运行，防止并发修改同一份会话状态。
     with GRAPH_RUN_LOCK:
+        ensure_thread_workspace(thread_id, selected_user)
         # 如果上次运行恰好停在 Tool Call 与 ToolMessage 之间，先尝试补完工具轮次，
         # 避免向一段不完整的消息协议后面直接追加新的 HumanMessage。
         if not _prepare_checkpoint_for_new_input(round_graph, run_config):
@@ -624,6 +723,12 @@ def run_agent(request: ChatRequest) -> dict:
                 "当前会话的上一批工具消息不完整，Runtime 已拒绝写入"
                 "这次新问题。"
             )
+        save_user_message(
+            thread_id=thread_id,
+            content=request.question,
+            workspace_id=selected_user.workspace_id,
+            created_by_user_id=selected_user.user_id,
+        )
         for _recursion_index in range(_max_recursions(run_config)):
             # 一次 invoke 会完整执行一轮 round_graph，并返回更新后的图状态。
             round_result = round_graph.invoke(graph_input, config=run_config)
@@ -679,12 +784,14 @@ def run_agent(request: ChatRequest) -> dict:
     _record_run(
         run_id=run_id,
         thread_id=thread_id,
+        workspace_id=selected_user.workspace_id,
+        user_id=selected_user.user_id,
         model=request.model,
         status=status,
         latency_ms=elapsed_ms,
         details=turn_result,
     )
-    return _run_response(
+    response = _run_response(
         run_id=run_id,
         thread_id=thread_id,
         model=request.model,
@@ -692,3 +799,10 @@ def run_agent(request: ChatRequest) -> dict:
         latency_ms=elapsed_ms,
         details=turn_result,
     )
+    save_assistant_message(
+        thread_id=thread_id,
+        content=response["answer"],
+        details=response,
+        workspace_id=selected_user.workspace_id,
+    )
+    return response

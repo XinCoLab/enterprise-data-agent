@@ -31,6 +31,8 @@ def test_list_and_open_saved_conversation():
     assert conversation_list == [
         {
             "thread_id": "thread-1",
+            "workspace_id": "workspace-a",
+            "created_by_user_id": "user-admin-a",
             "title": "第一行 第二行",
             "custom_title": False,
             "created_at": conversation_list[0]["created_at"],

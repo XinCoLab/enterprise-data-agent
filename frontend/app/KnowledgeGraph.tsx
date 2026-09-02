@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { fetchJsonForUser } from "./api-client";
 
 type GraphNode = {
   ref: string;
@@ -39,11 +40,10 @@ export type LiveKnowledgeTrace = {
 
 type KnowledgeGraphProps = {
   revision: number;
+  devUser: string;
   live?: boolean;
   liveTrace?: LiveKnowledgeTrace | null;
 };
-
-let cachedGraphPayload: GraphPayload | null = null;
 
 const NODE_COLORS: Record<string, string> = {
   database: "#2563eb",
@@ -102,7 +102,7 @@ function createSimulation(payload: GraphPayload): SimulationNode[] {
   });
 }
 
-export default function KnowledgeGraph({ revision, live = false, liveTrace = null }: KnowledgeGraphProps) {
+export default function KnowledgeGraph({ revision, devUser, live = false, liveTrace = null }: KnowledgeGraphProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const drawRef = useRef<() => void>(() => undefined);
@@ -110,24 +110,19 @@ export default function KnowledgeGraph({ revision, live = false, liveTrace = nul
   const selectedRefValue = useRef<string | null>(null);
   const queryRef = useRef("");
   const liveTraceRef = useRef<LiveKnowledgeTrace | null>(liveTrace);
-  const [payload, setPayload] = useState<GraphPayload | null>(cachedGraphPayload);
+  const [payload, setPayload] = useState<GraphPayload | null>(null);
   const [selectedRef, setSelectedRef] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/knowledge-graph", { cache: "no-store" })
-      .then(async (response) => {
-        if (!response.ok) throw new Error("Knowledge 图加载失败");
-        return response.json() as Promise<GraphPayload>;
-      })
+    fetchJsonForUser<GraphPayload>("/api/knowledge-graph", devUser, { cache: "no-store" })
       .then((nextPayload) => {
-        cachedGraphPayload = nextPayload;
         setError("");
         setPayload(nextPayload);
       })
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Knowledge 图加载失败"));
-  }, [revision]);
+  }, [devUser, revision]);
 
   useEffect(() => {
     selectedRefValue.current = selectedRef;

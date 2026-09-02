@@ -18,6 +18,7 @@ from zipfile import BadZipFile, ZipFile
 
 import duckdb
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 import psycopg2
 import pymysql
@@ -31,6 +32,12 @@ from api.schemas import (
 from knowledge_runtime.catalog import load_knowledge_cards
 from config.project_paths import CONFIG_ROOT, KNOWLEDGE_IMPORT_ROOT, PROJECT_ROOT
 from runtime.agent_runtime import GRAPH_RUN_LOCK
+from security.workspace_access import (
+    CurrentUser,
+    current_user_from_request,
+    public_user,
+    require_permission,
+)
 
 
 SETTINGS_PATH = CONFIG_ROOT / "settings.env"
@@ -48,6 +55,58 @@ ENV_ASSIGNMENT = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=")
 
 
 app = FastAPI(title="DataAgent", docs_url=None, redoc_url=None)
+
+
+@app.middleware("http")
+async def enforce_workspace_permissions(request: Request, call_next):
+    """Protect configuration routes in this separately mounted FastAPI app."""
+
+    if not request.url.path.startswith("/api/"):
+        return await call_next(request)
+    try:
+        current_user = current_user_from_request(request)
+        required_permission = (
+            "config:read" if request.method == "GET" else "config:write"
+        )
+        require_permission(current_user, required_permission)
+        request.state.current_user = current_user
+    except HTTPException as error:
+        return JSONResponse(
+            status_code=error.status_code,
+            content={"detail": error.detail},
+        )
+    return await call_next(request)
+
+
+def request_user(request: Request) -> CurrentUser:
+    return request.state.current_user
+
+
+def empty_workspace_state(current_user: CurrentUser) -> dict:
+    """Return a safe UI state until this workspace receives real resources."""
+
+    empty_profile = {
+        "id": f"{current_user.workspace_id}-unconfigured",
+        "label": current_user.workspace_name,
+        "description": "该模拟工作空间尚未配置独立资源。",
+        "backend": "postgresql",
+        "host": "",
+        "port": 5432,
+        "username": "",
+        "database": "",
+        "password_saved": False,
+        "duckdb_path": "",
+        "knowledge_root": "",
+    }
+    return {
+        "active": empty_profile,
+        "profiles": [empty_profile],
+        "model": "deepseek-v4-pro",
+        "models": list(ALLOWED_MODELS),
+        "knowledge": {"path": "", "card_count": 0, "types": {}},
+        "model_configured": False,
+        "workspace": public_user(current_user),
+    }
 
 
 def _read_env(path: Path) -> dict[str, str]:
@@ -523,7 +582,11 @@ def _refresh_model_runtime() -> None:
 
 
 @app.get("/api/state")
-def get_state():
+def get_state(request: Request):
+    current_user = request_user(request)
+    if not current_user.resources_ready:
+        return empty_workspace_state(current_user)
+
     active = _active_payload()
     settings = _read_env(SETTINGS_PATH)
     try:
@@ -543,6 +606,7 @@ def get_state():
         "models": list(ALLOWED_MODELS),
         "knowledge": knowledge,
         "model_configured": bool(_model_api_key()),
+        "workspace": public_user(current_user),
     }
 
 
@@ -552,8 +616,11 @@ def health():
 
 
 @app.get("/api/knowledge-graph")
-def knowledge_graph():
+def knowledge_graph(request: Request):
     """把 Runtime 已构建的 Knowledge 导航图提供给前端。"""
+
+    if not request_user(request).resources_ready:
+        return {"nodes": [], "edges": []}
 
     from knowledge_runtime import current_knowledge
 
@@ -565,7 +632,18 @@ def knowledge_graph():
 
 
 @app.get("/api/database-schema")
-def database_schema():
+def database_schema(request: Request):
+    if not request_user(request).resources_ready:
+        return {
+            "backend": "postgresql",
+            "database": "",
+            "host": "",
+            "port": 5432,
+            "username": "",
+            "table_count": 0,
+            "column_count": 0,
+            "tables": [],
+        }
     try:
         return _database_schema()
     except Exception as error:
