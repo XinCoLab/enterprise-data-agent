@@ -3,7 +3,7 @@ import unittest
 from langchain_core.messages import AIMessage
 
 from graph.nodes.tool_safety_node import tool_safety_node
-from runtime.stream_events import knowledge_trace_events
+from runtime.translate_graph_events import translate_knowledge_trace_events
 
 
 class KnowledgeTraceEventTests(unittest.TestCase):
@@ -32,7 +32,7 @@ class KnowledgeTraceEventTests(unittest.TestCase):
         )
         safe_message = tool_safety_node({"messages": [message]})["messages"][0]
 
-        events = knowledge_trace_events(
+        events = translate_knowledge_trace_events(
             {"data": {"Tool Safety": {"messages": [safe_message]}}}
         )
 
@@ -63,7 +63,7 @@ class KnowledgeTraceEventTests(unittest.TestCase):
         )
         safe_message = tool_safety_node({"messages": [message]})["messages"][0]
 
-        events = knowledge_trace_events(
+        events = translate_knowledge_trace_events(
             {"data": {"Tool Safety": {"messages": [safe_message]}}}
         )
 
@@ -81,7 +81,7 @@ class KnowledgeTraceEventTests(unittest.TestCase):
             ],
         )
 
-        events = knowledge_trace_events(
+        events = translate_knowledge_trace_events(
             {"data": {"Main Agent LLM": {"messages": [message]}}}
         )
 
@@ -100,7 +100,7 @@ class KnowledgeTraceEventTests(unittest.TestCase):
             ],
         )
 
-        events = knowledge_trace_events(
+        events = translate_knowledge_trace_events(
             {"data": {"Main Agent LLM": {"messages": [message]}}}
         )
 

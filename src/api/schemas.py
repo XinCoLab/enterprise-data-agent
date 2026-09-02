@@ -11,6 +11,10 @@ class ChatRequest(BaseModel):
     model: Literal["deepseek-v4-pro", "deepseek-v4-flash"] = "deepseek-v4-pro"
 
 
+class ConversationRenameRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=80, pattern=r"\S")
+
+
 class ProfilePayload(BaseModel):
     id: str = Field(min_length=1, max_length=64)
     label: str = Field(min_length=1, max_length=80)

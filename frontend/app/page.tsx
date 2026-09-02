@@ -17,11 +17,16 @@ type ToolCallView = { name: string; arguments: Record<string, unknown> };
 type LlmRoundView = { number: number; content: string; toolCalls: ToolCallView[] };
 type ChatStreamEvent = { type: "started" | "round" | "progress" | "knowledge_trace" | "final" | "error"; run_id: string; thread_id?: string; message?: string; round?: number; content?: string; tool_calls?: ToolCallView[]; response?: ChatResponse; action?: "open" | "close"; stage?: string; mode?: string; active_ids?: string[] };
 type ChatItem = { id: string; role: "user" | "assistant"; content: string; details?: ChatResponse };
-type ConversationHistoryItem = { threadId: string; title: string; messages: ChatItem[]; customTitle?: boolean };
+type ConversationSummaryPayload = { thread_id: string; title: string; custom_title: boolean; created_at: string; updated_at: string };
+type ConversationMessagePayload = { id: number; role: "user" | "assistant"; content: string; details: ChatResponse | null; created_at: string };
+type ConversationDetailPayload = ConversationSummaryPayload & { messages: ConversationMessagePayload[] };
+type ConversationListResponse = { conversations: ConversationSummaryPayload[] };
+type RenameConversationResponse = { conversation: ConversationDetailPayload };
+type ConversationHistoryItem = { threadId: string; title: string; customTitle: boolean };
 type Notice = { tone: "success" | "error" | "info"; text: string };
 
 const emptyProfile = (): Profile => ({ id: `profile-${Date.now()}`, label: "新配置方案", description: "", backend: "postgresql", host: "", port: 5432, username: "", database: "", password: "", duckdb_path: "", knowledge_root: "" });
-const pageNames: Record<Page, string> = { analysis: "数据分析", database: "数据源", knowledge: "Knowledge", model: "模型设置" };
+const pageNames: Record<Page, string> = { analysis: "数据分析", database: "数据源", knowledge: "知识库", model: "模型设置" };
 
 async function api<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...(options?.headers || {}) } });
@@ -50,6 +55,17 @@ async function readJsonLines(response: Response, onEvent: (event: ChatStreamEven
 
 function backendName(backend: Backend) { return { postgresql: "PostgreSQL", mysql: "MySQL", duckdb: "DuckDB" }[backend]; }
 function modelName(model: Model) { return model === "deepseek-v4-pro" ? "DeepSeek V4 Pro" : "DeepSeek V4 Flash"; }
+function conversationSummary(payload: ConversationSummaryPayload): ConversationHistoryItem {
+  return { threadId: payload.thread_id, title: payload.title, customTitle: payload.custom_title };
+}
+function conversationMessages(payload: ConversationDetailPayload): ChatItem[] {
+  return payload.messages.map((message) => ({
+    id: String(message.id),
+    role: message.role,
+    content: message.content,
+    details: message.details ?? undefined,
+  }));
+}
 function InlineText({ value }: { value: string }) {
   const parts = value.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
   return <>{parts.map((part, index) => {
@@ -130,6 +146,7 @@ export default function Home() {
   const [messages, setMessages] = useState<ChatItem[]>([]);
   const [conversationHistory, setConversationHistory] = useState<ConversationHistoryItem[]>([]);
   const [conversationMenu, setConversationMenu] = useState<string | null>(null);
+  const [conversationBusy, setConversationBusy] = useState(true);
   const [question, setQuestion] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
@@ -190,21 +207,16 @@ export default function Home() {
     const preferred = next.profiles.find((profile) => profile.id === preferredId);
     setForm({ ...(preferred || next.active), password: "" });
   };
+  const loadConversations = async () => {
+    const response = await api<ConversationListResponse>("/api/conversations", { cache: "no-store" });
+    setConversationHistory(response.conversations.map(conversationSummary));
+  };
   useEffect(() => { loadState().catch((error) => setNotice({ tone: "error", text: error.message })); }, []);
   useEffect(() => {
-    const firstQuestion = messages.find((message) => message.role === "user")?.content.replace(/\s+/g, " ").trim();
-    const automaticTitle = firstQuestion ? `${firstQuestion.slice(0, 18)}${firstQuestion.length > 18 ? "…" : ""}` : "新分析";
-    setConversationHistory((current) => {
-      const existing = current.find((item) => item.threadId === threadId);
-      const nextItem = {
-        threadId,
-        title: existing?.customTitle ? existing.title : automaticTitle,
-        messages,
-        customTitle: existing?.customTitle,
-      };
-      return [nextItem, ...current.filter((item) => item.threadId !== threadId)];
-    });
-  }, [messages, threadId]);
+    loadConversations()
+      .catch((error) => setNotice({ tone: "error", text: error.message }))
+      .finally(() => setConversationBusy(false));
+  }, []);
   const update = <K extends keyof Profile>(key: K, value: Profile[K]) => setForm((current) => ({ ...current, [key]: value }));
 
   const runAction = async (name: string, action: () => Promise<{ message?: string; details?: unknown }>) => {
@@ -216,7 +228,13 @@ export default function Home() {
 
   const sendQuestion = async (suggestedText?: string) => {
     const text = (suggestedText ?? question).trim();
-    if (!text || chatBusy) return;
+    if (!text || chatBusy || conversationBusy) return;
+    setConversationHistory((current) => {
+      if (current.some((conversation) => conversation.threadId === threadId)) return current;
+      const oneLineQuestion = text.replace(/\s+/g, " ");
+      const title = `${oneLineQuestion.slice(0, 18)}${oneLineQuestion.length > 18 ? "…" : ""}`;
+      return [{ threadId, title, customTitle: false }, ...current];
+    });
     setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content: text }]);
     hideLiveKnowledge(true); setQuestion(""); setChatBusy(true); setStopRequested(false); setCurrentRound(null); setRoundStatus("正在分析现有信息并决定下一步…"); setActiveRunId(null); activeRunIdRef.current = null;
     try {
@@ -261,7 +279,10 @@ export default function Home() {
       if (!finalReceived) throw new Error("响应流已结束，但没有收到最终结果。");
     } catch (error) {
       setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant", content: error instanceof Error ? error.message : "分析执行失败。" }]);
-    } finally { hideLiveKnowledge(); activeRunIdRef.current = null; setActiveRunId(null); setStopRequested(false); setCurrentRound(null); setRoundStatus(""); setChatBusy(false); }
+    } finally {
+      hideLiveKnowledge(); activeRunIdRef.current = null; setActiveRunId(null); setStopRequested(false); setCurrentRound(null); setRoundStatus(""); setChatBusy(false);
+      void loadConversations().catch((error) => console.error("会话列表刷新失败", error));
+    }
   };
 
   const stopRun = async () => {
@@ -279,7 +300,7 @@ export default function Home() {
   };
 
   const newConversation = () => {
-    if (chatBusy) return;
+    if (chatBusy || conversationBusy) return;
     if (!messages.some((message) => message.role === "user")) {
       setConversationHistory((current) => current.filter((item) => item.threadId !== threadId));
     }
@@ -290,28 +311,60 @@ export default function Home() {
     setCurrentRound(null);
     setRoundStatus("");
   };
-  const openConversation = (conversation: ConversationHistoryItem) => {
-    if (chatBusy) return;
+  const openConversation = async (conversation: ConversationHistoryItem) => {
+    if (chatBusy || conversationBusy) return;
     setConversationMenu(null);
     setPage("analysis");
     if (conversation.threadId === threadId) return;
-    setThreadId(conversation.threadId);
-    setMessages(conversation.messages);
-    setQuestion("");
-    setCurrentRound(null);
-    setRoundStatus("");
+    setConversationBusy(true);
+    try {
+      const savedConversation = await api<ConversationDetailPayload>(`/api/conversations/${encodeURIComponent(conversation.threadId)}`, { cache: "no-store" });
+      setThreadId(savedConversation.thread_id);
+      setMessages(conversationMessages(savedConversation));
+      setQuestion("");
+      setCurrentRound(null);
+      setRoundStatus("");
+    } catch (error) {
+      setNotice({ tone: "error", text: error instanceof Error ? error.message : "读取会话失败。" });
+    } finally {
+      setConversationBusy(false);
+    }
   };
-  const renameConversation = (conversation: ConversationHistoryItem) => {
+  const renameConversation = async (conversation: ConversationHistoryItem) => {
+    if (chatBusy || conversationBusy) return;
     const nextTitle = window.prompt("重命名分析", conversation.title)?.trim();
     if (!nextTitle) return;
-    setConversationHistory((current) => current.map((item) => item.threadId === conversation.threadId ? { ...item, title: nextTitle, customTitle: true } : item));
     setConversationMenu(null);
+    setConversationBusy(true);
+    try {
+      const response = await api<RenameConversationResponse>(`/api/conversations/${encodeURIComponent(conversation.threadId)}`, { method: "PATCH", body: JSON.stringify({ title: nextTitle }) });
+      const renamedConversation = conversationSummary(response.conversation);
+      setConversationHistory((current) => current.map((item) => item.threadId === conversation.threadId ? renamedConversation : item));
+    } catch (error) {
+      setNotice({ tone: "error", text: error instanceof Error ? error.message : "重命名失败。" });
+    } finally {
+      setConversationBusy(false);
+    }
   };
-  const deleteConversation = (conversation: ConversationHistoryItem) => {
-    if (chatBusy) return;
-    setConversationHistory((current) => current.filter((item) => item.threadId !== conversation.threadId));
+  const deleteConversation = async (conversation: ConversationHistoryItem) => {
+    if (chatBusy || conversationBusy) return;
     setConversationMenu(null);
-    if (conversation.threadId === threadId) newConversation();
+    setConversationBusy(true);
+    try {
+      await api(`/api/conversations/${encodeURIComponent(conversation.threadId)}`, { method: "DELETE" });
+      setConversationHistory((current) => current.filter((item) => item.threadId !== conversation.threadId));
+      if (conversation.threadId === threadId) {
+        setThreadId(crypto.randomUUID());
+        setMessages([]);
+        setQuestion("");
+        setCurrentRound(null);
+        setRoundStatus("");
+      }
+    } catch (error) {
+      setNotice({ tone: "error", text: error instanceof Error ? error.message : "删除会话失败。" });
+    } finally {
+      setConversationBusy(false);
+    }
   };
   const saveAndApply = async () => { const result = await runAction("save", () => api("/api/save-and-apply", { method: "POST", body: JSON.stringify(form) })); if (result) { await loadState(form.id); setRuntimeRevision((current) => current + 1); newConversation(); } };
   const deleteProfile = async () => {
@@ -336,16 +389,46 @@ export default function Home() {
   if (!state) return <main className="loading-shell">正在加载 DataAgent…</main>;
 
   return <div className="product-shell">
-    <aside className="main-nav"><div className="brand"><span>DA</span><strong>DataAgent</strong></div><nav>
-      <button className={page === "analysis" ? "active" : ""} onClick={() => { setPage("analysis"); newConversation(); }}><span>＋</span>开始新分析</button>
-      <button className={page === "database" ? "active" : ""} onClick={() => setPage("database")}><span>▤</span>数据源</button>
-      <button className={page === "knowledge" ? "active" : ""} onClick={() => setPage("knowledge")}><span>◇</span>Knowledge</button>
-      <button className={page === "model" ? "active" : ""} onClick={() => setPage("model")}><span>◉</span>模型</button>
-    </nav><div className="conversation-history">{conversationHistory.map((conversation) => <div className={`conversation-item ${conversation.threadId === threadId ? "active" : ""}`} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setConversationMenu(null); }} key={conversation.threadId}>
-      <button type="button" className="conversation-open" disabled={chatBusy} onClick={() => openConversation(conversation)}>{conversation.title}</button>
-      <button type="button" className="conversation-more" disabled={chatBusy} aria-label={`管理“${conversation.title}”`} onClick={() => setConversationMenu((current) => current === conversation.threadId ? null : conversation.threadId)}><svg aria-hidden="true" viewBox="0 0 18 6"><circle cx="3" cy="3" r="1.5" /><circle cx="9" cy="3" r="1.5" /><circle cx="15" cy="3" r="1.5" /></svg></button>
-      {conversationMenu === conversation.threadId && <div className="conversation-menu"><button type="button" onClick={() => renameConversation(conversation)}><span>✎</span>重命名</button><button type="button" className="delete" onClick={() => deleteConversation(conversation)}><span>⌫</span>删除</button></div>}
-    </div>)}</div><div className={`nav-status ${state.model_configured ? "" : "warning"}`}><span />{state.model_configured ? "服务已连接" : "模型密钥未配置"}</div></aside>
+    <aside className="main-nav">
+      <div className="brand"><strong>DataAgent</strong></div>
+      <nav aria-label="主导航">
+        <button className="new-analysis" disabled={chatBusy || conversationBusy} onClick={() => { setPage("analysis"); newConversation(); }}>
+          <span aria-hidden="true" className="nav-icon nav-icon-new-analysis" />
+          <span className="nav-label">开始新分析</span>
+        </button>
+        <button className={page === "database" ? "active" : ""} onClick={() => setPage("database")}>
+          <span aria-hidden="true" className="nav-icon nav-icon-database" />
+          <span className="nav-label">数据源</span>
+        </button>
+        <button className={page === "knowledge" ? "active" : ""} onClick={() => setPage("knowledge")}>
+          <span aria-hidden="true" className="nav-icon nav-icon-knowledge" />
+          <span className="nav-label">知识库</span>
+        </button>
+        <button className={page === "model" ? "active" : ""} onClick={() => setPage("model")}>
+          <span aria-hidden="true" className="nav-icon nav-icon-model" />
+          <span className="nav-label">模型</span>
+        </button>
+      </nav>
+      <div className="conversation-history">
+        <div className="conversation-section-label">最近</div>
+        {conversationHistory.map((conversation) => <div className={`conversation-item ${conversation.threadId === threadId ? "active" : ""}`} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setConversationMenu(null); }} key={conversation.threadId}>
+          <button type="button" className="conversation-open" disabled={chatBusy || conversationBusy} onClick={() => openConversation(conversation)}>{conversation.title}</button>
+          <button type="button" className="conversation-more" disabled={chatBusy || conversationBusy} aria-label={`管理“${conversation.title}”`} onClick={() => setConversationMenu((current) => current === conversation.threadId ? null : conversation.threadId)}><svg aria-hidden="true" viewBox="0 0 18 6"><circle cx="3" cy="3" r="1.5" /><circle cx="9" cy="3" r="1.5" /><circle cx="15" cy="3" r="1.5" /></svg></button>
+          {conversationMenu === conversation.threadId && <div className="conversation-menu" role="menu">
+            <button type="button" role="menuitem" onClick={() => renameConversation(conversation)}><svg aria-hidden="true" viewBox="0 0 18 18"><path d="m11.5 4.5 2 2M4 14l3-.7 7.4-7.4a1.4 1.4 0 0 0-2-2L5 11.3Z" /></svg><span>重命名</span></button>
+            <button type="button" role="menuitem" className="delete" onClick={() => deleteConversation(conversation)}><svg aria-hidden="true" viewBox="0 0 18 18"><path d="M3 5h12M7 5V3.5h4V5M5.5 5l.7 10h5.6l.7-10M8 8v4M10 8v4" /></svg><span>删除</span></button>
+          </div>}
+        </div>)}
+      </div>
+      <div className="account-shell" aria-label="当前账号">
+        <div className="account-avatar-wrap">
+          <div className="account-avatar" aria-hidden="true">X</div>
+          <span className={`account-online ${state.model_configured ? "" : "warning"}`} title={state.model_configured ? "服务已连接" : "模型密钥未配置"} />
+        </div>
+        <div className="account-copy"><strong>XinCo</strong><span>本地管理员</span></div>
+        <svg aria-hidden="true" className="account-more" viewBox="0 0 18 6"><circle cx="3" cy="3" r="1.4" /><circle cx="9" cy="3" r="1.4" /><circle cx="15" cy="3" r="1.4" /></svg>
+      </div>
+    </aside>
 
     <main className="main-area"><header className="app-header"><div><h1>{page === "analysis" ? `${backendName(state.active.backend)} · ${state.active.database || "本地文件"}` : pageNames[page]}</h1>{page !== "analysis" && <p>{backendName(state.active.backend)} · {state.active.database || "本地文件"}</p>}</div></header>
 
@@ -354,7 +437,7 @@ export default function Home() {
         {message.role === "assistant" ? <><AnswerBody content={message.content} />{message.details?.artifacts?.map((artifact) => <ArtifactPreview artifact={artifact} key={artifact.id} />)}</> : <p>{message.content}</p>}
         {message.details && <details className="run-details"><summary>查看 SQL 与运行信息</summary><div className="metric-row"><span>{(message.details.latency_ms / 1000).toFixed(1)} 秒</span><span>{message.details.sql_queries.length} 次 SQL</span><span>{message.details.knowledge_view?.knowledge_view_mode || "-"} View</span>{message.details.status === "paused" && <span className="warning-text">已暂停</span>}</div>{message.details.sql_queries.map((query, queryIndex) => <div className="sql-card" key={query.tool_call_id || queryIndex}><div>SQL {queryIndex + 1}</div><pre><code>{query.sql}</code></pre><ResultTable result={query.result} /></div>)}</details>}
       </article>)}{chatBusy && <article className="message assistant pending"><div className="round-status"><span className="round-status-dot" /><span className="round-status-text">{roundStatus || "正在分析现有信息并决定下一步…"}</span></div>{currentRound && <div className="current-round">{currentRound.content && <AnswerBody content={currentRound.content} />}{currentRound.toolCalls.length > 0 && <div className="round-tools">{currentRound.toolCalls.map((call, index) => <ToolCallCard call={call} key={`${call.name}-${index}`} />)}</div>}</div>}{stopRequested && <small>停止将在当前模型或工具调用结束后的安全位置生效。</small>}</article>}
-    </div>{liveKnowledgeTrace && !liveKnowledgeMinimized && <div className={`live-knowledge-overlay ${liveKnowledgeClosing ? "closing" : ""}`} aria-live="polite"><div className="live-knowledge-stage"><button className="live-knowledge-minimize" type="button" onClick={() => setLiveKnowledgeMinimized(true)} aria-label="收起 Knowledge 导航">×</button><KnowledgeGraph revision={runtimeRevision} live liveTrace={liveKnowledgeTrace} /></div></div>}{liveKnowledgeTrace && liveKnowledgeMinimized && <button className="live-knowledge-reopen" type="button" onClick={() => setLiveKnowledgeMinimized(false)}><span />查看 Knowledge 导航</button>}<div className="composer"><textarea value={question} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendQuestion(); } }} placeholder="询问 DataAgent" /><button className={`send-button ${chatBusy ? "stop-button" : ""}`} aria-label={chatBusy ? "停止分析" : "发送"} disabled={chatBusy ? !activeRunId || stopRequested : !question.trim()} onClick={chatBusy ? stopRun : () => sendQuestion()}>{chatBusy ? <span className="stop-symbol" /> : <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 15V5M6 9l4-4 4 4" /></svg>}</button></div></section>}
+    </div>{liveKnowledgeTrace && !liveKnowledgeMinimized && <div className={`live-knowledge-overlay ${liveKnowledgeClosing ? "closing" : ""}`} aria-live="polite"><div className="live-knowledge-stage"><button className="live-knowledge-minimize" type="button" onClick={() => setLiveKnowledgeMinimized(true)} aria-label="收起知识库导航">×</button><KnowledgeGraph revision={runtimeRevision} live liveTrace={liveKnowledgeTrace} /></div></div>}{liveKnowledgeTrace && liveKnowledgeMinimized && <button className="live-knowledge-reopen" type="button" onClick={() => setLiveKnowledgeMinimized(false)}><span />查看知识库导航</button>}<div className="composer"><textarea value={question} disabled={conversationBusy} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendQuestion(); } }} placeholder="询问 DataAgent" /><button className={`send-button ${chatBusy ? "stop-button" : ""}`} aria-label={chatBusy ? "停止分析" : "发送"} disabled={conversationBusy || (chatBusy ? !activeRunId || stopRequested : !question.trim())} onClick={chatBusy ? stopRun : () => sendQuestion()}>{chatBusy ? <span className="stop-symbol" /> : <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 15V5M6 9l4-4 4 4" /></svg>}</button></div></section>}
 
     {page === "database" && <section className="content-page database-page"><aside className="profile-panel"><div className="panel-heading"><h2>配置方案</h2><button onClick={() => setForm(emptyProfile())}>新建</button></div>{state.profiles.map((profile) => <button className={`profile-item ${profile.id === form.id ? "active" : ""}`} key={profile.id} onClick={() => setForm({ ...profile, password: "" })}><strong>{profile.label}</strong><span>{backendName(profile.backend)} · {profile.database || "本地文件"}</span></button>)}</aside>
       <div className="database-config-column"><div className="settings-panel"><div className="panel-heading"><div><h2>{selectedProfile ? "编辑数据源" : "新数据源"}</h2><p>账号应只具备读取权限。</p></div><span className="apply-note">保存后立即生效</span></div><div className="form-grid">
@@ -368,9 +451,9 @@ export default function Home() {
     {page === "knowledge" && <section className="content-page knowledge-page"><div className="knowledge-workspace">
       <div className="knowledge-main"><KnowledgeGraph revision={runtimeRevision} /></div>
       <aside className="knowledge-sidebar">
-        <div className="summary-card"><h2>当前 Knowledge</h2><div className="summary-number"><strong>{state.knowledge.card_count ?? "-"}</strong></div></div>
-        <div className="settings-panel"><div className="panel-heading"><h2>Knowledge 路径</h2></div><label><span>目录</span><input value={form.knowledge_root} onChange={(event) => update("knowledge_root", event.target.value)} /></label><div className="form-actions"><button className="button secondary" disabled={Boolean(busy)} onClick={() => runAction("validate", () => api("/api/validate-knowledge", { method: "POST", body: JSON.stringify({ knowledge_root: form.knowledge_root }) }))}>验证</button><button className="button primary" disabled={Boolean(busy)} onClick={saveAndApply}>保存并应用</button></div></div>
-        <div className="settings-panel"><div className="panel-heading"><h2>导入 Knowledge</h2></div><input ref={fileInput} type="file" accept=".zip,application/zip" hidden onChange={(event) => uploadKnowledge(event.target.files?.[0])} /><button className="upload-area" disabled={busy === "upload"} onClick={() => fileInput.current?.click()}><strong>{busy === "upload" ? "正在校验…" : "选择 ZIP 文件"}</strong></button></div>
+        <div className="summary-card"><h2>当前知识库</h2><div className="summary-number"><strong>{state.knowledge.card_count ?? "-"}</strong></div></div>
+        <div className="settings-panel"><div className="panel-heading"><h2>知识库路径</h2></div><label><span>目录</span><input value={form.knowledge_root} onChange={(event) => update("knowledge_root", event.target.value)} /></label><div className="form-actions"><button className="button secondary" disabled={Boolean(busy)} onClick={() => runAction("validate", () => api("/api/validate-knowledge", { method: "POST", body: JSON.stringify({ knowledge_root: form.knowledge_root }) }))}>验证</button><button className="button primary" disabled={Boolean(busy)} onClick={saveAndApply}>保存并应用</button></div></div>
+        <div className="settings-panel"><div className="panel-heading"><h2>导入知识库</h2></div><input ref={fileInput} type="file" accept=".zip,application/zip" hidden onChange={(event) => uploadKnowledge(event.target.files?.[0])} /><button className="upload-area" disabled={busy === "upload"} onClick={() => fileInput.current?.click()}><strong>{busy === "upload" ? "正在校验…" : "选择 ZIP 文件"}</strong></button></div>
         {state.knowledge.types && <div className="type-list">{Object.entries(state.knowledge.types).map(([type, count]) => <div key={type}><span>{type}</span><strong>{count}</strong></div>)}</div>}
       </aside>
     </div></section>}
