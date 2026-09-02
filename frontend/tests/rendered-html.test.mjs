@@ -51,7 +51,7 @@ test("exposes analysis, knowledge and model controls", async () => {
   assert.match(source, /模型 API Key/);
   assert.match(source, /保存后立即生效/);
   assert.doesNotMatch(source, /保存后重启生效/);
-  assert.match(source, />Knowledge</);
+  assert.match(source, />知识库</);
   assert.match(source, /开始新分析/);
   assert.match(source, /conversation-history/);
   assert.match(source, /setPage\("analysis"\)/);
@@ -68,6 +68,34 @@ test("exposes analysis, knowledge and model controls", async () => {
   assert.doesNotMatch(source, /输入数据分析问题，Enter 发送/);
   assert.doesNotMatch(source, /模型本轮输出/);
   assert.doesNotMatch(source, /本轮 Tool Call/);
+});
+
+test("uses the product wordmark and supplied sidebar icons", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+
+  assert.match(source, /<div className="brand"><strong>DataAgent<\/strong><\/div>/);
+  assert.doesNotMatch(source, /<span>DA<\/span>/);
+  assert.match(styles, /\/icons\/new-analysis\.svg/);
+  assert.match(styles, /\/icons\/database\.svg/);
+  assert.match(styles, /\/icons\/knowledge\.svg/);
+  assert.match(styles, /\/icons\/model\.svg/);
+  assert.match(source, /conversation-section-label">最近/);
+  assert.match(source, /className="account-shell"/);
+  assert.match(source, /<strong>XinCo<\/strong><span>本地管理员<\/span>/);
+});
+
+test("loads and manages persistent conversation history", async () => {
+  const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+
+  assert.match(source, /api<ConversationListResponse>\("\/api\/conversations"/);
+  assert.match(source, /api<ConversationDetailPayload>\(`\/api\/conversations\/\$\{encodeURIComponent/);
+  assert.match(source, /method: "PATCH"/);
+  assert.match(source, /method: "DELETE"/);
+  assert.match(source, /threadId: payload\.thread_id/);
+  assert.match(source, /customTitle: payload\.custom_title/);
+  assert.match(source, /id: String\(message\.id\)/);
+  assert.doesNotMatch(source, /const firstQuestion = messages\.find/);
 });
 
 test("renders the interactive Knowledge graph from runtime data", async () => {

@@ -17,15 +17,20 @@ from uuid import uuid4
 from fastapi import HTTPException
 
 from api.schemas import ChatRequest
+
+from memory.conversation_history_database import (
+    save_assistant_message,
+    save_user_message,
+)
 from config.project_paths import CONFIG_ROOT
-from runtime.stream_events import (
+from runtime.translate_graph_events import (
     encode_event,
-    knowledge_trace_events,
-    llm_round_event,
-    safe_cancel_boundary,
-    task_progress_event,
-    update_progress_events,
-    visible_ai_content,
+    extract_visible_ai_content,
+    is_safe_cancel_boundary,
+    translate_knowledge_trace_events,
+    translate_llm_round_event,
+    translate_task_progress_event,
+    translate_update_progress_events,
 )
 
 SETTINGS_PATH = CONFIG_ROOT / "settings.env"
@@ -362,7 +367,7 @@ def _generate_recursion_limit_summary(
             messages,
             model_name=model_name,
         )
-        content = visible_ai_content(model_output.content)
+        content = extract_visible_ai_content(model_output.content)
     except Exception:
         content = ""
     tool_markup = ("<|DSML|", "tool_calls>", "invoke name=")
@@ -378,6 +383,8 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
     run_id = str(uuid4())
     created_at = datetime.now(timezone.utc).isoformat()
     run_control = ActiveRun(run_id=run_id, thread_id=thread_id)
+
+
     with ACTIVE_RUNS_LOCK:
         ACTIVE_RUNS[run_id] = run_control
 
@@ -408,6 +415,12 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
                     "当前会话的上一批工具消息不完整，Runtime 已拒绝写入"
                     "这次新问题。"
                 )
+
+            save_user_message(
+                thread_id=thread_id,
+                content=request.question,
+            )
+
             for recursion_index in range(_max_recursions(run_config)):
                 if run_control.cancel_requested.is_set():
                     canceled_at_safe_boundary = True
@@ -423,27 +436,27 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
 
                 for stream_part in graph_stream:
                     if stream_part.get("type") == "tasks":
-                        event = task_progress_event(stream_part)
+                        event = translate_task_progress_event(stream_part)
                         if event is not None:
                             event["run_id"] = run_id
                             yield encode_event(event)
                     elif stream_part.get("type") == "updates":
-                        round_event = llm_round_event(
+                        round_event = translate_llm_round_event(
                             stream_part,
                             recursion_index + 1,
                         )
                         if round_event is not None:
                             round_event["run_id"] = run_id
                             yield encode_event(round_event)
-                        for event in knowledge_trace_events(stream_part):
+                        for event in translate_knowledge_trace_events(stream_part):
                             event["run_id"] = run_id
                             yield encode_event(event)
-                        for event in update_progress_events(stream_part):
+                        for event in translate_update_progress_events(stream_part):
                             event["run_id"] = run_id
                             yield encode_event(event)
                         if (
                             run_control.cancel_requested.is_set()
-                            and safe_cancel_boundary(stream_part)
+                            and is_safe_cancel_boundary(stream_part)
                         ):
                             canceled_at_safe_boundary = True
                             break
@@ -537,6 +550,11 @@ def stream_agent(request: ChatRequest) -> Iterator[str]:
             status=status,
             latency_ms=elapsed_ms,
             details=turn_result,
+        )
+        save_assistant_message(
+            thread_id=thread_id,
+            content=final_response["answer"],
+            details=final_response,
         )
         yield encode_event(
             {

@@ -85,3 +85,8 @@ CHECKPOINT_DATABASE_PATH = _configured_path(
     "DATA_AGENT_CHECKPOINT_PATH",
     PROJECT_ROOT / "databases" / "langgraph_conversation_memory.sqlite",
 )
+
+CHAT_HISTORY_DATABASE_PATH= _configured_path(
+    "DATA_AGENT_CHAT_HISTORY_PATH",
+    PROJECT_ROOT / "runtime" / "state" / "chat_history.sqlite",
+)

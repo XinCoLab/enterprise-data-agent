@@ -29,7 +29,7 @@ def encode_event(payload: dict) -> str:
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n"
 
 
-def task_progress_event(part: dict) -> dict | None:
+def translate_task_progress_event(part: dict) -> dict | None:
     data = part.get("data")
     if not isinstance(data, dict) or "input" not in data:
         return None
@@ -40,7 +40,7 @@ def task_progress_event(part: dict) -> dict | None:
     return {"type": "progress", "stage": node_name, "message": message}
 
 
-def tool_result_progress(message: Any) -> dict | None:
+def translate_tool_result_progress_event(message: Any) -> dict | None:
     from langchain_core.messages import ToolMessage
 
     if not isinstance(message, ToolMessage):
@@ -73,7 +73,7 @@ def tool_result_progress(message: Any) -> dict | None:
     }
 
 
-def visible_ai_content(content: Any) -> str:
+def extract_visible_ai_content(content: Any) -> str:
     """Return only assistant content intended for the public message."""
 
     if isinstance(content, str):
@@ -89,7 +89,7 @@ def visible_ai_content(content: Any) -> str:
     return "\n".join(part.strip() for part in text_parts if part.strip())
 
 
-def llm_round_event(part: dict, round_number: int) -> dict | None:
+def translate_llm_round_event(part: dict, round_number: int) -> dict | None:
     from langchain_core.messages import AIMessage
 
     data = part.get("data")
@@ -119,7 +119,7 @@ def llm_round_event(part: dict, round_number: int) -> dict | None:
         "type": "round",
         "stage": "Main Agent LLM",
         "round": round_number,
-        "content": visible_ai_content(model_output.content),
+        "content": extract_visible_ai_content(model_output.content),
         "tool_calls": tool_calls,
         "message": (
             "本轮模型输出已生成，正在执行工具。"
@@ -129,7 +129,7 @@ def llm_round_event(part: dict, round_number: int) -> dict | None:
     }
 
 
-def knowledge_trace_events(part: dict) -> list[dict]:
+def translate_knowledge_trace_events(part: dict) -> list[dict]:
     """Expose real Knowledge navigation activity without exposing reasoning.
 
     The graph opens only after Tool Safety has allowed a Knowledge tool. It
@@ -244,7 +244,7 @@ def knowledge_trace_events(part: dict) -> list[dict]:
     ]
 
 
-def update_progress_events(part: dict) -> list[dict]:
+def translate_update_progress_events(part: dict) -> list[dict]:
     data = part.get("data")
     if not isinstance(data, dict):
         return []
@@ -252,13 +252,13 @@ def update_progress_events(part: dict) -> list[dict]:
     execution_update = data.get("Tool Execution")
     if isinstance(execution_update, dict):
         for message in execution_update.get("messages", []):
-            event = tool_result_progress(message)
+            event = translate_tool_result_progress_event(message)
             if event is not None:
                 events.append(event)
     return events
 
 
-def safe_cancel_boundary(part: dict) -> bool:
+def is_safe_cancel_boundary(part: dict) -> bool:
     """Stop only after Tool execution or a terminal Assistant message."""
 
     from langchain_core.messages import AIMessage
