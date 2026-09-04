@@ -5,7 +5,7 @@ from functools import lru_cache
 from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableConfig
 
-from graph.text2sql_state import Text2SQLState
+from graph.graph_state import GraphState
 from knowledge_runtime.catalog import browse_catalog
 from knowledge_runtime import current_knowledge
 from knowledge_runtime.knowledge_view import (
@@ -21,6 +21,7 @@ from model_clients.llm_api_clients import (
 )
 from prompts.prompt_loader import build_model_input
 from prompts.runtime_database_context import inject_runtime_database_context
+from agent_runtime.agent_run_context import AgentRunContext, read_agent_run_context
 from tools.tool_registry import TOOLS
 
 
@@ -53,9 +54,16 @@ def refresh_model_runtime() -> None:
     MAIN_LLM_WITH_TOOLS = get_main_llm(DEFAULT_MAIN_MODEL).bind_tools(TOOLS)
 
 
-def _requested_model(config: RunnableConfig | None) -> str:
+def selected_model_name(
+    run_context: AgentRunContext | None,
+    config: RunnableConfig | None,
+) -> str:
     configurable = (config or {}).get("configurable", {})
-    model_name = str(configurable.get("model", DEFAULT_MAIN_MODEL)).strip()
+    model_name = str(
+        run_context.model
+        if run_context is not None
+        else configurable.get("model", DEFAULT_MAIN_MODEL)
+    ).strip()
     if model_name not in ALLOWED_MAIN_MODELS:
         raise ValueError(f"Unsupported model: {model_name!r}")
     return model_name
@@ -82,8 +90,14 @@ def _invalid_tool_json_fallback(model_output: AIMessage) -> AIMessage | None:
     )
 
 
-def main_agent_llm_node(state: Text2SQLState, config: RunnableConfig | None = None):
+async def main_agent_llm_node(
+    state: GraphState,
+    config: RunnableConfig | None = None,
+):
     """为本轮模型组装上下文，然后让模型决定调用工具还是直接回答。"""
+
+    run_context = read_agent_run_context(config)
+    model_name = selected_model_name(run_context, config)
 
     # 根目录只告诉模型当前有哪些 Knowledge 类型及可浏览路径，相当于知识库首页。
     runtime_directory = browse_catalog(current_knowledge.KNOWLEDGE_CATALOG, "/")
@@ -116,7 +130,7 @@ def main_agent_llm_node(state: Text2SQLState, config: RunnableConfig | None = No
 
     # 到这里才真正调用 LLM。模型返回一个 AIMessage：可能包含 Tool Call，
     # 也可能不调用工具、直接给出最终回答。
-    model_output = _model_with_tools(_requested_model(config)).invoke(model_input)
+    model_output = await _model_with_tools(model_name).ainvoke(model_input)
 
     # Provider 有时会返回无法解析的 Tool JSON。此时不执行工具，改成安全的终止回答。
     invalid_json_fallback = _invalid_tool_json_fallback(model_output)
@@ -152,6 +166,6 @@ def main_agent_llm_node(state: Text2SQLState, config: RunnableConfig | None = No
         }
     )
 
-    # 返回的是图状态增量。Text2SQLState 的 messages reducer 会把这个
+    # 返回的是图状态增量。GraphState 的 messages reducer 会把这个
     # AIMessage 追加到已有对话中，Checkpointer 随后保存更新后的状态。
     return {"messages": [model_output]}

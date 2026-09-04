@@ -321,12 +321,20 @@ def read_conversation_info(
 
     messages = []
     for row in message_rows:
+        details = None if row[3] is None else json.loads(row[3])
+        # 旧会话不改 SQLite 原始数据；读取时统一成现在的 request_id 契约。
+        if (
+            isinstance(details, dict)
+            and "request_id" not in details
+            and "run_id" in details
+        ):
+            details["request_id"] = details.pop("run_id")
         messages.append(
             {
                 "id": row[0],
                 "role": row[1],
                 "content": row[2],
-                "details": None if row[3] is None else json.loads(row[3]),
+                "details": details,
                 "created_at": row[4],
             }
         )

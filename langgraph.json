@@ -1,7 +1,7 @@
 {
   "dependencies": ["."],
   "graphs": {
-    "generic_directory_data_agent": "./src/graph/round_graph.py:studio_graph"
+    "data_agent": "./src/graph/data_agent_graph.py:studio_graph"
   },
   "env": "./config/settings.env"
 }

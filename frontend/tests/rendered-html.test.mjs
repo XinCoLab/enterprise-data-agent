@@ -139,7 +139,7 @@ test("streams Agent progress and exposes cooperative cancellation", async () => 
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
 
   assert.match(source, /\/api\/chat\/stream/);
-  assert.match(source, /\/api\/runs\/\$\{runId\}\/cancel/);
+  assert.match(source, /\/api\/runs\/\$\{requestId\}\/cancel/);
   assert.match(source, /停止将在当前模型或工具调用结束后的安全位置生效/);
   assert.match(source, /currentRound/);
   assert.doesNotMatch(source, /本轮没有文本输出/);

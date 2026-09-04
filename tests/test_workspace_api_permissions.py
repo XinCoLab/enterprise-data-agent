@@ -1,10 +1,4 @@
-from fastapi.testclient import TestClient
-
-from api.app import app
 from memory import conversation_history_database
-
-
-client = TestClient(app)
 
 
 def save_conversation(
@@ -21,7 +15,7 @@ def save_conversation(
     )
 
 
-def test_account_endpoint_exposes_selected_simulation_identity_and_permissions():
+def test_account_endpoint_exposes_selected_simulation_identity_and_permissions(client):
     default_response = client.get("/api/accounts")
     analyst_response = client.get(
         "/api/accounts",
@@ -53,7 +47,7 @@ def test_account_endpoint_exposes_selected_simulation_identity_and_permissions()
     assert unknown_response.status_code == 401
 
 
-def test_conversation_api_hides_other_workspaces():
+def test_conversation_api_hides_other_workspaces(client):
     save_conversation(
         "thread-a",
         workspace_id="workspace-a",
@@ -95,7 +89,7 @@ def test_conversation_api_hides_other_workspaces():
     assert guessed_delete.status_code == 404
 
 
-def test_role_permissions_apply_to_conversation_and_configuration_routes():
+def test_role_permissions_apply_to_conversation_and_configuration_routes(client):
     save_conversation(
         "analyst-thread",
         workspace_id="workspace-b",

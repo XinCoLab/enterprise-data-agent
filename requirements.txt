@@ -1,3 +1,4 @@
+aiosqlite==0.22.1
 duckdb==1.5.5
 fastapi==0.141.1
 langchain-core==1.5.6

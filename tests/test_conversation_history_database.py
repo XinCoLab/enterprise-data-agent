@@ -94,6 +94,22 @@ def test_rename_conversation(tmp_path, monkeypatch):
     ) is False
 
 
+def test_old_run_id_is_returned_as_request_id(tmp_path, monkeypatch):
+    prepare_temporary_database(tmp_path, monkeypatch)
+    conversation_history_database.save_user_message("thread-1", "兼容旧记录")
+    conversation_history_database.save_assistant_message(
+        "thread-1",
+        "旧回答",
+        {"run_id": "old-request"},
+    )
+
+    conversation = conversation_history_database.read_conversation_info("thread-1")
+
+    assert conversation is not None
+    details = conversation["messages"][1]["details"]
+    assert details == {"request_id": "old-request"}
+
+
 def test_delete_conversation_also_deletes_messages(tmp_path, monkeypatch):
     database_path = prepare_temporary_database(tmp_path, monkeypatch)
     conversation_history_database.save_user_message("thread-1", "测试问题")

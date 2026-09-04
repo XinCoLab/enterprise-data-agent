@@ -3,7 +3,7 @@ import unittest
 from langchain_core.messages import AIMessage
 
 from graph.nodes.tool_safety_node import tool_safety_node
-from runtime.translate_graph_events import translate_knowledge_trace_events
+from agent_runtime.translate_graph_events import translate_knowledge_trace_events
 
 
 class KnowledgeTraceEventTests(unittest.TestCase):

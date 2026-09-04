@@ -2,11 +2,12 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+from starlette.concurrency import run_in_threadpool
 
 from api.schemas import ConversationRenameRequest
 from memory import conversation_history_database as conversation_history
-from runtime import agent_runtime
+from agent_runtime import agent_runtime
 from security.workspace_access import (
     CurrentUser,
     read_current_user,
@@ -89,11 +90,13 @@ def rename_conversation_title(
 
 
 @router.delete("/{thread_id}")
-def delete_conversation(
+async def delete_conversation(
     thread_id: str,
+    http_request: Request,
     current_user: Annotated[CurrentUser, Depends(read_current_user)],
 ):
-    conversation = conversation_history.read_conversation_info(
+    conversation = await run_in_threadpool(
+        conversation_history.read_conversation_info,
         thread_id,
         current_user.workspace_id,
     )
@@ -101,10 +104,10 @@ def delete_conversation(
         raise HTTPException(status_code=404, detail="会话不存在。")
     require_conversation_change(current_user, conversation)
 
-    agent_runtime.delete_saved_agent_state(thread_id, current_user)
-    conversation_history.delete_conversation(
+    await agent_runtime.delete_saved_conversation(
         thread_id,
-        current_user.workspace_id,
+        current_user,
+        http_request.app.state.checkpointer,
     )
     return {
         "status": "success",

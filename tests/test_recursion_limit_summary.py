@@ -1,3 +1,5 @@
+import asyncio
+
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 
 from prompts import recursion_limit_summary as summary_module
@@ -7,7 +9,7 @@ class _FakeModel:
     def __init__(self):
         self.input_messages = []
 
-    def invoke(self, messages):
+    async def ainvoke(self, messages):
         self.input_messages = list(messages)
         return AIMessage(content="当前进度总结")
 
@@ -34,9 +36,11 @@ def test_recursion_limit_prompt_is_temporary_and_uses_an_unbound_model(monkeypat
     ]
     monkeypatch.setattr(summary_module, "get_main_llm", lambda _name: model)
 
-    model_output = summary_module.generate_recursion_limit_summary(
-        conversation,
-        model_name="deepseek-v4-pro",
+    model_output = asyncio.run(
+        summary_module.generate_recursion_limit_summary(
+            conversation,
+            model_name="deepseek-v4-pro",
+        )
     )
 
     assert model_output.content == "当前进度总结"

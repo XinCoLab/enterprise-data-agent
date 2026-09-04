@@ -77,12 +77,14 @@ Open [http://127.0.0.1:8080](http://127.0.0.1:8080). The prebuilt frontend is in
 To follow one Agent request from its real entrypoint to the database, read these files in order:
 
 ```text
-src/api/app.py
+frontend/app/page.tsx: sendQuestion()
   -> src/api/routers/chat.py
-  -> src/runtime/agent_runtime.py
-  -> src/graph/round_graph.py
+  -> src/agent_runtime/agent_runtime.py
+  -> src/graph/data_agent_graph.py
   -> src/graph/nodes/
   -> src/tools/
+  -> src/agent_runtime/agent_runtime.py: final event
+  -> frontend/app/page.tsx: render
 ```
 
 `src/api/configuration_app.py` is the separate configuration and Knowledge-import subsystem. Benchmark runners live in `benchmarks/`, developer CLIs in `scripts/`, and tests in `tests/`; none of them are part of the main request path above.

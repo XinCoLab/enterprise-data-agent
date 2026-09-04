@@ -1,6 +1,7 @@
 """Run one public LiveSQLBench question, then score its captured SQL privately."""
 
 import argparse
+import asyncio
 import importlib.util
 import json
 import os
@@ -219,7 +220,7 @@ def _score(instance_id: str, generated_sql: str) -> tuple[bool, list, list]:
     return correct, actual, gold
 
 
-def main() -> None:
+async def main() -> None:
     # The agent may emit Unicode characters that the Windows GBK console cannot
     # encode. The parent batch runner always reads this machine payload as UTF-8.
     if hasattr(sys.stdout, "reconfigure"):
@@ -235,7 +236,10 @@ def main() -> None:
 
     # Import only after runtime variables are set. Gold is not opened until
     # the Agent has completed and its final successful SQL has been captured.
-    from graph.round_graph import graph
+    from graph.data_agent_graph import create_conversation_graph
+    from memory.conversation_checkpointer import (
+        open_conversation_checkpoint_database,
+    )
 
     question = _load_public_question(args.instance_id)
     usage_recorder = UsageRecorder()
@@ -252,59 +256,69 @@ def main() -> None:
     seen_tool_call_ids: set[str] = set()
     final_answer = ""
 
+    database_connection, checkpointer = (
+        await open_conversation_checkpoint_database()
+    )
+    conversation_graph = create_conversation_graph(checkpointer)
     started = perf_counter()
-    for update in graph.stream(
-        {"messages": [HumanMessage(content=question["query"]) ]},
-        config=config,
-        stream_mode="updates",
-    ):
-        for node_name, node_update in update.items():
-            print(f"NODE {node_name}")
-            for message in node_update.get("messages", []):
-                if isinstance(message, AIMessage):
-                    if node_name == "Main Agent LLM":
-                        view_trace = (message.response_metadata or {}).get(
-                            "knowledge_view"
-                        )
-                        if isinstance(view_trace, dict):
-                            knowledge_view_trace.append(view_trace)
-                    if message.content and not message.tool_calls:
-                        final_answer = str(message.content)
-                    for call in message.tool_calls:
-                        if call["id"] in seen_tool_call_ids:
-                            continue
-                        seen_tool_call_ids.add(call["id"])
-                        tool_sequence.append(call["name"])
-                        if call["name"] == "read_knowledge":
-                            knowledge_ids = (call.get("args") or {}).get(
-                                "knowledge_ids",
-                                [],
+    try:
+        async for update in conversation_graph.astream(
+            {"messages": [HumanMessage(content=question["query"])]},
+            config=config,
+            stream_mode="updates",
+        ):
+            for node_name, node_update in update.items():
+                print(f"NODE {node_name}")
+                for message in node_update.get("messages", []):
+                    if isinstance(message, AIMessage):
+                        if node_name == "Main Agent LLM":
+                            view_trace = (message.response_metadata or {}).get(
+                                "knowledge_view"
                             )
-                            read_knowledge_calls.append(
-                                [str(item) for item in knowledge_ids]
-                                if isinstance(knowledge_ids, list)
-                                else []
+                            if isinstance(view_trace, dict):
+                                knowledge_view_trace.append(view_trace)
+                        if message.content and not message.tool_calls:
+                            final_answer = str(message.content)
+                        for call in message.tool_calls:
+                            if call["id"] in seen_tool_call_ids:
+                                continue
+                            seen_tool_call_ids.add(call["id"])
+                            tool_sequence.append(call["name"])
+                            if call["name"] == "read_knowledge":
+                                knowledge_ids = (call.get("args") or {}).get(
+                                    "knowledge_ids",
+                                    [],
+                                )
+                                read_knowledge_calls.append(
+                                    [str(item) for item in knowledge_ids]
+                                    if isinstance(knowledge_ids, list)
+                                    else []
+                                )
+                            if call["name"] == "execute_readonly_sql":
+                                pending_sql[call["id"]] = call["args"]["sql"]
+                    elif isinstance(message, ToolMessage):
+                        try:
+                            tool_payload = json.loads(message.content)
+                        except (TypeError, json.JSONDecodeError):
+                            tool_payload = None
+                        if (
+                            isinstance(tool_payload, dict)
+                            and tool_payload.get("status")
+                            in {"error", "rejected", "denied"}
+                        ):
+                            tool_errors.append(
+                                {
+                                    "tool_name": message.name,
+                                    **tool_payload,
+                                }
                             )
-                        if call["name"] == "execute_readonly_sql":
-                            pending_sql[call["id"]] = call["args"]["sql"]
-                elif isinstance(message, ToolMessage):
-                    try:
-                        tool_payload = json.loads(message.content)
-                    except (TypeError, json.JSONDecodeError):
-                        tool_payload = None
-                    if (
-                        isinstance(tool_payload, dict)
-                        and tool_payload.get("status") in {"error", "rejected", "denied"}
-                    ):
-                        tool_errors.append(
-                            {
-                                "tool_name": message.name,
-                                **tool_payload,
-                            }
-                        )
-                    if message.tool_call_id in pending_sql:
-                        if _tool_result_succeeded(message):
-                            successful_sql.append(pending_sql[message.tool_call_id])
+                        if message.tool_call_id in pending_sql:
+                            if _tool_result_succeeded(message):
+                                successful_sql.append(
+                                    pending_sql[message.tool_call_id]
+                                )
+    finally:
+        await database_connection.close()
 
     latency_ms = round((perf_counter() - started) * 1000, 2)
     final_sql = successful_sql[-1] if successful_sql else ""
@@ -337,4 +351,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

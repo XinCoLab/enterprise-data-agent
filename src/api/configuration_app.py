@@ -31,7 +31,7 @@ from api.schemas import (
 )
 from knowledge_runtime.catalog import load_knowledge_cards
 from config.project_paths import CONFIG_ROOT, KNOWLEDGE_IMPORT_ROOT, PROJECT_ROOT
-from runtime.agent_runtime import GRAPH_RUN_LOCK
+from agent_runtime.agent_runtime import RESOURCE_CONFIG_LOCK, active_runs_exist
 from security.workspace_access import (
     CurrentUser,
     current_user_from_request,
@@ -80,6 +80,14 @@ async def enforce_workspace_permissions(request: Request, call_next):
 
 def request_user(request: Request) -> CurrentUser:
     return request.state.current_user
+
+
+def require_no_active_agent_runs() -> None:
+    if active_runs_exist():
+        raise HTTPException(
+            status_code=409,
+            detail="Agent 正在运行，请等待运行结束后再切换配置。",
+        )
 
 
 def empty_workspace_state(current_user: CurrentUser) -> dict:
@@ -581,8 +589,10 @@ def _refresh_model_runtime() -> None:
     refresh_model_runtime()
 
 
-@app.get("/api/state")
-def get_state(request: Request):
+@app.get("/api/page_configuration")
+def get_page_configuration(request: Request):
+    """加载当前工作区的数据库、模型、知识库和用户配置。"""
+
     current_user = request_user(request)
     if not current_user.resources_ready:
         return empty_workspace_state(current_user)
@@ -661,12 +671,13 @@ def save_model_settings(payload: ModelSettingsPayload):
     if not api_key and not _model_api_key():
         raise HTTPException(status_code=400, detail="请输入 DeepSeek API Key。")
 
-    _update_env(SETTINGS_PATH, {"DATA_AGENT_MODEL": payload.model})
-    os.environ["DATA_AGENT_MODEL"] = payload.model
-    if api_key:
-        _update_env(SECRETS_PATH, {"DEEPSEEK_API_KEY": api_key})
-        os.environ["DEEPSEEK_API_KEY"] = api_key
-    with GRAPH_RUN_LOCK:
+    with RESOURCE_CONFIG_LOCK:
+        require_no_active_agent_runs()
+        _update_env(SETTINGS_PATH, {"DATA_AGENT_MODEL": payload.model})
+        os.environ["DATA_AGENT_MODEL"] = payload.model
+        if api_key:
+            _update_env(SECRETS_PATH, {"DEEPSEEK_API_KEY": api_key})
+            os.environ["DEEPSEEK_API_KEY"] = api_key
         _refresh_model_runtime()
 
     return {
@@ -773,11 +784,15 @@ def save_and_apply(payload: ProfilePayload):
         knowledge_root = _resolve_local_path(payload.knowledge_root, PROJECT_ROOT / "knowledge")
         load_knowledge_cards(knowledge_root)
         password = _payload_password(payload)
-        _atomic_json(PROFILES_ROOT / f"{payload.id}.json", _profile_document(payload))
-        password_key = _password_key(payload.backend)
-        if password_key and password:
-            _update_env(_profile_secret_path(payload.id), {password_key: password})
-        with GRAPH_RUN_LOCK:
+        with RESOURCE_CONFIG_LOCK:
+            require_no_active_agent_runs()
+            _atomic_json(
+                PROFILES_ROOT / f"{payload.id}.json",
+                _profile_document(payload),
+            )
+            password_key = _password_key(payload.backend)
+            if password_key and password:
+                _update_env(_profile_secret_path(payload.id), {password_key: password})
             _apply_payload(payload, password)
             _refresh_knowledge_runtime(knowledge_root)
         return {
@@ -785,6 +800,8 @@ def save_and_apply(payload: ProfilePayload):
             "message": "数据库与 Knowledge 配置已保存并立即生效。",
             "restart_required": False,
         }
+    except HTTPException:
+        raise
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"保存失败：{error}") from error
 
@@ -835,7 +852,8 @@ def apply_profile(reference: ProfileReference):
             PROJECT_ROOT / "knowledge",
         )
         load_knowledge_cards(knowledge_root)
-        with GRAPH_RUN_LOCK:
+        with RESOURCE_CONFIG_LOCK:
+            require_no_active_agent_runs()
             _apply_payload(payload, password)
             _refresh_knowledge_runtime(knowledge_root)
         return {
@@ -843,6 +861,8 @@ def apply_profile(reference: ProfileReference):
             "message": f"已切换到“{payload.label}”并立即生效。",
             "restart_required": False,
         }
+    except HTTPException:
+        raise
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"切换失败：{error}") from error
 

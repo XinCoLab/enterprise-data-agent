@@ -15,10 +15,10 @@ type ApiState = { active: Profile; profiles: Profile[]; model: Model; models: Mo
 type AccountsResponse = { demo_mode: boolean; current: Account; accounts: Account[] };
 type SqlResult = { columns?: string[]; rows?: Record<string, unknown>[]; returned_rows?: number; truncated?: boolean; status?: string; error_type?: string; message?: string };
 type ArtifactView = { id: string; kind: "report"; title: string; preview_url: string };
-type ChatResponse = { run_id: string; status: "success" | "paused" | "canceled"; thread_id: string; model: Model; latency_ms: number; answer: string; tool_counts: Record<string, number>; sql_queries: { tool_call_id: string; sql: string; result?: SqlResult }[]; result_preview?: SqlResult | null; knowledge_view?: { knowledge_view_mode?: string } | null; artifacts?: ArtifactView[] };
+type ChatResponse = { request_id: string; status: "success" | "paused" | "canceled"; thread_id: string; model: Model; latency_ms: number; answer: string; tool_counts: Record<string, number>; sql_queries: { tool_call_id: string; sql: string; result?: SqlResult }[]; result_preview?: SqlResult | null; knowledge_view?: { knowledge_view_mode?: string } | null; artifacts?: ArtifactView[] };
 type ToolCallView = { name: string; arguments: Record<string, unknown> };
 type LlmRoundView = { number: number; content: string; toolCalls: ToolCallView[] };
-type ChatStreamEvent = { type: "started" | "round" | "progress" | "knowledge_trace" | "final" | "error"; run_id: string; thread_id?: string; message?: string; round?: number; content?: string; tool_calls?: ToolCallView[]; response?: ChatResponse; action?: "open" | "close"; stage?: string; mode?: string; active_ids?: string[] };
+type ChatStreamEvent = { type: "started" | "round" | "progress" | "knowledge_trace" | "final" | "error"; request_id: string; thread_id?: string; message?: string; round?: number; content?: string; tool_calls?: ToolCallView[]; response?: ChatResponse; action?: "open" | "close"; stage?: string; mode?: string; active_ids?: string[] };
 type ChatItem = { id: string; role: "user" | "assistant"; content: string; details?: ChatResponse };
 type ConversationSummaryPayload = { thread_id: string; title: string; custom_title: boolean; created_at: string; updated_at: string };
 type ConversationMessagePayload = { id: number; role: "user" | "assistant"; content: string; details: ChatResponse | null; created_at: string };
@@ -149,7 +149,7 @@ export default function Home() {
   const [conversationBusy, setConversationBusy] = useState(true);
   const [question, setQuestion] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
-  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
   const [currentRound, setCurrentRound] = useState<LlmRoundView | null>(null);
   const [roundStatus, setRoundStatus] = useState("");
   const [stopRequested, setStopRequested] = useState(false);
@@ -160,7 +160,7 @@ export default function Home() {
   const [liveKnowledgeClosing, setLiveKnowledgeClosing] = useState(false);
   const [liveKnowledgeMinimized, setLiveKnowledgeMinimized] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
-  const activeRunIdRef = useRef<string | null>(null);
+  const activeRequestIdRef = useRef<string | null>(null);
   const liveKnowledgeTraceRef = useRef<LiveKnowledgeTrace | null>(null);
   const liveKnowledgeCloseTimer = useRef<number | null>(null);
   const selectedProfile = useMemo(() => state?.profiles.find((profile) => profile.id === form.id), [state, form.id]);
@@ -212,7 +212,7 @@ export default function Home() {
   }, []);
 
   const loadState = async (preferredId?: string, requestUser = devUser) => {
-    const next = await api<ApiState>("/api/state", undefined, requestUser);
+    const next = await api<ApiState>("/api/page_configuration", undefined, requestUser);
     setState(next); setModel(next.model);
     const preferred = next.profiles.find((profile) => profile.id === preferredId);
     setForm({ ...(preferred || next.active), password: "" });
@@ -224,7 +224,7 @@ export default function Home() {
   useEffect(() => {
     Promise.all([
       fetchJsonForUser<AccountsResponse>("/api/accounts", DEFAULT_DEV_USER, { cache: "no-store" }),
-      fetchJsonForUser<ApiState>("/api/state", DEFAULT_DEV_USER),
+      fetchJsonForUser<ApiState>("/api/page_configuration", DEFAULT_DEV_USER),
       fetchJsonForUser<ConversationListResponse>("/api/conversations", DEFAULT_DEV_USER, { cache: "no-store" }),
     ])
       .then(([accountResponse, nextState, conversationResponse]) => {
@@ -257,7 +257,7 @@ export default function Home() {
       return [{ threadId, title, customTitle: false }, ...current];
     });
     setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content: text }]);
-    hideLiveKnowledge(true); setQuestion(""); setChatBusy(true); setStopRequested(false); setCurrentRound(null); setRoundStatus("正在分析现有信息并决定下一步…"); setActiveRunId(null); activeRunIdRef.current = null;
+    hideLiveKnowledge(true); setQuestion(""); setChatBusy(true); setStopRequested(false); setCurrentRound(null); setRoundStatus("正在分析现有信息并决定下一步…"); setActiveRequestId(null); activeRequestIdRef.current = null;
     try {
       const response = await fetchForUser("/api/chat/stream", devUser, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: text, thread_id: threadId, model }) });
       if (!response.ok) {
@@ -267,8 +267,8 @@ export default function Home() {
       let finalReceived = false;
       await readJsonLines(response, (event) => {
         if (event.type === "started") {
-          activeRunIdRef.current = event.run_id;
-          setActiveRunId(event.run_id);
+          activeRequestIdRef.current = event.request_id;
+          setActiveRequestId(event.request_id);
           if (event.thread_id) setThreadId(event.thread_id);
           setRoundStatus("正在分析现有信息并决定下一步…");
         } else if (event.type === "round") {
@@ -301,18 +301,18 @@ export default function Home() {
     } catch (error) {
       setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant", content: error instanceof Error ? error.message : "分析执行失败。" }]);
     } finally {
-      hideLiveKnowledge(); activeRunIdRef.current = null; setActiveRunId(null); setStopRequested(false); setCurrentRound(null); setRoundStatus(""); setChatBusy(false);
+      hideLiveKnowledge(); activeRequestIdRef.current = null; setActiveRequestId(null); setStopRequested(false); setCurrentRound(null); setRoundStatus(""); setChatBusy(false);
       void loadConversations().catch((error) => console.error("会话列表刷新失败", error));
     }
   };
 
   const stopRun = async () => {
-    const runId = activeRunIdRef.current;
-    if (!runId || stopRequested) return;
+    const requestId = activeRequestIdRef.current;
+    if (!requestId || stopRequested) return;
     setStopRequested(true);
     setRoundStatus("已请求停止，正在等待当前步骤安全结束…");
     try {
-      const result = await api<{ status: string; message: string }>(`/api/runs/${runId}/cancel`, { method: "POST" });
+      const result = await api<{ status: string; message: string }>(`/api/runs/${requestId}/cancel`, { method: "POST" });
       if (result.status === "not_running") setNotice({ tone: "info", text: result.message });
     } catch (error) {
       setStopRequested(false);
@@ -497,7 +497,7 @@ export default function Home() {
         {message.role === "assistant" ? <><AnswerBody content={message.content} />{message.details?.artifacts?.map((artifact) => <ArtifactPreview artifact={artifact} key={artifact.id} />)}</> : <p>{message.content}</p>}
         {message.details && <details className="run-details"><summary>查看 SQL 与运行信息</summary><div className="metric-row"><span>{(message.details.latency_ms / 1000).toFixed(1)} 秒</span><span>{message.details.sql_queries.length} 次 SQL</span><span>{message.details.knowledge_view?.knowledge_view_mode || "-"} View</span>{message.details.status === "paused" && <span className="warning-text">已暂停</span>}</div>{message.details.sql_queries.map((query, queryIndex) => <div className="sql-card" key={query.tool_call_id || queryIndex}><div>SQL {queryIndex + 1}</div><pre><code>{query.sql}</code></pre><ResultTable result={query.result} /></div>)}</details>}
       </article>)}{chatBusy && <article className="message assistant pending"><div className="round-status"><span className="round-status-dot" /><span className="round-status-text">{roundStatus || "正在分析现有信息并决定下一步…"}</span></div>{currentRound && <div className="current-round">{currentRound.content && <AnswerBody content={currentRound.content} />}{currentRound.toolCalls.length > 0 && <div className="round-tools">{currentRound.toolCalls.map((call, index) => <ToolCallCard call={call} key={`${call.name}-${index}`} />)}</div>}</div>}{stopRequested && <small>停止将在当前模型或工具调用结束后的安全位置生效。</small>}</article>}
-    </div>{liveKnowledgeTrace && !liveKnowledgeMinimized && <div className={`live-knowledge-overlay ${liveKnowledgeClosing ? "closing" : ""}`} aria-live="polite"><div className="live-knowledge-stage"><button className="live-knowledge-minimize" type="button" onClick={() => setLiveKnowledgeMinimized(true)} aria-label="收起知识库导航">×</button><KnowledgeGraph key={`live-knowledge-${devUser}`} revision={runtimeRevision} devUser={devUser} live liveTrace={liveKnowledgeTrace} /></div></div>}{liveKnowledgeTrace && liveKnowledgeMinimized && <button className="live-knowledge-reopen" type="button" onClick={() => setLiveKnowledgeMinimized(false)}><span />查看知识库导航</button>}<div className="composer" title={chatUnavailableReason}><textarea value={question} disabled={conversationBusy || !canChat || !resourcesReady} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendQuestion(); } }} placeholder={chatUnavailableReason || "询问 DataAgent"} /><button className={`send-button ${chatBusy ? "stop-button" : ""}`} aria-label={chatBusy ? "停止分析" : "发送"} disabled={conversationBusy || !canChat || !resourcesReady || (chatBusy ? !activeRunId || stopRequested : !question.trim())} onClick={chatBusy ? stopRun : () => sendQuestion()}>{chatBusy ? <span className="stop-symbol" /> : <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 15V5M6 9l4-4 4 4" /></svg>}</button></div></section>}
+    </div>{liveKnowledgeTrace && !liveKnowledgeMinimized && <div className={`live-knowledge-overlay ${liveKnowledgeClosing ? "closing" : ""}`} aria-live="polite"><div className="live-knowledge-stage"><button className="live-knowledge-minimize" type="button" onClick={() => setLiveKnowledgeMinimized(true)} aria-label="收起知识库导航">×</button><KnowledgeGraph key={`live-knowledge-${devUser}`} revision={runtimeRevision} devUser={devUser} live liveTrace={liveKnowledgeTrace} /></div></div>}{liveKnowledgeTrace && liveKnowledgeMinimized && <button className="live-knowledge-reopen" type="button" onClick={() => setLiveKnowledgeMinimized(false)}><span />查看知识库导航</button>}<div className="composer" title={chatUnavailableReason}><textarea value={question} disabled={conversationBusy || !canChat || !resourcesReady} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendQuestion(); } }} placeholder={chatUnavailableReason || "询问 DataAgent"} /><button className={`send-button ${chatBusy ? "stop-button" : ""}`} aria-label={chatBusy ? "停止分析" : "发送"} disabled={conversationBusy || !canChat || !resourcesReady || (chatBusy ? !activeRequestId || stopRequested : !question.trim())} onClick={chatBusy ? stopRun : () => sendQuestion()}>{chatBusy ? <span className="stop-symbol" /> : <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 15V5M6 9l4-4 4 4" /></svg>}</button></div></section>}
 
     {page === "database" && <section className="content-page database-page"><aside className="profile-panel"><div className="panel-heading"><h2>配置方案</h2><button disabled={!canConfigure} onClick={() => setForm(emptyProfile())}>新建</button></div>{state.profiles.map((profile) => <button className={`profile-item ${profile.id === form.id ? "active" : ""}`} key={profile.id} onClick={() => setForm({ ...profile, password: "" })}><strong>{profile.label}</strong><span>{backendName(profile.backend)} · {profile.database || "本地文件"}</span></button>)}</aside>
       <div className="database-config-column"><div className="settings-panel"><div className="panel-heading"><div><h2>{selectedProfile ? "编辑数据源" : "新数据源"}</h2><p>账号应只具备读取权限。</p></div><span className="apply-note">保存后立即生效</span></div><div className="form-grid">

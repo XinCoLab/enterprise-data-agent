@@ -32,3 +32,13 @@ def isolate_chat_history_database(tmp_path, monkeypatch):
         database_path,
     )
     conversation_history_database.create_chat_history_tables()
+
+
+@pytest.fixture
+def client(isolate_chat_history_database):
+    from fastapi.testclient import TestClient
+
+    from api.app import app
+
+    with TestClient(app) as test_client:
+        yield test_client
