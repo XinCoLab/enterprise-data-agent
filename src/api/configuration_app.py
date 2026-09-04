@@ -18,6 +18,7 @@ from zipfile import BadZipFile, ZipFile
 
 import duckdb
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 import psycopg2
 import pymysql
@@ -30,7 +31,13 @@ from api.schemas import (
 )
 from knowledge_runtime.catalog import load_knowledge_cards
 from config.project_paths import CONFIG_ROOT, KNOWLEDGE_IMPORT_ROOT, PROJECT_ROOT
-from runtime.agent_runtime import GRAPH_RUN_LOCK
+from agent_runtime.agent_runtime import RESOURCE_CONFIG_LOCK, active_runs_exist
+from security.workspace_access import (
+    CurrentUser,
+    current_user_from_request,
+    public_user,
+    require_permission,
+)
 
 
 SETTINGS_PATH = CONFIG_ROOT / "settings.env"
@@ -48,6 +55,66 @@ ENV_ASSIGNMENT = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=")
 
 
 app = FastAPI(title="DataAgent", docs_url=None, redoc_url=None)
+
+
+@app.middleware("http")
+async def enforce_workspace_permissions(request: Request, call_next):
+    """Protect configuration routes in this separately mounted FastAPI app."""
+
+    if not request.url.path.startswith("/api/"):
+        return await call_next(request)
+    try:
+        current_user = current_user_from_request(request)
+        required_permission = (
+            "config:read" if request.method == "GET" else "config:write"
+        )
+        require_permission(current_user, required_permission)
+        request.state.current_user = current_user
+    except HTTPException as error:
+        return JSONResponse(
+            status_code=error.status_code,
+            content={"detail": error.detail},
+        )
+    return await call_next(request)
+
+
+def request_user(request: Request) -> CurrentUser:
+    return request.state.current_user
+
+
+def require_no_active_agent_runs() -> None:
+    if active_runs_exist():
+        raise HTTPException(
+            status_code=409,
+            detail="Agent 正在运行，请等待运行结束后再切换配置。",
+        )
+
+
+def empty_workspace_state(current_user: CurrentUser) -> dict:
+    """Return a safe UI state until this workspace receives real resources."""
+
+    empty_profile = {
+        "id": f"{current_user.workspace_id}-unconfigured",
+        "label": current_user.workspace_name,
+        "description": "该模拟工作空间尚未配置独立资源。",
+        "backend": "postgresql",
+        "host": "",
+        "port": 5432,
+        "username": "",
+        "database": "",
+        "password_saved": False,
+        "duckdb_path": "",
+        "knowledge_root": "",
+    }
+    return {
+        "active": empty_profile,
+        "profiles": [empty_profile],
+        "model": "deepseek-v4-pro",
+        "models": list(ALLOWED_MODELS),
+        "knowledge": {"path": "", "card_count": 0, "types": {}},
+        "model_configured": False,
+        "workspace": public_user(current_user),
+    }
 
 
 def _read_env(path: Path) -> dict[str, str]:
@@ -522,8 +589,14 @@ def _refresh_model_runtime() -> None:
     refresh_model_runtime()
 
 
-@app.get("/api/state")
-def get_state():
+@app.get("/api/page_configuration")
+def get_page_configuration(request: Request):
+    """加载当前工作区的数据库、模型、知识库和用户配置。"""
+
+    current_user = request_user(request)
+    if not current_user.resources_ready:
+        return empty_workspace_state(current_user)
+
     active = _active_payload()
     settings = _read_env(SETTINGS_PATH)
     try:
@@ -543,6 +616,7 @@ def get_state():
         "models": list(ALLOWED_MODELS),
         "knowledge": knowledge,
         "model_configured": bool(_model_api_key()),
+        "workspace": public_user(current_user),
     }
 
 
@@ -552,8 +626,11 @@ def health():
 
 
 @app.get("/api/knowledge-graph")
-def knowledge_graph():
+def knowledge_graph(request: Request):
     """把 Runtime 已构建的 Knowledge 导航图提供给前端。"""
+
+    if not request_user(request).resources_ready:
+        return {"nodes": [], "edges": []}
 
     from knowledge_runtime import current_knowledge
 
@@ -565,7 +642,18 @@ def knowledge_graph():
 
 
 @app.get("/api/database-schema")
-def database_schema():
+def database_schema(request: Request):
+    if not request_user(request).resources_ready:
+        return {
+            "backend": "postgresql",
+            "database": "",
+            "host": "",
+            "port": 5432,
+            "username": "",
+            "table_count": 0,
+            "column_count": 0,
+            "tables": [],
+        }
     try:
         return _database_schema()
     except Exception as error:
@@ -583,12 +671,13 @@ def save_model_settings(payload: ModelSettingsPayload):
     if not api_key and not _model_api_key():
         raise HTTPException(status_code=400, detail="请输入 DeepSeek API Key。")
 
-    _update_env(SETTINGS_PATH, {"DATA_AGENT_MODEL": payload.model})
-    os.environ["DATA_AGENT_MODEL"] = payload.model
-    if api_key:
-        _update_env(SECRETS_PATH, {"DEEPSEEK_API_KEY": api_key})
-        os.environ["DEEPSEEK_API_KEY"] = api_key
-    with GRAPH_RUN_LOCK:
+    with RESOURCE_CONFIG_LOCK:
+        require_no_active_agent_runs()
+        _update_env(SETTINGS_PATH, {"DATA_AGENT_MODEL": payload.model})
+        os.environ["DATA_AGENT_MODEL"] = payload.model
+        if api_key:
+            _update_env(SECRETS_PATH, {"DEEPSEEK_API_KEY": api_key})
+            os.environ["DEEPSEEK_API_KEY"] = api_key
         _refresh_model_runtime()
 
     return {
@@ -695,11 +784,15 @@ def save_and_apply(payload: ProfilePayload):
         knowledge_root = _resolve_local_path(payload.knowledge_root, PROJECT_ROOT / "knowledge")
         load_knowledge_cards(knowledge_root)
         password = _payload_password(payload)
-        _atomic_json(PROFILES_ROOT / f"{payload.id}.json", _profile_document(payload))
-        password_key = _password_key(payload.backend)
-        if password_key and password:
-            _update_env(_profile_secret_path(payload.id), {password_key: password})
-        with GRAPH_RUN_LOCK:
+        with RESOURCE_CONFIG_LOCK:
+            require_no_active_agent_runs()
+            _atomic_json(
+                PROFILES_ROOT / f"{payload.id}.json",
+                _profile_document(payload),
+            )
+            password_key = _password_key(payload.backend)
+            if password_key and password:
+                _update_env(_profile_secret_path(payload.id), {password_key: password})
             _apply_payload(payload, password)
             _refresh_knowledge_runtime(knowledge_root)
         return {
@@ -707,6 +800,8 @@ def save_and_apply(payload: ProfilePayload):
             "message": "数据库与 Knowledge 配置已保存并立即生效。",
             "restart_required": False,
         }
+    except HTTPException:
+        raise
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"保存失败：{error}") from error
 
@@ -757,7 +852,8 @@ def apply_profile(reference: ProfileReference):
             PROJECT_ROOT / "knowledge",
         )
         load_knowledge_cards(knowledge_root)
-        with GRAPH_RUN_LOCK:
+        with RESOURCE_CONFIG_LOCK:
+            require_no_active_agent_runs()
             _apply_payload(payload, password)
             _refresh_knowledge_runtime(knowledge_root)
         return {
@@ -765,6 +861,8 @@ def apply_profile(reference: ProfileReference):
             "message": f"已切换到“{payload.label}”并立即生效。",
             "restart_required": False,
         }
+    except HTTPException:
+        raise
     except Exception as error:
         raise HTTPException(status_code=400, detail=f"切换失败：{error}") from error
 

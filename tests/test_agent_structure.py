@@ -5,7 +5,7 @@ from pathlib import Path
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from config.project_paths import AI_APP_LAB_ROOT
-from graph.round_graph import studio_graph
+from graph.data_agent_graph import studio_graph
 from knowledge_runtime.catalog import browse_catalog
 from knowledge_runtime.current_knowledge import (
     KNOWLEDGE_CATALOG,
@@ -149,6 +149,7 @@ class GenericToolProfileTest(unittest.TestCase):
             {
                 "__init__.py",
                 "tool_registry.py",
+                "tool_safety.py",
                 "browse_knowledge.py",
                 "search_knowledge.py",
                 "read_knowledge.py",

@@ -1,10 +1,12 @@
 """命令行运行入口；相同 thread_id 会恢复此前的 messages。"""
 
 import argparse
+import asyncio
 
 from langchain_core.messages import HumanMessage
 
-from graph.round_graph import graph
+from graph.data_agent_graph import create_conversation_graph
+from memory.conversation_checkpointer import open_conversation_checkpoint_database
 
 
 def print_update(node_name: str, update: dict) -> str:
@@ -19,10 +21,10 @@ def print_update(node_name: str, update: dict) -> str:
     return final_answer
 
 
-def run_one_turn(user_text: str, config: dict):
+async def run_one_turn(graph, user_text: str, config: dict):
     initial_state = {"messages": [HumanMessage(content=user_text)]}
 
-    for graph_update in graph.stream(
+    async for graph_update in graph.astream(
         initial_state,
         config=config,
         stream_mode="updates",
@@ -31,7 +33,7 @@ def run_one_turn(user_text: str, config: dict):
             print_update(node_name, update)
 
 
-if __name__ == "__main__":
+async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--thread-id", default="demo")
     parser.add_argument("--message")
@@ -43,13 +45,24 @@ if __name__ == "__main__":
         }
     }
 
-    if args.message:
-        run_one_turn(args.message, config)
-    else:
-        print(f"当前会话：{args.thread_id}（输入‘退出’结束）")
-        while True:
-            user_text = input("你：").strip()
-            if user_text == "退出":
-                break
-            if user_text:
-                run_one_turn(user_text, config)
+    database_connection, checkpointer = (
+        await open_conversation_checkpoint_database()
+    )
+    graph = create_conversation_graph(checkpointer)
+    try:
+        if args.message:
+            await run_one_turn(graph, args.message, config)
+        else:
+            print(f"当前会话：{args.thread_id}（输入‘退出’结束）")
+            while True:
+                user_text = (await asyncio.to_thread(input, "你：")).strip()
+                if user_text == "退出":
+                    break
+                if user_text:
+                    await run_one_turn(graph, user_text, config)
+    finally:
+        await database_connection.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

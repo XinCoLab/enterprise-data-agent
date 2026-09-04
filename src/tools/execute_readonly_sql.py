@@ -5,7 +5,10 @@ import json
 import os
 from typing import Annotated
 
+from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import tool
+
+from agent_runtime.agent_run_context import read_agent_run_context
 
 ALLOWED_DATABASE_BACKENDS = {"postgresql", "mysql", "duckdb"}
 
@@ -32,6 +35,7 @@ def execute_readonly_sql(
             "knowledge."
         ),
     ],
+    config: RunnableConfig,
 ) -> str:
     """Execute one read-only query against the currently configured database.
 
@@ -39,6 +43,15 @@ def execute_readonly_sql(
     timeout, resource limits, and display-row limit. A successful return is
     required before query results may be presented to the user.
     """
+
+    run_context = read_agent_run_context(config)
+    if run_context is not None:
+        selected_ids = run_context.selected_data_source_ids
+        allowed_ids = run_context.allowed_data_source_ids
+        if not selected_ids:
+            raise RuntimeError("No data source is selected for this Agent run.")
+        if any(data_source_id not in allowed_ids for data_source_id in selected_ids):
+            raise RuntimeError("This Agent run selected a forbidden data source.")
 
     executor, resource_limit_error, timeout_error = _configured_executor()
     try:

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { fetchJsonForUser } from "./api-client";
 
 type DatabaseColumn = { name: string; data_type: string; nullable: boolean };
 type DatabaseTable = { schema: string; name: string; kind: string; columns: DatabaseColumn[] };
@@ -15,7 +16,7 @@ type SchemaPayload = {
   tables: DatabaseTable[];
 };
 
-export default function DatabaseExplorer({ revision }: { revision: number }) {
+export default function DatabaseExplorer({ revision, devUser }: { revision: number; devUser: string }) {
   const [payload, setPayload] = useState<SchemaPayload | null>(null);
   const [selectedName, setSelectedName] = useState("");
   const [query, setQuery] = useState("");
@@ -24,15 +25,9 @@ export default function DatabaseExplorer({ revision }: { revision: number }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
-    setError("");
-    fetch("/api/database-schema", { cache: "no-store" })
-      .then(async (response) => {
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.detail || "数据库结构加载失败");
-        return result as SchemaPayload;
-      })
+    fetchJsonForUser<SchemaPayload>("/api/database-schema", devUser, { cache: "no-store" })
       .then((result) => {
+        setError("");
         setPayload(result);
         setSelectedName((current) => current && result.tables.some((table) => `${table.schema}.${table.name}` === current)
           ? current
@@ -40,7 +35,7 @@ export default function DatabaseExplorer({ revision }: { revision: number }) {
       })
       .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "数据库结构加载失败"))
       .finally(() => setLoading(false));
-  }, [refreshIndex, revision]);
+  }, [devUser, refreshIndex, revision]);
 
   const filteredTables = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -50,10 +45,17 @@ export default function DatabaseExplorer({ revision }: { revision: number }) {
 
   const selectedTable = payload?.tables.find((table) => `${table.schema}.${table.name}` === selectedName) || null;
 
+  const refreshSchema = () => {
+    setLoading(true);
+    setError("");
+    setPayload(null);
+    setRefreshIndex((current) => current + 1);
+  };
+
   return <section className="database-explorer">
     <div className="database-explorer-heading">
       <div><h2>Schema Explorer</h2></div>
-      <button type="button" onClick={() => setRefreshIndex((current) => current + 1)} disabled={loading}>刷新</button>
+      <button type="button" onClick={refreshSchema} disabled={loading}>刷新</button>
     </div>
     {loading && !payload ? <div className="database-explorer-state">正在读取数据库结构…</div> : error ? <div className="database-explorer-state error">{error}</div> : payload && <>
       <div className="database-stats">

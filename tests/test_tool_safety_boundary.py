@@ -1,3 +1,4 @@
+import asyncio
 import json
 import importlib
 import unittest
@@ -5,12 +6,12 @@ from unittest.mock import patch
 
 from langchain_core.messages import AIMessage, HumanMessage
 
-from graph.round_graph import studio_graph
+from graph.data_agent_graph import studio_graph
 from graph.nodes.main_agent_llm_node import _invalid_tool_json_fallback
 from graph.nodes.tool_execution_node import tool_execution_node
 from graph.nodes.tool_safety_node import tool_safety_node
 from knowledge_runtime.current_knowledge import KNOWLEDGE_CARDS
-from safety.tool_safety import (
+from tools.tool_safety import (
     ALLOW,
     DENY,
     INVALID_ARGUMENTS,
@@ -150,14 +151,14 @@ class ToolSafetyBoundaryTest(unittest.TestCase):
         safety_update = tool_safety_node({"messages": [message]})
 
         class MustNotExecute:
-            def invoke(self, arguments):
+            async def ainvoke(self, arguments):
                 raise AssertionError("denied tool must not execute")
 
         real_tool = TOOLS_BY_NAME["execute_readonly_sql"]
         try:
             TOOLS_BY_NAME["execute_readonly_sql"] = MustNotExecute()
-            execution_update = tool_execution_node(
-                {"messages": safety_update["messages"]}
+            execution_update = asyncio.run(
+                tool_execution_node({"messages": safety_update["messages"]})
             )
         finally:
             TOOLS_BY_NAME["execute_readonly_sql"] = real_tool
@@ -178,7 +179,9 @@ class ToolSafetyBoundaryTest(unittest.TestCase):
             ],
         )
         safety_update = tool_safety_node({"messages": [message]})
-        execution_update = tool_execution_node({"messages": safety_update["messages"]})
+        execution_update = asyncio.run(
+            tool_execution_node({"messages": safety_update["messages"]})
+        )
 
         result = json.loads(execution_update["messages"][0].content)
         self.assertEqual(result["query"], "revenue")
@@ -199,14 +202,14 @@ class ToolSafetyBoundaryTest(unittest.TestCase):
         safety_update = tool_safety_node({"messages": [message]})
 
         class BrokenTool:
-            def invoke(self, arguments):
+            async def ainvoke(self, arguments):
                 raise RuntimeError("database unavailable; password=do-not-return")
 
         real_tool = TOOLS_BY_NAME["search_knowledge"]
         try:
             TOOLS_BY_NAME["search_knowledge"] = BrokenTool()
-            execution_update = tool_execution_node(
-                {"messages": safety_update["messages"]}
+            execution_update = asyncio.run(
+                tool_execution_node({"messages": safety_update["messages"]})
             )
         finally:
             TOOLS_BY_NAME["search_knowledge"] = real_tool
@@ -279,7 +282,7 @@ class ToolSafetyBoundaryTest(unittest.TestCase):
 
     def test_invalid_tool_json_ends_graph_without_tool_execution(self):
         class MalformedToolModel:
-            def invoke(self, messages):
+            async def ainvoke(self, messages):
                 return AIMessage(
                     content="",
                     invalid_tool_calls=[
@@ -297,9 +300,11 @@ class ToolSafetyBoundaryTest(unittest.TestCase):
             "graph.nodes.main_agent_llm_node.MAIN_LLM_WITH_TOOLS",
             MalformedToolModel(),
         ):
-            result = studio_graph.invoke(
-                {"messages": [HumanMessage(content="Question")]},
-                config={"recursion_limit": 8},
+            result = asyncio.run(
+                studio_graph.ainvoke(
+                    {"messages": [HumanMessage(content="Question")]},
+                    config={"recursion_limit": 8},
+                )
             )
 
         final = result["messages"][-1]

@@ -1,32 +1,28 @@
+import asyncio
 import io
 import json
 import os
 from pathlib import Path
-import threading
 from types import SimpleNamespace
 import zipfile
 
-from fastapi.testclient import TestClient
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from api import configuration_app as config_server
-from api.app import app
 from api.schemas import ChatRequest, ProfilePayload
-from runtime import agent_runtime
+from agent_runtime import agent_runtime
+from security.workspace_access import resolve_current_user
 
 
-client = TestClient(app)
-
-
-def test_state_exposes_only_supported_models():
-    response = client.get("/api/state")
+def test_state_exposes_only_supported_models(client):
+    response = client.get("/api/page_configuration")
     assert response.status_code == 200
     payload = response.json()
     assert payload["models"] == ["deepseek-v4-pro", "deepseek-v4-flash"]
     assert payload["active"]["backend"] in {"postgresql", "mysql", "duckdb"}
 
 
-def test_knowledge_graph_exposes_runtime_nodes_and_edges():
+def test_knowledge_graph_exposes_runtime_nodes_and_edges(client):
     response = client.get("/api/knowledge-graph")
     assert response.status_code == 200
     payload = response.json()
@@ -36,7 +32,7 @@ def test_knowledge_graph_exposes_runtime_nodes_and_edges():
     assert {"source", "relation", "target"} <= payload["edges"][0].keys()
 
 
-def test_database_schema_endpoint_does_not_expose_secrets(monkeypatch):
+def test_database_schema_endpoint_does_not_expose_secrets(monkeypatch, client):
     monkeypatch.setattr(
         config_server,
         "_database_schema",
@@ -58,7 +54,7 @@ def test_database_schema_endpoint_does_not_expose_secrets(monkeypatch):
     assert "password" not in json.dumps(payload).lower()
 
 
-def test_chat_rejects_unknown_model_before_agent_execution():
+def test_chat_rejects_unknown_model_before_agent_execution(client):
     response = client.post(
         "/api/chat",
         json={"question": "count records", "model": "unknown-model"},
@@ -69,6 +65,7 @@ def test_chat_rejects_unknown_model_before_agent_execution():
 def test_chat_reports_missing_model_key_without_exposing_internal_name(
     tmp_path: Path,
     monkeypatch,
+    client,
 ):
     monkeypatch.setattr(agent_runtime, "SECRETS_PATH", tmp_path / "secrets.env")
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
@@ -84,7 +81,11 @@ def test_chat_reports_missing_model_key_without_exposing_internal_name(
     assert "DEEPSEEK_API_KEY" not in detail
 
 
-def test_model_settings_store_key_without_returning_it(tmp_path: Path, monkeypatch):
+def test_model_settings_store_key_without_returning_it(
+    tmp_path: Path,
+    monkeypatch,
+    client,
+):
     settings_path = tmp_path / "settings.env"
     secrets_path = tmp_path / "secrets.env"
     monkeypatch.setattr(config_server, "SETTINGS_PATH", settings_path)
@@ -108,7 +109,11 @@ def test_model_settings_store_key_without_returning_it(tmp_path: Path, monkeypat
     assert f"DEEPSEEK_API_KEY={secret}" in secrets_path.read_text(encoding="utf-8")
 
 
-def test_delete_profile_removes_document_and_saved_secret(tmp_path: Path, monkeypatch):
+def test_delete_profile_removes_document_and_saved_secret(
+    tmp_path: Path,
+    monkeypatch,
+    client,
+):
     profiles_root = tmp_path / "profiles"
     secrets_root = tmp_path / "profile_secrets"
     profiles_root.mkdir()
@@ -130,7 +135,7 @@ def test_delete_profile_removes_document_and_saved_secret(tmp_path: Path, monkey
     assert not secret_path.exists()
 
 
-def test_delete_profile_rejects_active_profile(tmp_path: Path, monkeypatch):
+def test_delete_profile_rejects_active_profile(tmp_path: Path, monkeypatch, client):
     profiles_root = tmp_path / "profiles"
     profiles_root.mkdir()
     profile_path = profiles_root / "active-profile.json"
@@ -189,7 +194,7 @@ def test_apply_payload_updates_database_environment_immediately(
     assert os.environ["DATA_AGENT_POSTGRES_DATABASE"] == "analytics"
 
 
-def test_turn_result_links_sql_to_its_real_tool_result():
+def test_build_turn_result_links_sql_to_its_real_tool_result():
     messages = [
         HumanMessage(content="Count rows"),
         AIMessage(
@@ -210,7 +215,7 @@ def test_turn_result_links_sql_to_its_real_tool_result():
         AIMessage(content="There are 12 records."),
     ]
 
-    result = agent_runtime._turn_result(messages)
+    result = agent_runtime.build_turn_result(messages)
 
     assert result["answer"] == "There are 12 records."
     assert result["sql_queries"][0]["sql"].startswith("SELECT COUNT")
@@ -218,11 +223,12 @@ def test_turn_result_links_sql_to_its_real_tool_result():
 
 
 def test_round_graph_returns_to_runtime_after_one_complete_tool_cycle():
-    from graph.round_graph import round_graph
+    from graph.data_agent_graph import create_single_round_graph
 
+    single_round_graph = create_single_round_graph(None)
     edges = {
         (edge.source, edge.target)
-        for edge in round_graph.get_graph().edges
+        for edge in single_round_graph.get_graph().edges
     }
 
     assert ("Tool Safety", "Tool Execution") in edges
@@ -236,7 +242,7 @@ class _StreamingGraph:
         self.round_number = 0
         self.emitted_terminal_answer = False
 
-    def stream(self, payload, **_kwargs):
+    async def astream(self, payload, **_kwargs):
         if payload.get("messages"):
             self.messages.extend(payload["messages"])
         self.round_number += 1
@@ -300,19 +306,143 @@ class _StreamingGraph:
             "data": {"Tool Execution": {"messages": [tool_result]}},
         }
 
-    def update_state(self, _config, values):
+    async def aupdate_state(self, _config, values):
         self.messages.extend(values.get("messages", []))
 
-    def get_state(self, _config):
-        return SimpleNamespace(values={"messages": list(self.messages)})
+    async def aget_state(self, _config):
+        return SimpleNamespace(
+            values={"messages": list(self.messages)},
+            next=(),
+        )
+
+
+class _ClosableStreamingGraph(_StreamingGraph):
+    def __init__(self):
+        super().__init__()
+        self.stream_closed = False
+
+    async def astream(self, payload, **kwargs):
+        graph_stream = super().astream(payload, **kwargs)
+        try:
+            async for part in graph_stream:
+                yield part
+        finally:
+            self.stream_closed = True
+            await graph_stream.aclose()
+
+
+class _FailingStreamingGraph(_StreamingGraph):
+    async def astream(self, _payload, **_kwargs):
+        if False:
+            yield None
+        raise RuntimeError("database unavailable")
+
+
+async def _collect_async(iterator):
+    return [item async for item in iterator]
+
+
+def test_sync_run_uses_the_same_event_execution_path(tmp_path: Path, monkeypatch):
+    fake_graph = _StreamingGraph()
+    monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", tmp_path / "settings.env")
+
+    response = asyncio.run(
+        agent_runtime.run_agent(
+            ChatRequest(
+                question="Count records",
+                thread_id="sync-shared-path",
+                model="deepseek-v4-pro",
+            ),
+            resolve_current_user(None),
+            single_round_graph=fake_graph,
+        )
+    )
+
+    assert response["status"] == "success"
+    assert response["answer"] == "There are 12 records."
+    assert response["result_preview"]["rows"] == [{"n": 12}]
+    assert fake_graph.round_number == 2
+
+
+def test_closing_http_stream_closes_the_active_graph_stream(
+    tmp_path: Path,
+    monkeypatch,
+):
+    fake_graph = _ClosableStreamingGraph()
+    monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", tmp_path / "settings.env")
+    request = ChatRequest(
+        question="Count records",
+        thread_id="closed-browser-stream",
+        model="deepseek-v4-pro",
+    )
+    current_user = resolve_current_user(None)
+    thread_id, run_config = agent_runtime.build_agent_config(request, current_user)
+    async def consume_and_close():
+        events = agent_runtime.stream_agent(
+            request,
+            current_user,
+            single_round_graph=fake_graph,
+            thread_id=thread_id,
+            run_config=run_config,
+        )
+        started = json.loads(await anext(events))
+        await anext(events)
+        await events.aclose()
+        return started
+
+    started = asyncio.run(consume_and_close())
+
+    assert fake_graph.stream_closed is True
+    assert started["request_id"] not in agent_runtime.ACTIVE_RUNS
+
+
+def test_stream_failure_is_returned_as_one_terminal_error_event(
+    tmp_path: Path,
+    monkeypatch,
+):
+    fake_graph = _FailingStreamingGraph()
+    monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", tmp_path / "settings.env")
+    request = ChatRequest(
+        question="Count records",
+        thread_id="failed-stream",
+        model="deepseek-v4-pro",
+    )
+    current_user = resolve_current_user(None)
+    thread_id, run_config = agent_runtime.build_agent_config(request, current_user)
+
+    events = [
+        json.loads(line)
+        for line in asyncio.run(
+            _collect_async(
+                agent_runtime.stream_agent(
+                    request,
+                    current_user,
+                    single_round_graph=fake_graph,
+                    thread_id=thread_id,
+                    run_config=run_config,
+                )
+            )
+        )
+    ]
+
+    assert [event["type"] for event in events] == ["started", "error"]
+    assert events[-1]["message"] == "分析执行失败：database unavailable"
+    matching_runs = [
+        run
+        for run in agent_runtime.RECENT_RUNS
+        if run["request_id"] == events[0]["request_id"]
+    ]
+    assert len(matching_runs) == 1
+    assert matching_runs[0]["status"] == "error"
+    assert events[0]["request_id"] not in agent_runtime.ACTIVE_RUNS
 
 
 def test_streaming_run_cancels_only_after_tool_results_complete_protocol(
     tmp_path: Path,
     monkeypatch,
+    client,
 ):
     fake_graph = _StreamingGraph()
-    monkeypatch.setattr(agent_runtime, "_agent_graph", lambda: fake_graph)
     monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", tmp_path / "settings.env")
     request = ChatRequest(
         question="Count records",
@@ -320,17 +450,29 @@ def test_streaming_run_cancels_only_after_tool_results_complete_protocol(
         model="deepseek-v4-pro",
     )
 
-    events = agent_runtime.stream_agent(request)
-    started = json.loads(next(events))
-    assert started["type"] == "started"
-    first_progress = json.loads(next(events))
-    assert first_progress["type"] == "progress"
+    current_user = resolve_current_user(None)
+    thread_id, run_config = agent_runtime.build_agent_config(request, current_user)
+    async def consume_with_cancel():
+        events = agent_runtime.stream_agent(
+            request,
+            current_user,
+            single_round_graph=fake_graph,
+            thread_id=thread_id,
+            run_config=run_config,
+        )
+        started = json.loads(await anext(events))
+        first_progress = json.loads(await anext(events))
+        cancel_response = client.post(f"/api/runs/{started['request_id']}/cancel")
+        remaining = [json.loads(line) async for line in events]
+        return started, first_progress, cancel_response, remaining
 
-    cancel_response = client.post(f"/api/runs/{started['run_id']}/cancel")
+    started, first_progress, cancel_response, remaining = asyncio.run(
+        consume_with_cancel()
+    )
+    assert started["type"] == "started"
+    assert first_progress["type"] == "progress"
     assert cancel_response.status_code == 200
     assert cancel_response.json()["status"] == "cancel_requested"
-
-    remaining = [json.loads(line) for line in events]
     round_event = next(event for event in remaining if event["type"] == "round")
     assert round_event["round"] == 1
     assert round_event["content"] == ""
@@ -344,7 +486,7 @@ def test_streaming_run_cancels_only_after_tool_results_complete_protocol(
     assert final["response"]["status"] == "canceled"
     assert final["response"]["result_preview"]["rows"] == [{"n": 12}]
     assert fake_graph.emitted_terminal_answer is False
-    assert started["run_id"] not in agent_runtime.ACTIVE_RUNS
+    assert started["request_id"] not in agent_runtime.ACTIVE_RUNS
 
 
 def test_streaming_runtime_counts_one_complete_tool_cycle_as_one_recursion(
@@ -357,7 +499,6 @@ def test_streaming_runtime_counts_one_complete_tool_cycle_as_one_recursion(
         "DATA_AGENT_MAX_RECURSIONS=2\n",
         encoding="utf-8",
     )
-    monkeypatch.setattr(agent_runtime, "_agent_graph", lambda: fake_graph)
     monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", settings_path)
     request = ChatRequest(
         question="Count records",
@@ -365,7 +506,22 @@ def test_streaming_runtime_counts_one_complete_tool_cycle_as_one_recursion(
         model="deepseek-v4-pro",
     )
 
-    events = [json.loads(line) for line in agent_runtime.stream_agent(request)]
+    current_user = resolve_current_user(None)
+    thread_id, run_config = agent_runtime.build_agent_config(request, current_user)
+    events = [
+        json.loads(line)
+        for line in asyncio.run(
+            _collect_async(
+                agent_runtime.stream_agent(
+                    request,
+                    current_user,
+                    single_round_graph=fake_graph,
+                    thread_id=thread_id,
+                    run_config=run_config,
+                )
+            )
+        )
+    ]
 
     rounds = [event["round"] for event in events if event["type"] == "round"]
     final = next(event for event in events if event["type"] == "final")
@@ -385,11 +541,13 @@ def test_max_recursions_generates_tool_free_fallback_summary(
         "DATA_AGENT_MAX_RECURSIONS=1\n",
         encoding="utf-8",
     )
-    monkeypatch.setattr(agent_runtime, "_agent_graph", lambda: fake_graph)
+    async def fake_summary(_messages, **_kwargs):
+        return AIMessage(content="Pause report")
+
     monkeypatch.setattr(
         agent_runtime,
-        "_generate_recursion_limit_summary",
-        lambda _messages, **_kwargs: AIMessage(content="Pause report"),
+        "generate_recursion_limit_summary",
+        fake_summary,
     )
     monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", settings_path)
     request = ChatRequest(
@@ -398,7 +556,22 @@ def test_max_recursions_generates_tool_free_fallback_summary(
         model="deepseek-v4-pro",
     )
 
-    events = [json.loads(line) for line in agent_runtime.stream_agent(request)]
+    current_user = resolve_current_user(None)
+    thread_id, run_config = agent_runtime.build_agent_config(request, current_user)
+    events = [
+        json.loads(line)
+        for line in asyncio.run(
+            _collect_async(
+                agent_runtime.stream_agent(
+                    request,
+                    current_user,
+                    single_round_graph=fake_graph,
+                    thread_id=thread_id,
+                    run_config=run_config,
+                )
+            )
+        )
+    ]
 
     final = next(event for event in events if event["type"] == "final")
     response = final["response"]
@@ -412,10 +585,8 @@ def test_max_recursions_generates_tool_free_fallback_summary(
 def test_recursion_limit_summary_never_persists_new_tool_calls(monkeypatch):
     from prompts import recursion_limit_summary
 
-    monkeypatch.setattr(
-        recursion_limit_summary,
-        "generate_recursion_limit_summary",
-        lambda _messages, **_kwargs: AIMessage(
+    async def fake_summary(_messages, **_kwargs):
+        return AIMessage(
             content='<|DSML|tool_calls><|DSML|invoke name="read_knowledge">',
             tool_calls=[
                 {
@@ -424,12 +595,19 @@ def test_recursion_limit_summary_never_persists_new_tool_calls(monkeypatch):
                     "args": {"knowledge_ids": ["table.example"]},
                 }
             ],
-        ),
+        )
+
+    monkeypatch.setattr(
+        recursion_limit_summary,
+        "generate_recursion_limit_summary",
+        fake_summary,
     )
 
-    model_output = agent_runtime._generate_recursion_limit_summary(
-        [HumanMessage(content="复杂分析任务")],
-        model_name="deepseek-v4-pro",
+    model_output = asyncio.run(
+        agent_runtime.generate_recursion_limit_summary(
+            [HumanMessage(content="复杂分析任务")],
+            model_name="deepseek-v4-pro",
+        )
     )
 
     assert model_output.content
@@ -450,44 +628,31 @@ def test_agent_config_separates_product_recursions_from_langgraph_guard(
     monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", settings_path)
 
     _thread_id, config = agent_runtime.build_agent_config(
-        ChatRequest(question="test", thread_id="budget-config")
+        ChatRequest(question="test", thread_id="budget-config"),
+        resolve_current_user(None),
     )
 
     assert config["configurable"]["max_recursions"] == 10
     assert config["recursion_limit"] == 6
 
 
-def test_cancel_endpoint_is_idempotent_for_finished_or_unknown_run():
+def test_cancel_endpoint_is_idempotent_for_finished_or_unknown_run(client):
     response = client.post("/api/runs/not-running/cancel")
     assert response.status_code == 200
     assert response.json()["status"] == "not_running"
 
 
-def test_graph_run_lock_supports_streaming_worker_handoffs():
-    """The stream lock must not require release by its acquiring thread."""
+def test_conversation_locks_are_scoped_by_checkpoint_thread():
+    async def read_locks():
+        first = agent_runtime.conversation_lock("lock-thread-a")
+        same_thread = agent_runtime.conversation_lock("lock-thread-a")
+        other_thread = agent_runtime.conversation_lock("lock-thread-b")
+        return first, same_thread, other_thread
 
-    lock = agent_runtime.GRAPH_RUN_LOCK
-    assert type(lock) is type(threading.Lock())
+    first, same_thread, other_thread = asyncio.run(read_locks())
 
-    errors: list[Exception] = []
-
-    def acquire_on_first_worker():
-        lock.acquire()
-
-    def release_on_second_worker():
-        try:
-            lock.release()
-        except Exception as error:  # pragma: no cover - regression evidence
-            errors.append(error)
-
-    first_worker = threading.Thread(target=acquire_on_first_worker)
-    first_worker.start()
-    first_worker.join()
-    second_worker = threading.Thread(target=release_on_second_worker)
-    second_worker.start()
-    second_worker.join()
-
-    assert errors == []
+    assert first is same_thread
+    assert first is not other_thread
 
 
 def _archive(files: dict[str, str]) -> bytes:
@@ -498,7 +663,7 @@ def _archive(files: dict[str, str]) -> bytes:
     return buffer.getvalue()
 
 
-def test_knowledge_import_accepts_valid_cards(tmp_path: Path, monkeypatch):
+def test_knowledge_import_accepts_valid_cards(tmp_path: Path, monkeypatch, client):
     monkeypatch.setattr(config_server, "KNOWLEDGE_IMPORT_ROOT", tmp_path)
     card = """
 knowledge_id: table.demo.records
@@ -518,7 +683,7 @@ payload:
     assert response.json()["details"]["card_count"] == 1
 
 
-def test_knowledge_import_rejects_parent_traversal(tmp_path: Path, monkeypatch):
+def test_knowledge_import_rejects_parent_traversal(tmp_path: Path, monkeypatch, client):
     monkeypatch.setattr(config_server, "KNOWLEDGE_IMPORT_ROOT", tmp_path)
     response = client.post(
         "/api/import-knowledge",

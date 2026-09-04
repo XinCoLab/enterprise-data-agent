@@ -3,13 +3,17 @@
 from uuid import uuid4
 
 from langchain_core.messages import AIMessage
+from langchain_core.runnables import RunnableConfig
 
-from graph.text2sql_state import Text2SQLState
-from safety.tool_safety import StandardToolCall, check_tool_calls
+from graph.graph_state import GraphState
+from tools.tool_safety import StandardToolCall, check_tool_calls
 from tools.tool_registry import TOOLS_BY_NAME
 
 
-def tool_safety_node(state: Text2SQLState) -> dict:
+def tool_safety_node(
+    state: GraphState,
+    config: RunnableConfig | None = None,
+) -> dict:
     """Translate AI tool calls, attach ALLOW/DENY decisions, and do nothing else."""
 
     message = state["messages"][-1]

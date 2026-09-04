@@ -4,9 +4,10 @@ import json
 import re
 
 from langchain_core.messages import AIMessage, ToolMessage
+from langchain_core.runnables import RunnableConfig
 
-from graph.text2sql_state import Text2SQLState
-from safety.tool_safety import ALLOW
+from graph.graph_state import GraphState
+from tools.tool_safety import ALLOW
 from tools.tool_registry import TOOLS_BY_NAME
 
 
@@ -23,7 +24,10 @@ def _safe_error_details(error: Exception) -> str:
     return details[:1000]
 
 
-def tool_execution_node(state: Text2SQLState) -> dict:
+async def tool_execution_node(
+    state: GraphState,
+    config: RunnableConfig | None = None,
+) -> dict:
     """Execute ALLOW decisions and return DENY decisions without execution."""
 
     message = state["messages"][-1]
@@ -58,7 +62,13 @@ def tool_execution_node(state: Text2SQLState) -> dict:
         else:
             registered_tool = TOOLS_BY_NAME[tool_call["name"]]
             try:
-                content = registered_tool.invoke(tool_call["args"])
+                if config is None:
+                    content = await registered_tool.ainvoke(tool_call["args"])
+                else:
+                    content = await registered_tool.ainvoke(
+                        tool_call["args"],
+                        config=config,
+                    )
             except Exception as error:
                 content = json.dumps(
                     {

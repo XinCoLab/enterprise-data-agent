@@ -1,10 +1,4 @@
-from fastapi.testclient import TestClient
-
-from api.app import app
 from memory import conversation_history_database
-
-
-client = TestClient(app)
 
 
 def seed_conversation() -> None:
@@ -22,7 +16,7 @@ def seed_conversation() -> None:
     )
 
 
-def test_list_and_open_saved_conversation():
+def test_list_and_open_saved_conversation(client):
     seed_conversation()
 
     list_response = client.get("/api/conversations")
@@ -31,6 +25,8 @@ def test_list_and_open_saved_conversation():
     assert conversation_list == [
         {
             "thread_id": "thread-1",
+            "workspace_id": "workspace-a",
+            "created_by_user_id": "user-admin-a",
             "title": "第一行 第二行",
             "custom_title": False,
             "created_at": conversation_list[0]["created_at"],
@@ -49,7 +45,7 @@ def test_list_and_open_saved_conversation():
     assert conversation["messages"][1]["details"]["answer"] == "分析完成"
 
 
-def test_rename_and_delete_saved_conversation():
+def test_rename_and_delete_saved_conversation(client):
     seed_conversation()
 
     rename_response = client.patch(
@@ -68,7 +64,7 @@ def test_rename_and_delete_saved_conversation():
     assert client.delete("/api/conversations/thread-1").status_code == 404
 
 
-def test_conversation_api_validates_title_and_missing_conversation():
+def test_conversation_api_validates_title_and_missing_conversation(client):
     assert client.get("/api/conversations/missing").status_code == 404
     assert client.patch(
         "/api/conversations/missing",

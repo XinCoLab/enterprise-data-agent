@@ -26,7 +26,7 @@ Using only the existing conversation, Tool Calls, and Tool Results:
 """
 
 
-def generate_recursion_limit_summary(
+async def generate_recursion_limit_summary(
     messages: list[AnyMessage],
     *,
     model_name: str,
@@ -60,7 +60,7 @@ def generate_recursion_limit_summary(
             transcript.append(f"Conversation message:\n{content}")
 
     model = get_main_llm(model_name)
-    return model.invoke(
+    return await model.ainvoke(
         [
             SystemMessage(content=RECURSION_LIMIT_SUMMARY_PROMPT),
             HumanMessage(

@@ -1,8 +1,5 @@
 import json
 
-from fastapi.testclient import TestClient
-
-from api.app import app
 from visualization import artifacts
 from tools.compose_dashboard import compose_dashboard
 from tools.create_chart import create_chart
@@ -14,7 +11,7 @@ def _artifact_id(result: str) -> str:
     return json.loads(result)["artifact"]["id"]
 
 
-def test_visualization_tools_return_a_viewable_report(tmp_path, monkeypatch):
+def test_visualization_tools_return_a_viewable_report(tmp_path, monkeypatch, client):
     monkeypatch.setattr(artifacts, "ARTIFACT_ROOT", tmp_path)
     cards_id = _artifact_id(
         create_metric_cards.invoke(
@@ -51,6 +48,6 @@ def test_visualization_tools_return_a_viewable_report(tmp_path, monkeypatch):
         export_report.invoke({"dashboard_id": dashboard_id})
     )["artifact"]
 
-    response = TestClient(app).get(report["preview_url"])
+    response = client.get(report["preview_url"])
     assert response.status_code == 200
     assert "echarts.init" in response.text

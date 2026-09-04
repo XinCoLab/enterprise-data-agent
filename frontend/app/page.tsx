@@ -3,19 +3,22 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import DatabaseExplorer from "./DatabaseExplorer";
 import KnowledgeGraph, { type LiveKnowledgeTrace } from "./KnowledgeGraph";
+import { fetchForUser, fetchJsonForUser } from "./api-client";
 
 type Backend = "postgresql" | "mysql" | "duckdb";
 type Page = "analysis" | "database" | "knowledge" | "model";
 type Model = "deepseek-v4-pro" | "deepseek-v4-flash";
 type Profile = { id: string; label: string; description: string; backend: Backend; host: string; port: number; username: string; database: string; password?: string; password_saved?: boolean; duckdb_path: string; knowledge_root: string };
+type Account = { login_id: string; user_id: string; display_name: string; avatar: string; workspace_id: string; workspace_name: string; resources_ready: boolean; role: "admin" | "analyst" | "viewer"; role_label: string; permissions: string[] };
 type KnowledgeSummary = { path: string; card_count?: number; types?: Record<string, number>; error?: string };
-type ApiState = { active: Profile; profiles: Profile[]; model: Model; models: Model[]; knowledge: KnowledgeSummary; model_configured: boolean };
+type ApiState = { active: Profile; profiles: Profile[]; model: Model; models: Model[]; knowledge: KnowledgeSummary; model_configured: boolean; workspace: Account };
+type AccountsResponse = { demo_mode: boolean; current: Account; accounts: Account[] };
 type SqlResult = { columns?: string[]; rows?: Record<string, unknown>[]; returned_rows?: number; truncated?: boolean; status?: string; error_type?: string; message?: string };
 type ArtifactView = { id: string; kind: "report"; title: string; preview_url: string };
-type ChatResponse = { run_id: string; status: "success" | "paused" | "canceled"; thread_id: string; model: Model; latency_ms: number; answer: string; tool_counts: Record<string, number>; sql_queries: { tool_call_id: string; sql: string; result?: SqlResult }[]; result_preview?: SqlResult | null; knowledge_view?: { knowledge_view_mode?: string } | null; artifacts?: ArtifactView[] };
+type ChatResponse = { request_id: string; status: "success" | "paused" | "canceled"; thread_id: string; model: Model; latency_ms: number; answer: string; tool_counts: Record<string, number>; sql_queries: { tool_call_id: string; sql: string; result?: SqlResult }[]; result_preview?: SqlResult | null; knowledge_view?: { knowledge_view_mode?: string } | null; artifacts?: ArtifactView[] };
 type ToolCallView = { name: string; arguments: Record<string, unknown> };
 type LlmRoundView = { number: number; content: string; toolCalls: ToolCallView[] };
-type ChatStreamEvent = { type: "started" | "round" | "progress" | "knowledge_trace" | "final" | "error"; run_id: string; thread_id?: string; message?: string; round?: number; content?: string; tool_calls?: ToolCallView[]; response?: ChatResponse; action?: "open" | "close"; stage?: string; mode?: string; active_ids?: string[] };
+type ChatStreamEvent = { type: "started" | "round" | "progress" | "knowledge_trace" | "final" | "error"; request_id: string; thread_id?: string; message?: string; round?: number; content?: string; tool_calls?: ToolCallView[]; response?: ChatResponse; action?: "open" | "close"; stage?: string; mode?: string; active_ids?: string[] };
 type ChatItem = { id: string; role: "user" | "assistant"; content: string; details?: ChatResponse };
 type ConversationSummaryPayload = { thread_id: string; title: string; custom_title: boolean; created_at: string; updated_at: string };
 type ConversationMessagePayload = { id: number; role: "user" | "assistant"; content: string; details: ChatResponse | null; created_at: string };
@@ -27,13 +30,7 @@ type Notice = { tone: "success" | "error" | "info"; text: string };
 
 const emptyProfile = (): Profile => ({ id: `profile-${Date.now()}`, label: "新配置方案", description: "", backend: "postgresql", host: "", port: 5432, username: "", database: "", password: "", duckdb_path: "", knowledge_root: "" });
 const pageNames: Record<Page, string> = { analysis: "数据分析", database: "数据源", knowledge: "知识库", model: "模型设置" };
-
-async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(path, { ...options, headers: { "Content-Type": "application/json", ...(options?.headers || {}) } });
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.detail || "请求失败");
-  return payload as T;
-}
+const DEFAULT_DEV_USER = "admin-a";
 
 async function readJsonLines(response: Response, onEvent: (event: ChatStreamEvent) => void) {
   if (!response.body) throw new Error("浏览器没有收到可读取的响应流。");
@@ -137,6 +134,9 @@ function ArtifactPreview({ artifact }: { artifact: ArtifactView }) {
 }
 
 export default function Home() {
+  const [devUser, setDevUser] = useState(DEFAULT_DEV_USER);
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [page, setPage] = useState<Page>("analysis");
   const [state, setState] = useState<ApiState | null>(null);
   const [form, setForm] = useState<Profile>(emptyProfile());
@@ -149,7 +149,7 @@ export default function Home() {
   const [conversationBusy, setConversationBusy] = useState(true);
   const [question, setQuestion] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
-  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const [activeRequestId, setActiveRequestId] = useState<string | null>(null);
   const [currentRound, setCurrentRound] = useState<LlmRoundView | null>(null);
   const [roundStatus, setRoundStatus] = useState("");
   const [stopRequested, setStopRequested] = useState(false);
@@ -160,10 +160,20 @@ export default function Home() {
   const [liveKnowledgeClosing, setLiveKnowledgeClosing] = useState(false);
   const [liveKnowledgeMinimized, setLiveKnowledgeMinimized] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
-  const activeRunIdRef = useRef<string | null>(null);
+  const activeRequestIdRef = useRef<string | null>(null);
   const liveKnowledgeTraceRef = useRef<LiveKnowledgeTrace | null>(null);
   const liveKnowledgeCloseTimer = useRef<number | null>(null);
   const selectedProfile = useMemo(() => state?.profiles.find((profile) => profile.id === form.id), [state, form.id]);
+  const canChat = state?.workspace.permissions.includes("chat:run") ?? false;
+  const canConfigure = state?.workspace.permissions.includes("config:write") ?? false;
+  const canWriteConversations = state?.workspace.permissions.includes("conversation:write") ?? false;
+  const resourcesReady = state?.workspace.resources_ready ?? false;
+  const chatUnavailableReason = !canChat
+    ? "当前账号为只读角色，不能发起分析。"
+    : !resourcesReady
+      ? "当前工作空间尚未配置独立数据库、模型和知识库。"
+      : "";
+  const api = <T,>(path: string, options?: RequestInit, requestUser = devUser) => fetchJsonForUser<T>(path, requestUser, options);
 
   const showLiveKnowledge = (trace: LiveKnowledgeTrace) => {
     if (liveKnowledgeCloseTimer.current !== null) window.clearTimeout(liveKnowledgeCloseTimer.current);
@@ -201,19 +211,30 @@ export default function Home() {
     if (liveKnowledgeCloseTimer.current !== null) window.clearTimeout(liveKnowledgeCloseTimer.current);
   }, []);
 
-  const loadState = async (preferredId?: string) => {
-    const next = await api<ApiState>("/api/state");
+  const loadState = async (preferredId?: string, requestUser = devUser) => {
+    const next = await api<ApiState>("/api/page_configuration", undefined, requestUser);
     setState(next); setModel(next.model);
     const preferred = next.profiles.find((profile) => profile.id === preferredId);
     setForm({ ...(preferred || next.active), password: "" });
   };
-  const loadConversations = async () => {
-    const response = await api<ConversationListResponse>("/api/conversations", { cache: "no-store" });
+  const loadConversations = async (requestUser = devUser) => {
+    const response = await api<ConversationListResponse>("/api/conversations", { cache: "no-store" }, requestUser);
     setConversationHistory(response.conversations.map(conversationSummary));
   };
-  useEffect(() => { loadState().catch((error) => setNotice({ tone: "error", text: error.message })); }, []);
   useEffect(() => {
-    loadConversations()
+    Promise.all([
+      fetchJsonForUser<AccountsResponse>("/api/accounts", DEFAULT_DEV_USER, { cache: "no-store" }),
+      fetchJsonForUser<ApiState>("/api/page_configuration", DEFAULT_DEV_USER),
+      fetchJsonForUser<ConversationListResponse>("/api/conversations", DEFAULT_DEV_USER, { cache: "no-store" }),
+    ])
+      .then(([accountResponse, nextState, conversationResponse]) => {
+        setAccounts(accountResponse.accounts);
+        setDevUser(accountResponse.current.login_id);
+        setState(nextState);
+        setModel(nextState.model);
+        setForm({ ...nextState.active, password: "" });
+        setConversationHistory(conversationResponse.conversations.map(conversationSummary));
+      })
       .catch((error) => setNotice({ tone: "error", text: error.message }))
       .finally(() => setConversationBusy(false));
   }, []);
@@ -228,7 +249,7 @@ export default function Home() {
 
   const sendQuestion = async (suggestedText?: string) => {
     const text = (suggestedText ?? question).trim();
-    if (!text || chatBusy || conversationBusy) return;
+    if (!text || chatBusy || conversationBusy || !canChat || !resourcesReady) return;
     setConversationHistory((current) => {
       if (current.some((conversation) => conversation.threadId === threadId)) return current;
       const oneLineQuestion = text.replace(/\s+/g, " ");
@@ -236,9 +257,9 @@ export default function Home() {
       return [{ threadId, title, customTitle: false }, ...current];
     });
     setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content: text }]);
-    hideLiveKnowledge(true); setQuestion(""); setChatBusy(true); setStopRequested(false); setCurrentRound(null); setRoundStatus("正在分析现有信息并决定下一步…"); setActiveRunId(null); activeRunIdRef.current = null;
+    hideLiveKnowledge(true); setQuestion(""); setChatBusy(true); setStopRequested(false); setCurrentRound(null); setRoundStatus("正在分析现有信息并决定下一步…"); setActiveRequestId(null); activeRequestIdRef.current = null;
     try {
-      const response = await fetch("/api/chat/stream", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: text, thread_id: threadId, model }) });
+      const response = await fetchForUser("/api/chat/stream", devUser, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: text, thread_id: threadId, model }) });
       if (!response.ok) {
         const payload = await response.json();
         throw new Error(payload.detail || "请求失败");
@@ -246,8 +267,8 @@ export default function Home() {
       let finalReceived = false;
       await readJsonLines(response, (event) => {
         if (event.type === "started") {
-          activeRunIdRef.current = event.run_id;
-          setActiveRunId(event.run_id);
+          activeRequestIdRef.current = event.request_id;
+          setActiveRequestId(event.request_id);
           if (event.thread_id) setThreadId(event.thread_id);
           setRoundStatus("正在分析现有信息并决定下一步…");
         } else if (event.type === "round") {
@@ -280,18 +301,18 @@ export default function Home() {
     } catch (error) {
       setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant", content: error instanceof Error ? error.message : "分析执行失败。" }]);
     } finally {
-      hideLiveKnowledge(); activeRunIdRef.current = null; setActiveRunId(null); setStopRequested(false); setCurrentRound(null); setRoundStatus(""); setChatBusy(false);
+      hideLiveKnowledge(); activeRequestIdRef.current = null; setActiveRequestId(null); setStopRequested(false); setCurrentRound(null); setRoundStatus(""); setChatBusy(false);
       void loadConversations().catch((error) => console.error("会话列表刷新失败", error));
     }
   };
 
   const stopRun = async () => {
-    const runId = activeRunIdRef.current;
-    if (!runId || stopRequested) return;
+    const requestId = activeRequestIdRef.current;
+    if (!requestId || stopRequested) return;
     setStopRequested(true);
     setRoundStatus("已请求停止，正在等待当前步骤安全结束…");
     try {
-      const result = await api<{ status: string; message: string }>(`/api/runs/${runId}/cancel`, { method: "POST" });
+      const result = await api<{ status: string; message: string }>(`/api/runs/${requestId}/cancel`, { method: "POST" });
       if (result.status === "not_running") setNotice({ tone: "info", text: result.message });
     } catch (error) {
       setStopRequested(false);
@@ -310,6 +331,35 @@ export default function Home() {
     setQuestion("");
     setCurrentRound(null);
     setRoundStatus("");
+  };
+  const switchDevAccount = async (account: Account) => {
+    if (account.login_id === devUser || chatBusy || conversationBusy || Boolean(busy)) return;
+    setAccountMenuOpen(false);
+    setConversationBusy(true);
+    setBusy("account-switch");
+    setPage("analysis");
+    setDevUser(account.login_id);
+    setThreadId(crypto.randomUUID());
+    setMessages([]);
+    setConversationHistory([]);
+    setConversationMenu(null);
+    setQuestion("");
+    setCurrentRound(null);
+    setRoundStatus("");
+    setNotice(null);
+    hideLiveKnowledge(true);
+    try {
+      await Promise.all([
+        loadState(undefined, account.login_id),
+        loadConversations(account.login_id),
+      ]);
+      setRuntimeRevision((current) => current + 1);
+    } catch (error) {
+      setNotice({ tone: "error", text: error instanceof Error ? error.message : "切换账号失败。" });
+    } finally {
+      setBusy("");
+      setConversationBusy(false);
+    }
   };
   const openConversation = async (conversation: ConversationHistoryItem) => {
     if (chatBusy || conversationBusy) return;
@@ -366,19 +416,19 @@ export default function Home() {
       setConversationBusy(false);
     }
   };
-  const saveAndApply = async () => { const result = await runAction("save", () => api("/api/save-and-apply", { method: "POST", body: JSON.stringify(form) })); if (result) { await loadState(form.id); setRuntimeRevision((current) => current + 1); newConversation(); } };
+  const saveAndApply = async () => { if (!canConfigure) return; const result = await runAction("save", () => api("/api/save-and-apply", { method: "POST", body: JSON.stringify(form) })); if (result) { await loadState(form.id); setRuntimeRevision((current) => current + 1); newConversation(); } };
   const deleteProfile = async () => {
-    if (!selectedProfile || selectedProfile.id === state?.active.id) return;
+    if (!canConfigure || !selectedProfile || selectedProfile.id === state?.active.id) return;
     if (!window.confirm(`删除数据源配置“${selectedProfile.label}”？`)) return;
     const result = await runAction("delete-profile", () => api(`/api/profiles/${encodeURIComponent(selectedProfile.id)}`, { method: "DELETE" }));
     if (result) await loadState();
   };
-  const saveModelSettings = async () => { const result = await runAction("model", () => api("/api/model-settings", { method: "POST", body: JSON.stringify({ model, api_key: modelApiKey }) })); if (result) { setModelApiKey(""); await loadState(form.id); } };
+  const saveModelSettings = async () => { if (!canConfigure) return; const result = await runAction("model", () => api("/api/model-settings", { method: "POST", body: JSON.stringify({ model, api_key: modelApiKey }) })); if (result) { setModelApiKey(""); await loadState(form.id); } };
   const uploadKnowledge = async (file?: File) => {
-    if (!file) return;
+    if (!file || !canConfigure) return;
     setBusy("upload");
     try {
-      const response = await fetch("/api/import-knowledge", { method: "POST", headers: { "Content-Type": "application/zip", "X-Knowledge-Name": encodeURIComponent(file.name.replace(/\.zip$/i, "")) }, body: file });
+      const response = await fetchForUser("/api/import-knowledge", devUser, { method: "POST", headers: { "Content-Type": "application/zip", "X-Knowledge-Name": encodeURIComponent(file.name.replace(/\.zip$/i, "")) }, body: file });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.detail || "导入失败");
       update("knowledge_root", payload.details.path); setNotice({ tone: "success", text: payload.message });
@@ -392,7 +442,7 @@ export default function Home() {
     <aside className="main-nav">
       <div className="brand"><strong>DataAgent</strong></div>
       <nav aria-label="主导航">
-        <button className="new-analysis" disabled={chatBusy || conversationBusy} onClick={() => { setPage("analysis"); newConversation(); }}>
+        <button className="new-analysis" title={chatUnavailableReason || "开始新的数据分析"} disabled={chatBusy || conversationBusy || !canChat || !resourcesReady} onClick={() => { setPage("analysis"); newConversation(); }}>
           <span aria-hidden="true" className="nav-icon nav-icon-new-analysis" />
           <span className="nav-label">开始新分析</span>
         </button>
@@ -413,47 +463,57 @@ export default function Home() {
         <div className="conversation-section-label">最近</div>
         {conversationHistory.map((conversation) => <div className={`conversation-item ${conversation.threadId === threadId ? "active" : ""}`} onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setConversationMenu(null); }} key={conversation.threadId}>
           <button type="button" className="conversation-open" disabled={chatBusy || conversationBusy} onClick={() => openConversation(conversation)}>{conversation.title}</button>
-          <button type="button" className="conversation-more" disabled={chatBusy || conversationBusy} aria-label={`管理“${conversation.title}”`} onClick={() => setConversationMenu((current) => current === conversation.threadId ? null : conversation.threadId)}><svg aria-hidden="true" viewBox="0 0 18 6"><circle cx="3" cy="3" r="1.5" /><circle cx="9" cy="3" r="1.5" /><circle cx="15" cy="3" r="1.5" /></svg></button>
+          <button type="button" className="conversation-more" disabled={chatBusy || conversationBusy || !canWriteConversations} aria-label={`管理“${conversation.title}”`} onClick={() => setConversationMenu((current) => current === conversation.threadId ? null : conversation.threadId)}><svg aria-hidden="true" viewBox="0 0 18 6"><circle cx="3" cy="3" r="1.5" /><circle cx="9" cy="3" r="1.5" /><circle cx="15" cy="3" r="1.5" /></svg></button>
           {conversationMenu === conversation.threadId && <div className="conversation-menu" role="menu">
             <button type="button" role="menuitem" onClick={() => renameConversation(conversation)}><svg aria-hidden="true" viewBox="0 0 18 18"><path d="m11.5 4.5 2 2M4 14l3-.7 7.4-7.4a1.4 1.4 0 0 0-2-2L5 11.3Z" /></svg><span>重命名</span></button>
             <button type="button" role="menuitem" className="delete" onClick={() => deleteConversation(conversation)}><svg aria-hidden="true" viewBox="0 0 18 18"><path d="M3 5h12M7 5V3.5h4V5M5.5 5l.7 10h5.6l.7-10M8 8v4M10 8v4" /></svg><span>删除</span></button>
           </div>}
         </div>)}
       </div>
-      <div className="account-shell" aria-label="当前账号">
-        <div className="account-avatar-wrap">
-          <div className="account-avatar" aria-hidden="true">X</div>
-          <span className={`account-online ${state.model_configured ? "" : "warning"}`} title={state.model_configured ? "服务已连接" : "模型密钥未配置"} />
-        </div>
-        <div className="account-copy"><strong>XinCo</strong><span>本地管理员</span></div>
-        <svg aria-hidden="true" className="account-more" viewBox="0 0 18 6"><circle cx="3" cy="3" r="1.4" /><circle cx="9" cy="3" r="1.4" /><circle cx="15" cy="3" r="1.4" /></svg>
+      <div className="account-panel" onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setAccountMenuOpen(false); }}>
+        {accountMenuOpen && <div className="account-menu" role="menu" aria-label="切换模拟账号">
+          <div className="account-menu-label">模拟账号</div>
+          {accounts.map((account) => <button type="button" role="menuitem" className={account.login_id === devUser ? "active" : ""} key={account.login_id} onClick={() => switchDevAccount(account)}>
+            <span className="account-option-avatar" aria-hidden="true">{account.avatar}</span>
+            <span className="account-option-copy"><strong>{account.display_name}</strong><small>{account.role_label} · {account.workspace_name}</small></span>
+            <span className="account-option-check" aria-hidden="true">{account.login_id === devUser ? "✓" : ""}</span>
+          </button>)}
+        </div>}
+        <button className="account-shell" type="button" aria-label="当前账号" aria-haspopup="menu" aria-expanded={accountMenuOpen} disabled={chatBusy || conversationBusy || Boolean(busy)} onClick={() => setAccountMenuOpen((current) => !current)}>
+          <span className="account-avatar-wrap">
+            <span className="account-avatar" aria-hidden="true">{state.workspace.avatar}</span>
+            <span className={`account-online ${state.workspace.resources_ready && state.model_configured ? "" : "warning"}`} title={state.workspace.resources_ready ? "工作空间资源已连接" : "工作空间资源尚未配置"} />
+          </span>
+          <span className="account-copy"><strong>{state.workspace.display_name}</strong><span>{state.workspace.role_label} · {state.workspace.workspace_name}</span></span>
+          <svg aria-hidden="true" className="account-more" viewBox="0 0 18 6"><circle cx="3" cy="3" r="1.4" /><circle cx="9" cy="3" r="1.4" /><circle cx="15" cy="3" r="1.4" /></svg>
+        </button>
       </div>
     </aside>
 
     <main className="main-area"><header className="app-header"><div><h1>{page === "analysis" ? `${backendName(state.active.backend)} · ${state.active.database || "本地文件"}` : pageNames[page]}</h1>{page !== "analysis" && <p>{backendName(state.active.backend)} · {state.active.database || "本地文件"}</p>}</div></header>
 
     {page === "analysis" && <section className="analysis-page"><div className="conversation">
-      {messages.length === 0 ? <div className="empty-state"><h2>开始一次数据分析</h2></div> : messages.map((message) => <article className={`message ${message.role}`} key={message.id}>
+      {messages.length === 0 ? <div className="empty-state"><h2>{chatUnavailableReason || "开始一次数据分析"}</h2>{chatUnavailableReason && <p>可从左下角切换其他模拟账号，验证权限和工作空间隔离。</p>}</div> : messages.map((message) => <article className={`message ${message.role}`} key={message.id}>
         {message.role === "assistant" ? <><AnswerBody content={message.content} />{message.details?.artifacts?.map((artifact) => <ArtifactPreview artifact={artifact} key={artifact.id} />)}</> : <p>{message.content}</p>}
         {message.details && <details className="run-details"><summary>查看 SQL 与运行信息</summary><div className="metric-row"><span>{(message.details.latency_ms / 1000).toFixed(1)} 秒</span><span>{message.details.sql_queries.length} 次 SQL</span><span>{message.details.knowledge_view?.knowledge_view_mode || "-"} View</span>{message.details.status === "paused" && <span className="warning-text">已暂停</span>}</div>{message.details.sql_queries.map((query, queryIndex) => <div className="sql-card" key={query.tool_call_id || queryIndex}><div>SQL {queryIndex + 1}</div><pre><code>{query.sql}</code></pre><ResultTable result={query.result} /></div>)}</details>}
       </article>)}{chatBusy && <article className="message assistant pending"><div className="round-status"><span className="round-status-dot" /><span className="round-status-text">{roundStatus || "正在分析现有信息并决定下一步…"}</span></div>{currentRound && <div className="current-round">{currentRound.content && <AnswerBody content={currentRound.content} />}{currentRound.toolCalls.length > 0 && <div className="round-tools">{currentRound.toolCalls.map((call, index) => <ToolCallCard call={call} key={`${call.name}-${index}`} />)}</div>}</div>}{stopRequested && <small>停止将在当前模型或工具调用结束后的安全位置生效。</small>}</article>}
-    </div>{liveKnowledgeTrace && !liveKnowledgeMinimized && <div className={`live-knowledge-overlay ${liveKnowledgeClosing ? "closing" : ""}`} aria-live="polite"><div className="live-knowledge-stage"><button className="live-knowledge-minimize" type="button" onClick={() => setLiveKnowledgeMinimized(true)} aria-label="收起知识库导航">×</button><KnowledgeGraph revision={runtimeRevision} live liveTrace={liveKnowledgeTrace} /></div></div>}{liveKnowledgeTrace && liveKnowledgeMinimized && <button className="live-knowledge-reopen" type="button" onClick={() => setLiveKnowledgeMinimized(false)}><span />查看知识库导航</button>}<div className="composer"><textarea value={question} disabled={conversationBusy} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendQuestion(); } }} placeholder="询问 DataAgent" /><button className={`send-button ${chatBusy ? "stop-button" : ""}`} aria-label={chatBusy ? "停止分析" : "发送"} disabled={conversationBusy || (chatBusy ? !activeRunId || stopRequested : !question.trim())} onClick={chatBusy ? stopRun : () => sendQuestion()}>{chatBusy ? <span className="stop-symbol" /> : <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 15V5M6 9l4-4 4 4" /></svg>}</button></div></section>}
+    </div>{liveKnowledgeTrace && !liveKnowledgeMinimized && <div className={`live-knowledge-overlay ${liveKnowledgeClosing ? "closing" : ""}`} aria-live="polite"><div className="live-knowledge-stage"><button className="live-knowledge-minimize" type="button" onClick={() => setLiveKnowledgeMinimized(true)} aria-label="收起知识库导航">×</button><KnowledgeGraph key={`live-knowledge-${devUser}`} revision={runtimeRevision} devUser={devUser} live liveTrace={liveKnowledgeTrace} /></div></div>}{liveKnowledgeTrace && liveKnowledgeMinimized && <button className="live-knowledge-reopen" type="button" onClick={() => setLiveKnowledgeMinimized(false)}><span />查看知识库导航</button>}<div className="composer" title={chatUnavailableReason}><textarea value={question} disabled={conversationBusy || !canChat || !resourcesReady} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendQuestion(); } }} placeholder={chatUnavailableReason || "询问 DataAgent"} /><button className={`send-button ${chatBusy ? "stop-button" : ""}`} aria-label={chatBusy ? "停止分析" : "发送"} disabled={conversationBusy || !canChat || !resourcesReady || (chatBusy ? !activeRequestId || stopRequested : !question.trim())} onClick={chatBusy ? stopRun : () => sendQuestion()}>{chatBusy ? <span className="stop-symbol" /> : <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 15V5M6 9l4-4 4 4" /></svg>}</button></div></section>}
 
-    {page === "database" && <section className="content-page database-page"><aside className="profile-panel"><div className="panel-heading"><h2>配置方案</h2><button onClick={() => setForm(emptyProfile())}>新建</button></div>{state.profiles.map((profile) => <button className={`profile-item ${profile.id === form.id ? "active" : ""}`} key={profile.id} onClick={() => setForm({ ...profile, password: "" })}><strong>{profile.label}</strong><span>{backendName(profile.backend)} · {profile.database || "本地文件"}</span></button>)}</aside>
+    {page === "database" && <section className="content-page database-page"><aside className="profile-panel"><div className="panel-heading"><h2>配置方案</h2><button disabled={!canConfigure} onClick={() => setForm(emptyProfile())}>新建</button></div>{state.profiles.map((profile) => <button className={`profile-item ${profile.id === form.id ? "active" : ""}`} key={profile.id} onClick={() => setForm({ ...profile, password: "" })}><strong>{profile.label}</strong><span>{backendName(profile.backend)} · {profile.database || "本地文件"}</span></button>)}</aside>
       <div className="database-config-column"><div className="settings-panel"><div className="panel-heading"><div><h2>{selectedProfile ? "编辑数据源" : "新数据源"}</h2><p>账号应只具备读取权限。</p></div><span className="apply-note">保存后立即生效</span></div><div className="form-grid">
         <label><span>方案名称</span><input value={form.label} onChange={(event) => update("label", event.target.value)} /></label><label><span>方案 ID</span><input disabled={Boolean(selectedProfile)} value={form.id} onChange={(event) => update("id", event.target.value.toLowerCase())} /></label>
         <label className="wide"><span>数据库类型</span><select value={form.backend} onChange={(event) => { const backend = event.target.value as Backend; setForm((current) => ({ ...current, backend, port: backend === "mysql" ? 3306 : backend === "postgresql" ? 5432 : 0 })); }}><option value="postgresql">PostgreSQL</option><option value="mysql">MySQL</option><option value="duckdb">DuckDB</option></select></label>
         {form.backend === "duckdb" ? <label className="wide"><span>DuckDB 文件</span><input value={form.duckdb_path} onChange={(event) => update("duckdb_path", event.target.value)} /></label> : <><label><span>Host</span><input value={form.host} onChange={(event) => update("host", event.target.value)} placeholder="host.docker.internal" /></label><label><span>Port</span><input type="number" value={form.port || ""} onChange={(event) => update("port", Number(event.target.value))} /></label><label><span>只读用户名</span><input value={form.username} onChange={(event) => update("username", event.target.value)} /></label><label><span>密码 {form.password_saved ? "（已保存）" : ""}</span><input type="password" value={form.password || ""} onChange={(event) => update("password", event.target.value)} placeholder={form.password_saved ? "留空继续使用" : ""} /></label><label className="wide"><span>数据库名称</span><input value={form.database} onChange={(event) => update("database", event.target.value)} placeholder="例如：cold_chain_pharma_compliance" /><small>填写 PostgreSQL 或 MySQL 中实际存在的数据库名称。</small></label></>}
-      </div><div className="form-actions">{selectedProfile && <button className="button danger" title={selectedProfile.id === state.active.id ? "当前生效配置不能删除" : "删除数据源配置"} disabled={Boolean(busy) || selectedProfile.id === state.active.id} onClick={deleteProfile}>删除配置</button>}<button className="button secondary" disabled={Boolean(busy)} onClick={() => runAction("test", () => api("/api/test-database", { method: "POST", body: JSON.stringify(form) }))}>测试连接</button><button className="button primary" disabled={Boolean(busy)} onClick={saveAndApply}>保存并应用</button></div></div><div className="connection-overview"><div><span>数据库</span><strong>{backendName(form.backend)}</strong></div><div><span>连接地址</span><strong>{form.backend === "duckdb" ? "本地文件" : `${form.host || "-"}:${form.port || "-"}`}</strong></div><div><span>访问账号</span><strong>{form.username || "-"}</strong></div><div><span>访问模式</span><strong>只读事务</strong></div></div></div>
-      <DatabaseExplorer revision={runtimeRevision} />
+      </div><div className="form-actions">{selectedProfile && <button className="button danger" title={selectedProfile.id === state.active.id ? "当前生效配置不能删除" : "删除数据源配置"} disabled={Boolean(busy) || !canConfigure || selectedProfile.id === state.active.id} onClick={deleteProfile}>删除配置</button>}<button className="button secondary" disabled={Boolean(busy) || !canConfigure} onClick={() => runAction("test", () => api("/api/test-database", { method: "POST", body: JSON.stringify(form) }))}>测试连接</button><button className="button primary" disabled={Boolean(busy) || !canConfigure} onClick={saveAndApply}>保存并应用</button></div></div><div className="connection-overview"><div><span>数据库</span><strong>{backendName(form.backend)}</strong></div><div><span>连接地址</span><strong>{form.backend === "duckdb" ? "本地文件" : `${form.host || "-"}:${form.port || "-"}`}</strong></div><div><span>访问账号</span><strong>{form.username || "-"}</strong></div><div><span>访问模式</span><strong>只读事务</strong></div></div></div>
+      <DatabaseExplorer key={`database-${devUser}`} revision={runtimeRevision} devUser={devUser} />
     </section>}
 
     {page === "knowledge" && <section className="content-page knowledge-page"><div className="knowledge-workspace">
-      <div className="knowledge-main"><KnowledgeGraph revision={runtimeRevision} /></div>
+      <div className="knowledge-main"><KnowledgeGraph key={`knowledge-${devUser}`} revision={runtimeRevision} devUser={devUser} /></div>
       <aside className="knowledge-sidebar">
         <div className="summary-card"><h2>当前知识库</h2><div className="summary-number"><strong>{state.knowledge.card_count ?? "-"}</strong></div></div>
-        <div className="settings-panel"><div className="panel-heading"><h2>知识库路径</h2></div><label><span>目录</span><input value={form.knowledge_root} onChange={(event) => update("knowledge_root", event.target.value)} /></label><div className="form-actions"><button className="button secondary" disabled={Boolean(busy)} onClick={() => runAction("validate", () => api("/api/validate-knowledge", { method: "POST", body: JSON.stringify({ knowledge_root: form.knowledge_root }) }))}>验证</button><button className="button primary" disabled={Boolean(busy)} onClick={saveAndApply}>保存并应用</button></div></div>
-        <div className="settings-panel"><div className="panel-heading"><h2>导入知识库</h2></div><input ref={fileInput} type="file" accept=".zip,application/zip" hidden onChange={(event) => uploadKnowledge(event.target.files?.[0])} /><button className="upload-area" disabled={busy === "upload"} onClick={() => fileInput.current?.click()}><strong>{busy === "upload" ? "正在校验…" : "选择 ZIP 文件"}</strong></button></div>
+        <div className="settings-panel"><div className="panel-heading"><h2>知识库路径</h2></div><label><span>目录</span><input value={form.knowledge_root} onChange={(event) => update("knowledge_root", event.target.value)} /></label><div className="form-actions"><button className="button secondary" disabled={Boolean(busy) || !canConfigure} onClick={() => runAction("validate", () => api("/api/validate-knowledge", { method: "POST", body: JSON.stringify({ knowledge_root: form.knowledge_root }) }))}>验证</button><button className="button primary" disabled={Boolean(busy) || !canConfigure} onClick={saveAndApply}>保存并应用</button></div></div>
+        <div className="settings-panel"><div className="panel-heading"><h2>导入知识库</h2></div><input ref={fileInput} type="file" accept=".zip,application/zip" hidden onChange={(event) => uploadKnowledge(event.target.files?.[0])} /><button className="upload-area" disabled={busy === "upload" || !canConfigure} onClick={() => fileInput.current?.click()}><strong>{busy === "upload" ? "正在校验…" : "选择 ZIP 文件"}</strong></button></div>
         {state.knowledge.types && <div className="type-list">{Object.entries(state.knowledge.types).map(([type, count]) => <div key={type}><span>{type}</span><strong>{count}</strong></div>)}</div>}
       </aside>
     </div></section>}
@@ -461,7 +521,7 @@ export default function Home() {
     {page === "model" && <section className="content-page model-page"><div className="settings-panel"><div className="panel-heading"><div><h2>DeepSeek 模型</h2><p>当前仅支持 DeepSeek V4 Pro 与 DeepSeek V4 Flash。</p></div><span className={`config-status ${state.model_configured ? "configured" : ""}`}>{state.model_configured ? "API Key 已配置" : "API Key 未配置"}</span></div><div className="form-grid">
       <label className="wide"><span>模型</span><select value={model} onChange={(event) => setModel(event.target.value as Model)}>{state.models.map((item) => <option key={item} value={item}>{modelName(item)}</option>)}</select></label>
       <label className="wide"><span>模型 API Key</span><input type="password" autoComplete="new-password" value={modelApiKey} onChange={(event) => setModelApiKey(event.target.value)} placeholder={state.model_configured ? "留空继续使用已保存的 API Key" : "输入 DeepSeek API Key"} /><small>密钥只保存在本机，页面不会读取或回显完整内容。</small></label>
-    </div><div className="form-actions"><button className="button primary" disabled={Boolean(busy)} onClick={saveModelSettings}>保存模型配置</button></div></div></section>}
+    </div><div className="form-actions"><button className="button primary" disabled={Boolean(busy) || !canConfigure} onClick={saveModelSettings}>保存模型配置</button></div></div></section>}
 
     {notice && <div className={`toast ${notice.tone}`}><span>{notice.text}</span><button onClick={() => setNotice(null)}>×</button></div>}
   </main></div>;
