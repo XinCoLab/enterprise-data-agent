@@ -90,7 +90,7 @@ def test_run_refuses_a_resource_that_changed_after_context_creation(
     active_profile_path.write_text("database-b\n", encoding="utf-8")
 
     with pytest.raises(RuntimeError, match="data source changed"):
-        agent_runtime.confirm_run_resources_are_unchanged(context, current_user)
+        agent_runtime.validate_data_source_ids_unchanged(context, current_user)
 
 
 def test_main_agent_node_reads_model_from_run_context():

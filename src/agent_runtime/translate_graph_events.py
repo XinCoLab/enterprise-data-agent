@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, Iterator
 
 
 NODE_ACTIVITY = {
@@ -27,6 +27,37 @@ KNOWLEDGE_STAGE = {
 
 def encode_event(payload: dict) -> str:
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n"
+
+
+def translate_graph_progress_events(
+    part: dict,
+    round_number: int,
+    request_id: str,
+) -> Iterator[dict]:
+    """把一条已有图事件翻译为网页进度字典；不调用图、模型或工具。
+
+    执行核心在读取一条图事件后迭代此同步生成器。
+    tasks 产出节点进度；updates 依次产出模型轮次、知识导航、工具结果进度。
+    每条附上同一个 request_id。逐条生成以保留原先的事件顺序及暂停位置，
+    不提前计算后续类别的事件。
+    """
+
+    if part.get("type") == "tasks":
+        event = translate_task_progress_event(part)
+        if event is not None:
+            event["request_id"] = request_id
+            yield event
+    elif part.get("type") == "updates":
+        round_event = translate_llm_round_event(part, round_number)
+        if round_event is not None:
+            round_event["request_id"] = request_id
+            yield round_event
+        for event in translate_knowledge_trace_events(part):
+            event["request_id"] = request_id
+            yield event
+        for event in translate_update_progress_events(part):
+            event["request_id"] = request_id
+            yield event
 
 
 def translate_task_progress_event(part: dict) -> dict | None:

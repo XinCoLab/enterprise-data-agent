@@ -31,7 +31,7 @@ from api.schemas import (
 )
 from knowledge_runtime.catalog import load_knowledge_cards
 from config.project_paths import CONFIG_ROOT, KNOWLEDGE_IMPORT_ROOT, PROJECT_ROOT
-from agent_runtime.agent_runtime import RESOURCE_CONFIG_LOCK, active_runs_exist
+from agent_runtime.agent_runtime import RESOURCE_CONFIG_LOCK, has_active_runs
 from security.workspace_access import (
     CurrentUser,
     current_user_from_request,
@@ -83,7 +83,7 @@ def request_user(request: Request) -> CurrentUser:
 
 
 def require_no_active_agent_runs() -> None:
-    if active_runs_exist():
+    if has_active_runs():
         raise HTTPException(
             status_code=409,
             detail="Agent 正在运行，请等待运行结束后再切换配置。",
