@@ -1,3 +1,4 @@
+import json
 import sqlite3
 
 from memory import conversation_history_database, workspace_database
@@ -126,19 +127,21 @@ def test_cross_workspace_thread_is_rejected_before_model_or_runtime(monkeypatch,
         calls["model_check"] += 1
         raise AssertionError("跨空间请求不应进入模型配置检查")
 
-    async def forbidden_runtime(_request, _current_user, *, single_round_graph):
+    def forbidden_runtime(
+        _request, _current_user, *, single_round_graph, thread_id, run_config
+    ):
         calls["runtime"] += 1
         raise AssertionError("跨空间请求不应进入 Runtime")
 
     monkeypatch.setattr(
         agent_runtime,
-        "model_api_key_is_configured",
+        "is_model_api_key_configured",
         forbidden_model_check,
     )
-    monkeypatch.setattr(agent_runtime, "run_agent", forbidden_runtime)
+    monkeypatch.setattr(agent_runtime, "stream_chat_response", forbidden_runtime)
 
     response = client.post(
-        "/api/chat",
+        "/api/chat/stream",
         headers={"X-Dev-User": "analyst-b"},
         json={
             "question": "尝试继续 A 的会话",
@@ -158,19 +161,21 @@ def test_viewer_is_rejected_before_model_or_runtime(monkeypatch, client):
         calls["model_check"] += 1
         raise AssertionError("只读账号不应进入模型配置检查")
 
-    async def forbidden_runtime(_request, _current_user, *, single_round_graph):
+    def forbidden_runtime(
+        _request, _current_user, *, single_round_graph, thread_id, run_config
+    ):
         calls["runtime"] += 1
         raise AssertionError("只读账号不应进入 Runtime")
 
     monkeypatch.setattr(
         agent_runtime,
-        "model_api_key_is_configured",
+        "is_model_api_key_configured",
         forbidden_model_check,
     )
-    monkeypatch.setattr(agent_runtime, "run_agent", forbidden_runtime)
+    monkeypatch.setattr(agent_runtime, "stream_chat_response", forbidden_runtime)
 
     response = client.post(
-        "/api/chat",
+        "/api/chat/stream",
         headers={"X-Dev-User": "viewer-c"},
         json={"question": "只读账号尝试运行 Agent"},
     )
@@ -185,26 +190,33 @@ def test_authorized_chat_passes_server_selected_workspace_to_fake_runtime(
 ):
     captured = {}
 
-    async def fake_run_agent(request, current_user, *, single_round_graph):
+    async def fake_stream_agent(
+        request, current_user, *, single_round_graph, thread_id, run_config
+    ):
         captured["question"] = request.question
         captured["login_id"] = current_user.login_id
         captured["workspace_id"] = current_user.workspace_id
         captured["role"] = current_user.role
-        return {
-            "status": "success",
-            "answer": "fake answer",
-            "workspace_id": current_user.workspace_id,
-        }
+        yield json.dumps(
+            {
+                "type": "final",
+                "response": {
+                    "status": "success",
+                    "answer": "fake answer",
+                    "workspace_id": current_user.workspace_id,
+                },
+            }
+        ) + "\n"
 
     monkeypatch.setattr(
         agent_runtime,
-        "model_api_key_is_configured",
+        "is_model_api_key_configured",
         lambda: True,
     )
-    monkeypatch.setattr(agent_runtime, "run_agent", fake_run_agent)
+    monkeypatch.setattr(agent_runtime, "stream_chat_response", fake_stream_agent)
 
     response = client.post(
-        "/api/chat",
+        "/api/chat/stream",
         json={
             "question": "不调用真实 LLM",
             "model": "deepseek-v4-pro",
@@ -212,11 +224,16 @@ def test_authorized_chat_passes_server_selected_workspace_to_fake_runtime(
     )
 
     assert response.status_code == 200
-    assert response.json() == {
-        "status": "success",
-        "answer": "fake answer",
-        "workspace_id": "workspace-a",
-    }
+    assert [json.loads(line) for line in response.iter_lines()] == [
+        {
+            "type": "final",
+            "response": {
+                "status": "success",
+                "answer": "fake answer",
+                "workspace_id": "workspace-a",
+            },
+        }
+    ]
     assert captured == {
         "question": "不调用真实 LLM",
         "login_id": "admin-a",

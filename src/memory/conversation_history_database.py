@@ -107,7 +107,9 @@ def create_chat_history_tables() -> None:
     connection.close()
 
 
-def read_conversation_workspace_id(thread_id: str) -> str | None:
+def get_workspaceID(thread_id: str) -> str | None:
+    """根据会话 ID 查询所属工作区 ID；同步读取 SQLite，查不到会话时返回 None。"""
+
     connection = connect_chat_history_database()
     row = connection.execute(
         "SELECT workspace_id FROM conversations WHERE thread_id = ?",

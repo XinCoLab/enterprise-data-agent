@@ -56,7 +56,7 @@ def test_database_schema_endpoint_does_not_expose_secrets(monkeypatch, client):
 
 def test_chat_rejects_unknown_model_before_agent_execution(client):
     response = client.post(
-        "/api/chat",
+        "/api/chat/stream",
         json={"question": "count records", "model": "unknown-model"},
     )
     assert response.status_code == 422
@@ -71,7 +71,7 @@ def test_chat_reports_missing_model_key_without_exposing_internal_name(
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
 
     response = client.post(
-        "/api/chat",
+        "/api/chat/stream",
         json={"question": "count records", "model": "deepseek-v4-pro"},
     )
 
@@ -342,28 +342,6 @@ async def _collect_async(iterator):
     return [item async for item in iterator]
 
 
-def test_sync_run_uses_the_same_event_execution_path(tmp_path: Path, monkeypatch):
-    fake_graph = _StreamingGraph()
-    monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", tmp_path / "settings.env")
-
-    response = asyncio.run(
-        agent_runtime.run_agent(
-            ChatRequest(
-                question="Count records",
-                thread_id="sync-shared-path",
-                model="deepseek-v4-pro",
-            ),
-            resolve_current_user(None),
-            single_round_graph=fake_graph,
-        )
-    )
-
-    assert response["status"] == "success"
-    assert response["answer"] == "There are 12 records."
-    assert response["result_preview"]["rows"] == [{"n": 12}]
-    assert fake_graph.round_number == 2
-
-
 def test_closing_http_stream_closes_the_active_graph_stream(
     tmp_path: Path,
     monkeypatch,
@@ -378,7 +356,7 @@ def test_closing_http_stream_closes_the_active_graph_stream(
     current_user = resolve_current_user(None)
     thread_id, run_config = agent_runtime.build_agent_config(request, current_user)
     async def consume_and_close():
-        events = agent_runtime.stream_agent(
+        events = agent_runtime.stream_chat_response(
             request,
             current_user,
             single_round_graph=fake_graph,
@@ -414,7 +392,7 @@ def test_stream_failure_is_returned_as_one_terminal_error_event(
         json.loads(line)
         for line in asyncio.run(
             _collect_async(
-                agent_runtime.stream_agent(
+                agent_runtime.stream_chat_response(
                     request,
                     current_user,
                     single_round_graph=fake_graph,
@@ -453,7 +431,7 @@ def test_streaming_run_cancels_only_after_tool_results_complete_protocol(
     current_user = resolve_current_user(None)
     thread_id, run_config = agent_runtime.build_agent_config(request, current_user)
     async def consume_with_cancel():
-        events = agent_runtime.stream_agent(
+        events = agent_runtime.stream_chat_response(
             request,
             current_user,
             single_round_graph=fake_graph,
@@ -512,7 +490,7 @@ def test_streaming_runtime_counts_one_complete_tool_cycle_as_one_recursion(
         json.loads(line)
         for line in asyncio.run(
             _collect_async(
-                agent_runtime.stream_agent(
+                agent_runtime.stream_chat_response(
                     request,
                     current_user,
                     single_round_graph=fake_graph,
@@ -546,7 +524,7 @@ def test_max_recursions_generates_tool_free_fallback_summary(
 
     monkeypatch.setattr(
         agent_runtime,
-        "generate_recursion_limit_summary",
+        "generate_round_limit_summary",
         fake_summary,
     )
     monkeypatch.setattr(agent_runtime, "SETTINGS_PATH", settings_path)
@@ -562,7 +540,7 @@ def test_max_recursions_generates_tool_free_fallback_summary(
         json.loads(line)
         for line in asyncio.run(
             _collect_async(
-                agent_runtime.stream_agent(
+                agent_runtime.stream_chat_response(
                     request,
                     current_user,
                     single_round_graph=fake_graph,
@@ -604,7 +582,7 @@ def test_recursion_limit_summary_never_persists_new_tool_calls(monkeypatch):
     )
 
     model_output = asyncio.run(
-        agent_runtime.generate_recursion_limit_summary(
+        agent_runtime.generate_round_limit_summary(
             [HumanMessage(content="复杂分析任务")],
             model_name="deepseek-v4-pro",
         )
@@ -644,9 +622,9 @@ def test_cancel_endpoint_is_idempotent_for_finished_or_unknown_run(client):
 
 def test_conversation_locks_are_scoped_by_checkpoint_thread():
     async def read_locks():
-        first = agent_runtime.conversation_lock("lock-thread-a")
-        same_thread = agent_runtime.conversation_lock("lock-thread-a")
-        other_thread = agent_runtime.conversation_lock("lock-thread-b")
+        first = agent_runtime.get_or_create_conversation_lock("lock-thread-a")
+        same_thread = agent_runtime.get_or_create_conversation_lock("lock-thread-a")
+        other_thread = agent_runtime.get_or_create_conversation_lock("lock-thread-b")
         return first, same_thread, other_thread
 
     first, same_thread, other_thread = asyncio.run(read_locks())

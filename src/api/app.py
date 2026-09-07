@@ -3,7 +3,7 @@
 核心阅读顺序：
     frontend/app/page.tsx: sendQuestion()
     -> api/routers/chat.py: chat_stream()
-    -> agent_runtime/agent_runtime.py: stream_agent()
+    -> agent_runtime/agent_runtime.py: stream_chat_response()
     -> graph/data_agent_graph.py -> graph/nodes -> tools
     -> agent_runtime/agent_runtime.py: final event
     -> frontend/app/page.tsx: render
@@ -23,7 +23,9 @@ from memory.conversation_checkpointer import (
     open_conversation_checkpoint_database,
 )
 from memory.conversation_history_database import create_chat_history_tables
+import logging
 
+logging.basicConfig(level=logging.INFO)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -49,7 +51,7 @@ app = FastAPI(
 
 # 创建历史聊天表
 create_chat_history_tables()
-# 把 chat.py 中定义的 /api/chat、/api/chat/stream 等接口注册到应用。
+# 把 chat.py 中定义的 /api/chat/stream 和运行记录、取消接口注册到应用。
 # include_router() 只负责登记路由；收到对应 HTTP 请求后，路由函数才会执行。
 app.include_router(chat_router)
 app.include_router(artifacts_router)
