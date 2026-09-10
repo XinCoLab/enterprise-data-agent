@@ -1,4 +1,4 @@
-"""Persist conversation history and keep every workspace isolated."""
+"""Persist workspace-owned conversations with immutable data-source/knowledge bindings."""
 
 from __future__ import annotations
 
@@ -19,6 +19,36 @@ class ConversationAccessError(PermissionError):
     """Raised when a thread ID already belongs to another workspace."""
 
 
+class ConversationBindingError(ValueError):
+    """Raised when a saved conversation would be continued under another binding."""
+
+
+def bindings_match(left: dict | None, right: dict | None) -> bool:
+    """A conversation needs both identities; legacy/unknown bindings never match."""
+
+    return bool(
+        left and right
+        and left.get("data_source_id")
+        and left.get("knowledge_base_id")
+        and left.get("data_source_id") == right.get("data_source_id")
+        and left.get("knowledge_base_id") == right.get("knowledge_base_id")
+    )
+
+
+def _conversation_metadata(row) -> dict:
+    return {
+        "thread_id": row[0],
+        "workspace_id": row[1],
+        "created_by_user_id": row[2],
+        "title": row[3],
+        "custom_title": bool(row[4]),
+        "created_at": row[5],
+        "updated_at": row[6],
+        "binding": None if row[7] is None else json.loads(row[7]),
+    }
+
+
+
 def connect_chat_history_database() -> sqlite3.Connection:
     connection = sqlite3.connect(CHAT_HISTORY_DATABASE_PATH)
     connection.execute("PRAGMA foreign_keys = ON")
@@ -26,7 +56,7 @@ def connect_chat_history_database() -> sqlite3.Connection:
 
 
 def create_chat_history_tables() -> None:
-    """Create new tables and attach existing conversations to workspace A."""
+    """Migrate workspace ownership; retain unknown resource bindings as NULL."""
 
     CHAT_HISTORY_DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
     workspace_database.create_workspace_tables(CHAT_HISTORY_DATABASE_PATH)
@@ -42,6 +72,9 @@ def create_chat_history_tables() -> None:
             custom_title INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
+            data_source_id TEXT,
+            knowledge_base_id TEXT,
+            binding_json TEXT,
             FOREIGN KEY (workspace_id) REFERENCES workspaces(workspace_id),
             FOREIGN KEY (created_by_user_id) REFERENCES users(user_id)
         )
@@ -66,6 +99,11 @@ def create_chat_history_tables() -> None:
             """
         )
 
+    # Existing history has no reliable source evidence; never assign the active source.
+    for column in ("data_source_id", "knowledge_base_id", "binding_json"):
+        if column not in existing_columns:
+            connection.execute(f"ALTER TABLE conversations ADD COLUMN {column} TEXT")
+
     connection.execute(
         """
         UPDATE conversations
@@ -86,6 +124,12 @@ def create_chat_history_tables() -> None:
         """
         CREATE INDEX IF NOT EXISTS conversations_workspace_updated
         ON conversations(workspace_id, updated_at DESC)
+        """
+    )
+    connection.execute(
+        """
+        CREATE INDEX IF NOT EXISTS conversations_workspace_source_updated
+        ON conversations(workspace_id, data_source_id, updated_at DESC)
         """
     )
     connection.execute(
@@ -124,6 +168,8 @@ def save_user_message(
     content: str,
     workspace_id: str = DEFAULT_WORKSPACE_ID,
     created_by_user_id: str = DEFAULT_USER_ID,
+    *,
+    binding: dict | None = None,
 ) -> None:
     """Create or continue one conversation inside the selected workspace."""
 
@@ -134,6 +180,10 @@ def save_user_message(
     ):
         raise ConversationAccessError("当前用户不属于这个工作空间。")
 
+    if binding is not None and not bindings_match(binding, binding):
+        raise ConversationBindingError("会话必须绑定有效的数据源和知识库。")
+    binding_json = None if binding is None else json.dumps(dict(binding), ensure_ascii=False)
+
     message_created_at = datetime.now(timezone.utc).isoformat()
     user_content = content.strip()
     conversation_title = " ".join(user_content.split())
@@ -143,7 +193,7 @@ def save_user_message(
     connection = connect_chat_history_database()
     existing_conversation = connection.execute(
         """
-        SELECT workspace_id
+        SELECT workspace_id, binding_json
         FROM conversations
         WHERE thread_id = ?
         """,
@@ -156,6 +206,17 @@ def save_user_message(
         connection.close()
         raise ConversationAccessError("该会话属于另一个工作空间。")
 
+    if existing_conversation is not None:
+        previous_binding = (
+            None if existing_conversation[1] is None
+            else json.loads(existing_conversation[1])
+        )
+        # None-to-None is reserved for legacy callers; never claim a legacy thread
+        # with a new binding or silently remove/rebind an existing resource.
+        if (previous_binding is not None or binding is not None) and not bindings_match(previous_binding, binding):
+            connection.close()
+            raise ConversationBindingError("该会话的数据源或知识库与当前配置不同，请开始新分析。")
+
     if existing_conversation is None:
         connection.execute(
             """
@@ -166,9 +227,12 @@ def save_user_message(
                 title,
                 custom_title,
                 created_at,
-                updated_at
+                updated_at,
+                data_source_id,
+                knowledge_base_id,
+                binding_json
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 thread_id,
@@ -178,6 +242,9 @@ def save_user_message(
                 0,
                 message_created_at,
                 message_created_at,
+                None if binding is None else binding["data_source_id"],
+                None if binding is None else binding["knowledge_base_id"],
+                binding_json,
             ),
         )
     else:
@@ -249,39 +316,58 @@ def save_assistant_message(
 
 def list_conversation_rows(
     workspace_id: str = DEFAULT_WORKSPACE_ID,
+    *,
+    data_source_id: str | None = None,
+    legacy: bool = False,
 ) -> list[dict]:
-    """List only conversations owned by one workspace."""
+    """List workspace metadata, optionally narrowed to one source or legacy rows."""
+
+    if legacy and data_source_id is not None:
+        raise ValueError("不能同时筛选数据源和未归属历史。")
+    where = "workspace_id = ?"
+    params: list = [workspace_id]
+    if legacy:
+        where += " AND (data_source_id IS NULL OR knowledge_base_id IS NULL OR binding_json IS NULL)"
+    elif data_source_id is not None:
+        where += " AND data_source_id = ?"
+        params.append(data_source_id)
+    connection = connect_chat_history_database()
+    try:
+        rows = connection.execute(
+            f"""
+            SELECT thread_id, workspace_id, created_by_user_id, title,
+                   custom_title, created_at, updated_at, binding_json
+            FROM conversations
+            WHERE {where}
+            ORDER BY updated_at DESC, thread_id DESC
+            """,
+            params,
+        ).fetchall()
+        return [_conversation_metadata(row) for row in rows]
+    finally:
+        connection.close()
+
+
+def read_conversation_metadata(
+    thread_id: str,
+    workspace_id: str = DEFAULT_WORKSPACE_ID,
+) -> dict | None:
+    """Read ownership/binding without loading any message or checkpoint content."""
 
     connection = connect_chat_history_database()
-    rows = connection.execute(
-        """
-        SELECT
-            thread_id,
-            workspace_id,
-            created_by_user_id,
-            title,
-            custom_title,
-            created_at,
-            updated_at
-        FROM conversations
-        WHERE workspace_id = ?
-        ORDER BY updated_at DESC, thread_id DESC
-        """,
-        (workspace_id,),
-    ).fetchall()
-    connection.close()
-    return [
-        {
-            "thread_id": row[0],
-            "workspace_id": row[1],
-            "created_by_user_id": row[2],
-            "title": row[3],
-            "custom_title": bool(row[4]),
-            "created_at": row[5],
-            "updated_at": row[6],
-        }
-        for row in rows
-    ]
+    try:
+        row = connection.execute(
+            """
+            SELECT thread_id, workspace_id, created_by_user_id, title,
+                   custom_title, created_at, updated_at, binding_json
+            FROM conversations
+            WHERE thread_id = ? AND workspace_id = ?
+            """,
+            (thread_id, workspace_id),
+        ).fetchone()
+        return None if row is None else _conversation_metadata(row)
+    finally:
+        connection.close()
 
 
 def read_conversation_info(
@@ -300,7 +386,8 @@ def read_conversation_info(
             title,
             custom_title,
             created_at,
-            updated_at
+            updated_at,
+            binding_json
         FROM conversations
         WHERE thread_id = ? AND workspace_id = ?
         """,
@@ -341,16 +428,8 @@ def read_conversation_info(
             }
         )
 
-    return {
-        "thread_id": conversation_row[0],
-        "workspace_id": conversation_row[1],
-        "created_by_user_id": conversation_row[2],
-        "title": conversation_row[3],
-        "custom_title": bool(conversation_row[4]),
-        "created_at": conversation_row[5],
-        "updated_at": conversation_row[6],
-        "messages": messages,
-    }
+    return {**_conversation_metadata(conversation_row), "messages": messages}
+
 
 
 def rename_conversation(

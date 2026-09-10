@@ -67,7 +67,7 @@ The service binds to `127.0.0.1:8080` by default instead of exposing itself to t
 Install `requirements.txt` in a Python environment, then run:
 
 ```powershell
-python -m uvicorn api.app:app --app-dir src --host 127.0.0.1 --port 8080
+python src/api/app.py
 ```
 
 Open [http://127.0.0.1:8080](http://127.0.0.1:8080). The prebuilt frontend is included, so Node.js is not required for normal local use.

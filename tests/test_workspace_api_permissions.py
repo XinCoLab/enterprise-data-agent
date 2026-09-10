@@ -59,9 +59,9 @@ def test_conversation_api_hides_other_workspaces(client):
         user_id="user-analyst-b",
     )
 
-    list_a = client.get("/api/conversations")
+    list_a = client.get("/api/conversations?legacy=true")
     list_b = client.get(
-        "/api/conversations",
+        "/api/conversations?legacy=true",
         headers={"X-Dev-User": "analyst-b"},
     )
     guessed_read = client.get(

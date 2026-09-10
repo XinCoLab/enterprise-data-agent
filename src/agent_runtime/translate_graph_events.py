@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from typing import Any, Iterator
 
+from agent_runtime.context_usage import context_usage_for_message
+
 
 NODE_ACTIVITY = {
     "Main Agent LLM": "正在分析现有信息并决定下一步…",
@@ -150,6 +152,7 @@ def translate_llm_round_event(part: dict, round_number: int) -> dict | None:
         "type": "round",
         "stage": "Main Agent LLM",
         "round": round_number,
+        "context_usage": context_usage_for_message(model_output),
         "content": extract_visible_ai_content(model_output.content),
         "tool_calls": tool_calls,
         "message": (

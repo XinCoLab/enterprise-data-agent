@@ -7,7 +7,6 @@ from fastapi.responses import StreamingResponse
 from starlette.concurrency import run_in_threadpool
 
 from api.schemas import ChatRequest
-from memory import conversation_history_database as conversation_history
 from agent_runtime import agent_runtime
 from security.workspace_access import (
     CurrentUser,
@@ -135,14 +134,11 @@ def check_run_allowed(
     require_permission(current_user, "chat:run")
     require_workspace_resources(current_user)
 
-    thread_id = request.thread_id.strip()
-    if not thread_id:
-        # 没有会话 ID 是新会话请求，后面的 build_agent_config 会负责生成 ID。
-        return
-    # 已提供会话 ID 时查所属工作区；查不到记录允许作为新会话继续。
-    owner_workspaceID = conversation_history.get_workspaceID(thread_id)
-    if (
-        owner_workspaceID is not None
-        and owner_workspaceID != current_user.workspace_id
-    ):
-        raise HTTPException(status_code=404, detail="会话不存在。")
+    with agent_runtime.RESOURCE_CONFIG_LOCK:
+        binding = agent_runtime.read_current_conversation_binding(current_user)
+        agent_runtime.validate_request_binding(request, binding)
+        thread_id = request.thread_id.strip()
+        if thread_id:
+            agent_runtime.validate_conversation_binding(
+                thread_id, current_user, binding,
+            )

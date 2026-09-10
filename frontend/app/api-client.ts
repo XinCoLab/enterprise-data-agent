@@ -25,6 +25,12 @@ export async function fetchJsonForUser<T>(
 
   const response = await fetchForUser(path, devUser, { ...options, headers });
   const payload = await response.json();
-  if (!response.ok) throw new Error(payload.detail || "请求失败");
+  if (!response.ok) {
+    const detail = payload.detail;
+    const message = Array.isArray(detail)
+      ? detail.map((item: { msg?: string }) => item.msg || "字段格式不正确").join("；")
+      : typeof detail === "string" ? detail : "请求失败";
+    throw new Error(message);
+  }
   return payload as T;
 }

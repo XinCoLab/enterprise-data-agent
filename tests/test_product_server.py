@@ -3,6 +3,9 @@ import io
 import json
 import os
 from pathlib import Path
+import runpy
+import subprocess
+import sys
 from types import SimpleNamespace
 import zipfile
 
@@ -12,6 +15,61 @@ from api import configuration_app as config_server
 from api.schemas import ChatRequest, ProfilePayload
 from agent_runtime import agent_runtime
 from security.workspace_access import resolve_current_user
+
+
+def test_direct_app_entrypoint_launches_existing_app(monkeypatch):
+    import uvicorn
+
+    entrypoint = Path(__file__).resolve().parents[1] / "src" / "api" / "app.py"
+    source_root = entrypoint.parents[1]
+    monkeypatch.setattr(sys, "path", [path for path in sys.path if Path(path).resolve() not in {source_root, source_root.parent}])
+    calls = []
+    monkeypatch.setattr(uvicorn, "run", lambda app, **options: calls.append((app, options)))
+
+    namespace = runpy.run_path(str(entrypoint), run_name="__main__")
+
+    assert sys.path[:2] == [str(source_root), str(source_root.parent)]
+    assert calls == [(namespace["app"], {"host": "127.0.0.1", "port": 8080})]
+
+
+def test_direct_app_entrypoint_in_fresh_interpreter(tmp_path, monkeypatch):
+    entrypoint = Path(__file__).resolve().parents[1] / "src" / "api" / "app.py"
+    monkeypatch.setenv("DATA_AGENT_CHAT_HISTORY_PATH", str(tmp_path / "history.sqlite"))
+    monkeypatch.setenv("DATA_AGENT_CHECKPOINT_PATH", str(tmp_path / "checkpoints.sqlite"))
+    # -I excludes inherited PYTHONPATH and the working directory; no project modules
+    # are cached in this child process. Mock only serving, not application imports.
+    result = subprocess.run(
+        [sys.executable, "-I", "-c", """
+import runpy
+import sys
+from unittest.mock import patch
+
+assert "config" not in sys.modules
+with patch("uvicorn.run") as serve:
+    namespace = runpy.run_path(sys.argv[1], run_name="__main__")
+    serve.assert_called_once_with(namespace["app"], host="127.0.0.1", port=8080)
+print("direct startup imports passed")
+""", str(entrypoint)],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "direct startup imports passed" in result.stdout
+
+
+def test_importing_app_does_not_start_server(monkeypatch):
+    import uvicorn
+
+    entrypoint = Path(__file__).resolve().parents[1] / "src" / "api" / "app.py"
+    calls = []
+    monkeypatch.setattr(uvicorn, "run", lambda *args, **kwargs: calls.append((args, kwargs)))
+
+    namespace = runpy.run_path(str(entrypoint), run_name="api.app")
+
+    assert namespace["app"].title == "DataAgent"
+    assert calls == []
 
 
 def test_state_exposes_only_supported_models(client):
