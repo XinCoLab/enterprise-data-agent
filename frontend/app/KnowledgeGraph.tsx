@@ -1,24 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { fetchJsonForUser } from "./api-client";
+import "./knowledge-graph.css";
 
-type GraphNode = {
+export type GraphNode = {
   ref: string;
   knowledge_id: string;
   knowledge_type: string;
   title: string;
+  database_id?: string;
+  summary?: string;
+  status?: string;
+  revision?: number;
+  aliases?: string[];
 };
 
-type GraphEdge = {
+export type GraphEdge = {
   source: string;
   relation: string;
   target: string;
 };
 
-type GraphPayload = {
+export type GraphPayload = {
   nodes: GraphNode[];
   edges: GraphEdge[];
+  database_ids?: string[];
 };
 
 type SimulationNode = GraphNode & {
@@ -30,6 +37,15 @@ type SimulationNode = GraphNode & {
 };
 
 type ViewTransform = { x: number; y: number; scale: number };
+
+type SavedGraphView = {
+  devUser: string;
+  positions: Map<string, { x: number; y: number }>;
+  transform: ViewTransform;
+  width: number;
+  height: number;
+  viewTouched: boolean;
+};
 
 export type LiveKnowledgeTrace = {
   stage?: string;
@@ -43,6 +59,10 @@ type KnowledgeGraphProps = {
   devUser: string;
   live?: boolean;
   liveTrace?: LiveKnowledgeTrace | null;
+  onSelectNode?: (node: GraphNode | null) => void;
+  selectedKnowledgeId?: string | null;
+  onGraphLoaded?: (payload: GraphPayload) => void;
+  toolbarActions?: ReactNode;
 };
 
 const NODE_COLORS: Record<string, string> = {
@@ -65,6 +85,10 @@ const TYPE_LABELS: Record<string, string> = {
 
 function colorFor(type: string) {
   return NODE_COLORS[type] || "#64748b";
+}
+
+function matchesNode(node: GraphNode, query: string) {
+  return !query || `${node.title} ${node.knowledge_id} ${(node.aliases || []).join(" ")}`.toLowerCase().includes(query);
 }
 
 function stableNumber(value: string) {
@@ -102,33 +126,75 @@ function createSimulation(payload: GraphPayload): SimulationNode[] {
   });
 }
 
-export default function KnowledgeGraph({ revision, devUser, live = false, liveTrace = null }: KnowledgeGraphProps) {
+export default function KnowledgeGraph({ revision, devUser, live = false, liveTrace = null, onSelectNode, selectedKnowledgeId, onGraphLoaded, toolbarActions }: KnowledgeGraphProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const drawRef = useRef<() => void>(() => undefined);
-  const controllerRef = useRef<{ zoom: (factor: number) => void; reset: () => void; focus: (knowledgeIds: string[]) => void } | null>(null);
-  const selectedRefValue = useRef<string | null>(null);
+  const controllerRef = useRef<{ zoom: (factor: number) => void; reset: () => void; focus: (knowledgeIds: string[]) => void; reveal: (knowledgeId: string) => void } | null>(null);
+  const selectedIdRef = useRef<string | null>(null);
   const queryRef = useRef("");
+  const selectionHandlerRef = useRef<(node: GraphNode | null) => void>(() => undefined);
+  const onGraphLoadedRef = useRef(onGraphLoaded);
   const liveTraceRef = useRef<LiveKnowledgeTrace | null>(liveTrace);
+  const savedViewRef = useRef<SavedGraphView | null>(null);
+  const payloadUserRef = useRef(devUser);
+  const focusSelectionRef = useRef<string | null>(null);
+  const resultListRef = useRef<HTMLUListElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const searchId = useId();
   const [payload, setPayload] = useState<GraphPayload | null>(null);
-  const [selectedRef, setSelectedRef] = useState<string | null>(null);
+  const [localSelectedId, setLocalSelectedId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [activeResult, setActiveResult] = useState(0);
   const [error, setError] = useState("");
+  const effectiveSelectedId = live || selectedKnowledgeId === undefined ? localSelectedId : selectedKnowledgeId;
 
   useEffect(() => {
+    onGraphLoadedRef.current = onGraphLoaded;
+  }, [onGraphLoaded]);
+
+  useEffect(() => {
+    selectionHandlerRef.current = (node) => {
+      if (live || selectedKnowledgeId === undefined) setLocalSelectedId(node?.knowledge_id || null);
+      if (!live) onSelectNode?.(node);
+    };
+  }, [live, onSelectNode, selectedKnowledgeId]);
+
+  useEffect(() => {
+    let current = true;
+    if (payloadUserRef.current !== devUser) {
+      setPayload(null);
+      setLocalSelectedId(null);
+      payloadUserRef.current = devUser;
+    }
     fetchJsonForUser<GraphPayload>("/api/knowledge-graph", devUser, { cache: "no-store" })
       .then((nextPayload) => {
+        if (!current) return;
         setError("");
         setPayload(nextPayload);
+        setActiveResult(0);
+        onGraphLoadedRef.current?.(nextPayload);
       })
-      .catch((reason: unknown) => setError(reason instanceof Error ? reason.message : "Knowledge 图加载失败"));
+      .catch((reason: unknown) => {
+        if (current) setError(reason instanceof Error ? reason.message : "知识图谱加载失败");
+      });
+    return () => { current = false; };
   }, [devUser, revision]);
 
   useEffect(() => {
-    selectedRefValue.current = selectedRef;
+    selectedIdRef.current = effectiveSelectedId;
     queryRef.current = query.trim().toLowerCase();
+    if (!live && effectiveSelectedId) {
+      if (focusSelectionRef.current === effectiveSelectedId) {
+        controllerRef.current?.focus([effectiveSelectedId]);
+        focusSelectionRef.current = null;
+      } else {
+        controllerRef.current?.reveal(effectiveSelectedId);
+      }
+    }
     drawRef.current();
-  }, [query, selectedRef]);
+  }, [effectiveSelectedId, live, payload, query]);
 
   useEffect(() => {
     liveTraceRef.current = liveTrace;
@@ -140,14 +206,37 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
   }, [live, liveTrace]);
 
   const selectedNode = useMemo(
-    () => payload?.nodes.find((node) => node.ref === selectedRef) || null,
-    [payload, selectedRef],
+    () => payload?.nodes.find((node) => node.knowledge_id === effectiveSelectedId) || null,
+    [payload, effectiveSelectedId],
   );
 
   const selectedConnections = useMemo(() => {
-    if (!payload || !selectedRef) return 0;
-    return payload.edges.filter((edge) => edge.source === selectedRef || edge.target === selectedRef).length;
-  }, [payload, selectedRef]);
+    if (!payload || !selectedNode) return 0;
+    return payload.edges.filter((edge) => edge.source === selectedNode.ref || edge.target === selectedNode.ref).length;
+  }, [payload, selectedNode]);
+
+  const searchResults = useMemo(() => {
+    const activeQuery = query.trim().toLowerCase();
+    return (payload?.nodes || []).filter((node) => matchesNode(node, activeQuery))
+      .sort((a, b) => a.title.localeCompare(b.title, "zh-CN"));
+  }, [payload, query]);
+
+  useEffect(() => {
+    if (searchOpen) resultListRef.current?.children[activeResult]?.scrollIntoView({ block: "nearest" });
+  }, [activeResult, searchOpen]);
+
+  const chooseSearchResult = (node: GraphNode) => {
+    focusSelectionRef.current = node.knowledge_id;
+    selectionHandlerRef.current(node);
+    if (node.knowledge_id === effectiveSelectedId) {
+      controllerRef.current?.focus([node.knowledge_id]);
+      focusSelectionRef.current = null;
+    }
+    setQuery("");
+    setActiveResult(0);
+    setSearchOpen(false);
+    searchRef.current?.focus();
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -158,23 +247,40 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
     if (!canvasContext) return;
     const context: CanvasRenderingContext2D = canvasContext;
 
-    const nodes = createSimulation(payload);
+    const savedView = !live && savedViewRef.current?.devUser === devUser ? savedViewRef.current : null;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const nodes = createSimulation(payload).map((node) => ({ ...node, ...savedView?.positions.get(node.knowledge_id) }));
     const nodesByRef = new Map(nodes.map((node) => [node.ref, node]));
     const nodesByKnowledgeId = new Map(nodes.map((node) => [node.knowledge_id, node]));
     const edges = payload.edges
       .map((edge) => ({ ...edge, sourceNode: nodesByRef.get(edge.source), targetNode: nodesByRef.get(edge.target) }))
       .filter((edge) => edge.sourceNode && edge.targetNode) as (GraphEdge & { sourceNode: SimulationNode; targetNode: SimulationNode })[];
-    const transform: ViewTransform = { x: 0, y: 0, scale: 1 };
-    let width = 0;
-    let height = 0;
+    const transform: ViewTransform = savedView ? { ...savedView.transform } : { x: 0, y: 0, scale: 1 };
+    let width = savedView?.width || 0;
+    let height = savedView?.height || 0;
     let hoveredNode: SimulationNode | null = null;
     let draggedNode: SimulationNode | null = null;
+    let pressedNode: SimulationNode | null = null;
+    let pointerStart = { x: 0, y: 0 };
     let dragMoved = false;
     let isPanning = false;
     let lastPointer = { x: 0, y: 0 };
-    let frame = 0;
+    let frame = savedView && nodes.every((node) => savedView.positions.has(node.knowledge_id)) ? 190 : 0;
     let animationFrame = 0;
-    let viewTouched = false;
+    let viewTouched = savedView?.viewTouched || false;
+
+    // New nodes join their real neighbours while existing knowledge keeps its position.
+    if (savedView) {
+      nodes.forEach((node) => {
+        if (savedView.positions.has(node.knowledge_id)) return;
+        const neighbours = edges.flatMap((edge) => edge.source === node.ref ? [edge.targetNode] : edge.target === node.ref ? [edge.sourceNode] : [])
+          .filter((neighbour) => savedView.positions.has(neighbour.knowledge_id));
+        if (!neighbours.length) return;
+        const angle = (stableNumber(node.knowledge_id) % 360) * Math.PI / 180;
+        node.x = neighbours.reduce((total, neighbour) => total + neighbour.x, 0) / neighbours.length + Math.cos(angle) * 45;
+        node.y = neighbours.reduce((total, neighbour) => total + neighbour.y, 0) / neighbours.length + Math.sin(angle) * 45;
+      });
+    }
 
     const nodesAroundKnowledgeIds = (knowledgeIds: string[]) => {
       const activeRefs = new Set(
@@ -203,7 +309,7 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
       transform.scale = Math.min(
         live ? 1.9 : 1.5,
         Math.max(
-          .32,
+          live ? .32 : .08,
           Math.min(
             (width - padding * 2) / graphWidth,
             (height - padding * 2) / graphHeight,
@@ -227,6 +333,8 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
     const resize = () => {
       const rect = shell.getBoundingClientRect();
       const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      const previousWidth = width;
+      const previousHeight = height;
       width = rect.width;
       height = rect.height;
       canvas.width = Math.round(width * pixelRatio);
@@ -234,7 +342,12 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-      resetView();
+      if (live || !viewTouched || !previousWidth || !previousHeight) resetView();
+      else {
+        transform.x += (width - previousWidth) / 2;
+        transform.y += (height - previousHeight) / 2;
+        draw();
+      }
     };
 
     const screenPoint = (node: SimulationNode) => ({
@@ -253,14 +366,14 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
     };
 
     function draw() {
-      const now = performance.now();
+      const now = reducedMotion ? 0 : performance.now();
       context.clearRect(0, 0, width, height);
       context.fillStyle = "#fbfcff";
       context.fillRect(0, 0, width, height);
 
       context.strokeStyle = "rgba(148,163,184,.12)";
       context.lineWidth = 1;
-      const grid = 34 * transform.scale;
+      const grid = live ? 34 * transform.scale : Math.max(17, 34 * transform.scale);
       if (grid > 14) {
         const offsetX = ((transform.x % grid) + grid) % grid;
         const offsetY = ((transform.y % grid) + grid) % grid;
@@ -272,7 +385,7 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
         }
       }
 
-      const activeRef = selectedRefValue.current;
+      const activeRef = selectedIdRef.current ? nodesByKnowledgeId.get(selectedIdRef.current)?.ref : null;
       const currentLiveTrace = live ? liveTraceRef.current : null;
       const activeLiveRefs = new Set(
         (currentLiveTrace?.activeIds || [])
@@ -319,7 +432,7 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
       const activeQuery = queryRef.current;
       nodes.forEach((node) => {
         const point = screenPoint(node);
-        const matches = !activeQuery || `${node.title} ${node.knowledge_id}`.toLowerCase().includes(activeQuery);
+        const matches = matchesNode(node, activeQuery);
         const selected = node.ref === activeRef;
         const hovered = node === hoveredNode;
         const liveActive = activeLiveRefs.has(node.ref);
@@ -338,7 +451,7 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
         context.globalAlpha = currentLiveTrace && activeLiveRefs.size
           ? liveActive ? 1 : liveFrontier ? .68 : .1
           : liveScanning ? .28 + scanPulse * .72
-          : matches ? 1 : 0.12;
+          : selected || hovered || matches ? 1 : 0.12;
         if (liveActive) {
           context.beginPath();
           context.arc(point.x, point.y, Math.max(8, radius + 7 + livePulse * 3), 0, Math.PI * 2);
@@ -370,7 +483,7 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
       });
     }
 
-    const simulate = () => {
+    const simulateStep = () => {
       if (frame < 190) {
         const cooling = 1 - frame / 210;
         for (let left = 0; left < nodes.length; left += 1) {
@@ -404,18 +517,23 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
           node.vy += -node.y * 0.0018 * cooling;
           node.vx *= 0.82;
           node.vy *= 0.82;
-          if (node !== draggedNode) {
+          if (node !== draggedNode && !savedView?.positions.has(node.knowledge_id)) {
             node.x += node.vx;
             node.y += node.vy;
           }
         });
         frame += 1;
-        if (live && !viewTouched && [1, 40, 100, 189].includes(frame)) {
-          focusKnowledgeIds(liveTraceRef.current?.activeIds || []);
-        }
+      }
+    };
+
+    const simulate = () => {
+      const previousFrame = frame;
+      simulateStep();
+      if (frame !== previousFrame && live && !viewTouched && [1, 40, 100, 189].includes(frame)) {
+        focusKnowledgeIds(liveTraceRef.current?.activeIds || []);
       }
       draw();
-      if (frame < 190 || draggedNode || isPanning || live) animationFrame = requestAnimationFrame(simulate);
+      if (frame < 190 || draggedNode || isPanning || (live && !reducedMotion)) animationFrame = requestAnimationFrame(simulate);
     };
 
     const pointerPosition = (event: PointerEvent) => {
@@ -424,20 +542,21 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
     };
 
     const pointerDown = (event: PointerEvent) => {
+      if (event.button !== 0) return;
       viewTouched = true;
       const point = pointerPosition(event);
       lastPointer = point;
+      pointerStart = point;
       draggedNode = nodeAt(point.x, point.y);
+      pressedNode = draggedNode;
       dragMoved = false;
-      if (draggedNode) {
-        selectedRefValue.current = draggedNode.ref;
-        setSelectedRef(draggedNode.ref);
-      } else {
-        isPanning = true;
-        selectedRefValue.current = null;
-        setSelectedRef(null);
+      isPanning = !draggedNode;
+      if (live) {
+        selectedIdRef.current = draggedNode?.knowledge_id || null;
+        selectionHandlerRef.current(draggedNode);
       }
       canvas.setPointerCapture(event.pointerId);
+      canvas.style.cursor = draggedNode ? "grabbing" : "grab";
       draw();
     };
 
@@ -448,11 +567,11 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
         draggedNode.y = (point.y - transform.y) / transform.scale;
         draggedNode.vx = 0;
         draggedNode.vy = 0;
-        dragMoved = true;
+        dragMoved ||= Math.hypot(point.x - pointerStart.x, point.y - pointerStart.y) > 4;
       } else if (isPanning) {
         transform.x += point.x - lastPointer.x;
         transform.y += point.y - lastPointer.y;
-        dragMoved = true;
+        dragMoved ||= Math.hypot(point.x - pointerStart.x, point.y - pointerStart.y) > 4;
       } else {
         hoveredNode = nodeAt(point.x, point.y);
         canvas.style.cursor = hoveredNode ? "pointer" : "grab";
@@ -462,12 +581,25 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
     };
 
     const pointerUp = (event: PointerEvent) => {
+      if (!canvas.hasPointerCapture(event.pointerId)) return;
       if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+      if (!live && event.type !== "pointercancel" && !dragMoved) selectionHandlerRef.current(pressedNode);
       draggedNode = null;
+      pressedNode = null;
       isPanning = false;
-      if (dragMoved) frame = Math.min(frame, 165);
-      cancelAnimationFrame(animationFrame);
-      animationFrame = requestAnimationFrame(simulate);
+      canvas.style.cursor = hoveredNode ? "pointer" : "grab";
+      if (live && dragMoved) {
+        frame = Math.min(frame, 165);
+        cancelAnimationFrame(animationFrame);
+        animationFrame = requestAnimationFrame(simulate);
+      }
+      draw();
+    };
+
+    const pointerLeave = () => {
+      if (draggedNode || isPanning) return;
+      hoveredNode = null;
+      draw();
     };
 
     const wheel = (event: WheelEvent) => {
@@ -475,7 +607,7 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
       viewTouched = true;
       const point = pointerPosition(event as unknown as PointerEvent);
       const previousScale = transform.scale;
-      const nextScale = Math.min(2.8, Math.max(0.35, previousScale * Math.exp(-event.deltaY * 0.0012)));
+      const nextScale = Math.min(2.8, Math.max(live ? 0.35 : 0.08, previousScale * Math.exp(-event.deltaY * 0.0012)));
       const worldX = (point.x - transform.x) / previousScale;
       const worldY = (point.y - transform.y) / previousScale;
       transform.scale = nextScale;
@@ -486,13 +618,30 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
 
     controllerRef.current = {
       zoom(factor) {
-        transform.scale = Math.min(2.8, Math.max(0.35, transform.scale * factor));
+        viewTouched = true;
+        transform.scale = Math.min(2.8, Math.max(live ? 0.35 : 0.08, transform.scale * factor));
         draw();
       },
       reset: resetView,
       focus(knowledgeIds) {
-        viewTouched = false;
-        focusKnowledgeIds(knowledgeIds);
+        viewTouched = !live;
+        if (live) focusKnowledgeIds(knowledgeIds);
+        else {
+          const node = nodesByKnowledgeId.get(knowledgeIds[0]);
+          if (!node) return;
+          transform.x = width / 2 - node.x * transform.scale;
+          transform.y = height / 2 - node.y * transform.scale;
+          draw();
+        }
+      },
+      reveal(knowledgeId) {
+        const node = nodesByKnowledgeId.get(knowledgeId);
+        if (!node) return;
+        const point = screenPoint(node);
+        if (point.x >= 65 && point.x <= width - 95 && point.y >= 45 && point.y <= height - 70) return;
+        transform.x = width / 2 - node.x * transform.scale;
+        transform.y = height / 2 - node.y * transform.scale;
+        draw();
       },
     };
     drawRef.current = draw;
@@ -503,42 +652,94 @@ export default function KnowledgeGraph({ revision, devUser, live = false, liveTr
     canvas.addEventListener("pointermove", pointerMove);
     canvas.addEventListener("pointerup", pointerUp);
     canvas.addEventListener("pointercancel", pointerUp);
+    canvas.addEventListener("pointerleave", pointerLeave);
     canvas.addEventListener("wheel", wheel, { passive: false });
+    if (reducedMotion || savedView) while (frame < 190) simulateStep();
     resize();
-    animationFrame = requestAnimationFrame(simulate);
+    if (live) focusKnowledgeIds(liveTraceRef.current?.activeIds || []);
+    if (frame < 190 || (live && !reducedMotion)) animationFrame = requestAnimationFrame(simulate);
 
     return () => {
+      savedViewRef.current = {
+        devUser,
+        positions: new Map(nodes.map((node) => [node.knowledge_id, { x: node.x, y: node.y }])),
+        transform: { ...transform },
+        width,
+        height,
+        viewTouched,
+      };
       observer.disconnect();
       cancelAnimationFrame(animationFrame);
       canvas.removeEventListener("pointerdown", pointerDown);
       canvas.removeEventListener("pointermove", pointerMove);
       canvas.removeEventListener("pointerup", pointerUp);
       canvas.removeEventListener("pointercancel", pointerUp);
+      canvas.removeEventListener("pointerleave", pointerLeave);
       canvas.removeEventListener("wheel", wheel);
       drawRef.current = () => undefined;
       controllerRef.current = null;
     };
-  }, [payload, live]);
+  }, [payload, live, devUser]);
 
   if (error) return <div className="knowledge-graph-error">{error}</div>;
-  if (!payload) return <div className="knowledge-graph-loading">正在生成 Knowledge 图…</div>;
+  if (!payload) return <div className="knowledge-graph-loading" role="status">正在加载知识图谱…</div>;
 
-  return <section className={`knowledge-graph-panel ${live ? "live-knowledge-graph" : ""}`}>
+  return <section className={`knowledge-graph-panel ${live ? "live-knowledge-graph" : ""}`} aria-label={live ? "实时知识导航" : "知识图谱"}>
     <div className="knowledge-graph-heading">
       <div><h2>{live ? "Knowledge Navigation" : "Knowledge Graph"}</h2>{live && <p>{liveTrace?.message || "正在定位业务知识"}</p>}</div>
       {live ? <div className="live-knowledge-mode"><i />{liveTrace?.mode || "GLOBAL"}</div> : <div className="knowledge-graph-actions">
-        <label className="knowledge-graph-search"><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="查找节点" /></label>
+        <div className="kg-search-container" onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setSearchOpen(false);
+        }}>
+          <label className="knowledge-graph-search" htmlFor={`${searchId}-input`}>
+            <span aria-hidden="true">⌕</span>
+            <input ref={searchRef} id={`${searchId}-input`} value={query} onChange={(event) => { setQuery(event.target.value); setActiveResult(0); setSearchOpen(true); }}
+              onFocus={() => setSearchOpen(true)} onKeyDown={(event) => {
+                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                  event.preventDefault();
+                  setSearchOpen(true);
+                  setActiveResult((current) => searchResults.length ? (current + (event.key === "ArrowDown" ? 1 : -1) + searchResults.length) % searchResults.length : 0);
+                } else if (event.key === "Enter" && searchOpen && searchResults[activeResult]) {
+                  event.preventDefault();
+                  chooseSearchResult(searchResults[activeResult]);
+                } else if (event.key === "Escape") {
+                  event.preventDefault();
+                  setSearchOpen(false);
+                }
+              }}
+              role="combobox" aria-label="搜索知识" aria-autocomplete="list" aria-expanded={searchOpen}
+              aria-controls={`${searchId}-results`} aria-activedescendant={searchOpen && searchResults[activeResult] ? `${searchId}-result-${activeResult}` : undefined}
+              placeholder="查找节点" autoComplete="off" />
+            {query && <button type="button" className="kg-search-clear" aria-label="清空搜索" onClick={() => { setQuery(""); setActiveResult(0); searchRef.current?.focus(); }}>×</button>}
+          </label>
+          {searchOpen && <div className="kg-search-popover">
+            <div className="kg-search-count" role="status">{searchResults.length} 条知识</div>
+            <ul id={`${searchId}-results`} ref={resultListRef} className="kg-search-results" role="listbox" aria-label="知识搜索结果">
+              {searchResults.map((node, index) => <li key={node.knowledge_id} id={`${searchId}-result-${index}`} role="option" tabIndex={-1} aria-selected={index === activeResult} className={index === activeResult ? "active" : ""}
+                onMouseDown={(event) => event.preventDefault()} onMouseEnter={() => setActiveResult(index)} onClick={() => chooseSearchResult(node)} onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") { event.preventDefault(); chooseSearchResult(node); }
+                }}>
+                <i style={{ background: colorFor(node.knowledge_type) }} />
+                <span><strong>{node.title}</strong><small>{node.knowledge_id}</small></span>
+                <em>{TYPE_LABELS[node.knowledge_type] || node.knowledge_type}</em>
+              </li>)}
+            </ul>
+            {!searchResults.length && <div className="kg-search-empty">没有匹配的知识</div>}
+          </div>}
+        </div>
         <button type="button" onClick={() => controllerRef.current?.zoom(1.18)} aria-label="放大">＋</button>
         <button type="button" onClick={() => controllerRef.current?.zoom(0.84)} aria-label="缩小">−</button>
         <button type="button" onClick={() => controllerRef.current?.reset()}>复位</button>
+        {toolbarActions}
       </div>}
     </div>
     <div className="knowledge-graph-shell" ref={shellRef}>
-      <canvas ref={canvasRef} aria-label="Knowledge 节点关系图" />
+      <canvas ref={canvasRef} aria-label={`知识关系图，${payload.nodes.length} 个节点，${payload.edges.length} 条连接${selectedNode ? `，已选择 ${selectedNode.title}` : ""}`} />
+      {!payload.nodes.length && <div className="kg-canvas-empty">暂无知识</div>}
       <div className="knowledge-graph-legend">
         {Object.entries(TYPE_LABELS).map(([type, label]) => <span key={type}><i style={{ background: colorFor(type) }} />{label}</span>)}
       </div>
-      {selectedNode && <div className="knowledge-node-card">
+      {selectedNode && (live || !onSelectNode) && <div className="knowledge-node-card">
         <div><i style={{ background: colorFor(selectedNode.knowledge_type) }} /><span>{TYPE_LABELS[selectedNode.knowledge_type] || selectedNode.knowledge_type}</span></div>
         <strong>{selectedNode.title}</strong>
         <code>{selectedNode.knowledge_id}</code>

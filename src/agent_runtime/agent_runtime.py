@@ -49,14 +49,18 @@ from api.schemas import ChatRequest
 
 from memory.conversation_history_database import (
     DEFAULT_WORKSPACE_ID,
+    bindings_match,
+    read_conversation_metadata,
     delete_conversation as delete_conversation_history,
     get_workspaceID,
     save_assistant_message,
     save_user_message,
 )
+from memory.conversation_binding import read_active_conversation_binding
 from config.project_paths import CONFIG_ROOT
 from security.workspace_access import CurrentUser
 from agent_runtime.agent_run_context import AgentRunContext
+from agent_runtime.context_usage import context_usage_for_message
 from agent_runtime.translate_graph_events import (
     encode_event,
     extract_visible_ai_content,
@@ -220,9 +224,10 @@ async def execute_agent_request(
         # 等待模型或工具时只占用这个会话的锁，其他会话可继续执行。
         async with get_or_create_conversation_lock(checkpoint_id):
             await run_in_threadpool(
-                validate_conversation_workspace,
+                validate_conversation_binding,
                 thread_id,
                 current_user,
+                run_context.binding,
             )
             if not await resume_pending_tools_if_needed(
                 single_round_graph,
@@ -241,6 +246,7 @@ async def execute_agent_request(
                 content=request.question,
                 workspace_id=current_user.workspace_id,
                 created_by_user_id=current_user.user_id,
+                binding=run_context.binding,
             )
 
             # 4. 每轮从这里开始：需要记录轮次日志时，放在取消判断后的图调用前。
@@ -313,10 +319,10 @@ async def execute_agent_request(
             # 6. 整理本次用户轮次的结果；预算用尽时再生成一次不调用工具的摘要。
             if canceled_at_safe_boundary:
                 status = "canceled"
-                turn_result = build_turn_result(checkpoint_messages)
+                turn_result = build_turn_result(checkpoint_messages, model_name=request.model)
             elif final_answer_ready:
                 status = "success"
-                turn_result = build_turn_result(checkpoint_messages)
+                turn_result = build_turn_result(checkpoint_messages, model_name=request.model)
             else:
                 yield {
                     "type": "progress",
@@ -326,7 +332,7 @@ async def execute_agent_request(
                 }
                 if run_control.cancel_requested.is_set():
                     status = "canceled"
-                    turn_result = build_turn_result(checkpoint_messages)
+                    turn_result = build_turn_result(checkpoint_messages, model_name=request.model)
                 else:
                     round_limit_summary = await generate_round_limit_summary(
                         checkpoint_messages,
@@ -337,7 +343,8 @@ async def execute_agent_request(
                         {"messages": [round_limit_summary]},
                     )
                     turn_result = build_turn_result(
-                        await read_checkpoint_messages(single_round_graph, run_config)
+                        await read_checkpoint_messages(single_round_graph, run_config),
+                        model_name=request.model,
                     )
                     status = (
                         "canceled"
@@ -432,12 +439,16 @@ def build_agent_config(
     thread_id = request.thread_id.strip() or str(uuid4())
     if not THREAD_ID.fullmatch(thread_id):
         raise HTTPException(status_code=400, detail="thread_id 格式不合法。")
-    settings = read_env_file(SETTINGS_PATH)
+    with RESOURCE_CONFIG_LOCK:
+        settings = read_env_file(SETTINGS_PATH)
+        data_source_ids = read_selected_data_source_ids(current_user)
+        binding = read_current_conversation_binding(current_user)
+        validate_request_binding(request, binding)
+        validate_conversation_binding(thread_id, current_user, binding)
     max_recursions = max(
         1,
         int(settings.get("DATA_AGENT_MAX_RECURSIONS", "10")),
     )
-    data_source_ids = read_selected_data_source_ids(current_user)
     run_context = AgentRunContext(
         request_id=str(uuid4()),
         thread_id=thread_id,
@@ -447,6 +458,7 @@ def build_agent_config(
         permissions=current_user.permissions,
         allowed_data_source_ids=data_source_ids,
         selected_data_source_ids=data_source_ids,
+        binding=binding,
     )
     return thread_id, {
         "configurable": {
@@ -495,14 +507,40 @@ def read_selected_data_source_ids(current_user: CurrentUser) -> tuple[str, ...]:
     return (data_source_id or "current",)
 
 
+def read_current_conversation_binding(current_user: CurrentUser) -> dict | None:
+    """Read the active resource identity only; never connect to the database."""
+
+    if not current_user.resources_ready:
+        return None
+    return read_active_conversation_binding(
+        SETTINGS_PATH,
+        ACTIVE_PROFILE_PATH,
+        SETTINGS_PATH.parent / "profiles",
+    )
+
+
+def validate_request_binding(request: ChatRequest, active_binding: dict | None) -> None:
+    """Reject a stale browser tab before the response stream starts."""
+
+    for field in ("data_source_id", "knowledge_base_id"):
+        requested_id = getattr(request, field)
+        if requested_id is not None and (
+            active_binding is None or requested_id != active_binding.get(field)
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="数据源或知识库已切换，请刷新后开始新分析。",
+            )
+
+
 def validate_data_source_ids_unchanged(
     run_context: AgentRunContext,
     current_user: CurrentUser,
 ) -> None:
     """比较当前所选数据源 ID 与运行快照；不同则抛 RuntimeError，相同返回 None。
 
-    由运行登记函数在配置锁内调用。只比较 ID，不验证同一 ID 下的连接配置、
-    知识库或模型配置是否发生变化。
+    由运行登记函数在配置锁内调用；先比较配置方案 ID，随后由登记函数
+    核对固定的数据源与知识库身份。
     """
 
     current_data_source_ids = read_selected_data_source_ids(current_user)
@@ -542,12 +580,19 @@ def register_run(
     不写入聊天数据库，也不执行模型或工具。
 
     与配置修改接口共用 RESOURCE_CONFIG_LOCK，避免检查 ID 与登记之间插入
-    一次配置修改；只比较 ID，不检查模型、知识库或数据库凭据内容。
-    ID 改变时抛 RuntimeError，不登记。登记表另由 ACTIVE_RUNS_LOCK 保护。
+    一次配置修改；同时核对数据库和知识库身份，不读取数据库凭据内容。
+    绑定改变时拒绝登记。登记表另由 ACTIVE_RUNS_LOCK 保护。
     """
 
     with RESOURCE_CONFIG_LOCK:
         validate_data_source_ids_unchanged(run_context, current_user)
+        if run_context.binding is not None and not bindings_match(
+            run_context.binding, read_current_conversation_binding(current_user),
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="数据源或知识库已切换，请开始新分析。",
+            )
         with ACTIVE_RUNS_LOCK:
             ACTIVE_RUNS[run_control.request_id] = run_control
 
@@ -656,6 +701,30 @@ def validate_conversation_workspace(
         and owner_workspaceID != current_user.workspace_id
     ):
         raise HTTPException(status_code=404, detail="会话不存在。")
+
+
+def validate_conversation_binding(
+    thread_id: str,
+    current_user: CurrentUser,
+    binding: dict | None,
+) -> None:
+    """Reject legacy or differently bound history before any checkpoint/tool read."""
+
+    validate_conversation_workspace(thread_id, current_user)
+    conversation = read_conversation_metadata(thread_id, current_user.workspace_id)
+    if conversation is None:
+        return
+    stored_binding = conversation["binding"]
+    if stored_binding is None:
+        raise HTTPException(
+            status_code=409,
+            detail="该会话尚未确认数据源，只能查看。请开始新分析。",
+        )
+    if not bindings_match(stored_binding, binding):
+        raise HTTPException(
+            status_code=409,
+            detail="该会话绑定的数据源或知识库与当前配置不同，请切换回对应配置或开始新分析。",
+        )
 
 
 async def resume_pending_tools_if_needed(graph: Any, config: dict) -> bool:
@@ -783,7 +852,7 @@ def select_current_turn_messages(messages: list) -> list:
     return messages[last_human:]
 
 
-def build_turn_result(messages: list) -> dict:
+def build_turn_result(messages: list, *, model_name: str = "") -> dict:
     """从图消息提取当前用户轮次的回答、SQL 结果、工具次数及报表信息。
 
     只整理传入的消息，不执行工具、不访问存储。返回字典的 answer 用于显示，
@@ -797,11 +866,14 @@ def build_turn_result(messages: list) -> dict:
     tool_calls: list[dict] = []
     tool_results: dict[str, dict] = {}
     final_answer = ""
+    context_usage = context_usage_for_message(None, model_name=model_name)
     navigation_trace = None
     artifacts: list[dict[str, str]] = []
 
     for message in current:
         if isinstance(message, AIMessage):
+            # Every AI response replaces the snapshot, including missing usage.
+            context_usage = context_usage_for_message(message, model_name=model_name)
             for call in message.tool_calls:
                 tool_calls.append(
                     {
@@ -876,6 +948,7 @@ def build_turn_result(messages: list) -> dict:
         "sql_queries": sql_queries,
         "result_preview": successful_results[-1] if successful_results else None,
         "knowledge_view": navigation_trace,
+        "context_usage": context_usage,
         "artifacts": artifacts,
     }
 
@@ -935,6 +1008,7 @@ async def generate_round_limit_summary(
         "本次运行已达到最大循环次数，当前进度和工具结果已经保存。"
         "你可以继续原任务，或在当前会话中调整要求。"
     )
+    model_output = None
     try:
         model_output = await create_summary(
             messages,
@@ -948,7 +1022,16 @@ async def generate_round_limit_summary(
     tool_markup = ("<|DSML|", "tool_calls>", "invoke name=")
     if any(marker in content for marker in tool_markup):
         content = ""
-    return AIMessage(content=content or fallback)
+    return AIMessage(
+        content=content or fallback,
+        usage_metadata=getattr(model_output, "usage_metadata", None),
+        response_metadata={
+            **(getattr(model_output, "response_metadata", None) or {}),
+            "context_usage": context_usage_for_message(
+                model_output, model_name=model_name,
+            ),
+        },
+    )
 
 
 # 配置文件与错误展示

@@ -9,6 +9,14 @@
     -> frontend/app/page.tsx: render
 """
 
+import sys
+from pathlib import Path
+
+# 直接运行本文件时，同时加载 src 下的业务包和项目根目录下的 config 包。
+if __name__ == "__main__" and not __package__:
+    project_root = Path(__file__).resolve().parents[2]
+    sys.path[:0] = [str(project_root / "src"), str(project_root)]
+
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -60,3 +68,13 @@ app.include_router(accounts_router)
 
 # 配置接口和编译后的前端属于另一个子系统，最后挂载，避免遮住上面的 Agent 路由。
 app.mount("/", configuration_app)
+
+
+def main():
+    import uvicorn
+
+    uvicorn.run(app, host="127.0.0.1", port=8080)
+
+
+if __name__ == "__main__":
+    main()

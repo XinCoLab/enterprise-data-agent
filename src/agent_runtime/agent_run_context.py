@@ -46,6 +46,7 @@ class AgentRunContext:
     permissions: frozenset[str]  # 用户在本次请求中拥有的权限
     allowed_data_source_ids: tuple[str, ...]  # 用户有权访问的数据源
     selected_data_source_ids: tuple[str, ...]  # 本次请求实际选择的数据源
+    binding: dict[str, str] | None = None  # 会话固定的数据源与知识库，不包含凭据
 
 
 def read_agent_run_context(

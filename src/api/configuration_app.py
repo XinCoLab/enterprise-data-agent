@@ -24,19 +24,26 @@ import psycopg2
 import pymysql
 
 from api.schemas import (
+    KnowledgeCardCreate,
+    KnowledgeCardPatch,
+    KnowledgeRelationCreate,
     KnowledgeRequest,
     ModelSettingsPayload,
     ProfilePayload,
     ProfileReference,
 )
 from knowledge_runtime.catalog import load_knowledge_cards
+from knowledge_runtime.editor import KnowledgeEditError, KnowledgeEditor
 from config.project_paths import CONFIG_ROOT, KNOWLEDGE_IMPORT_ROOT, PROJECT_ROOT
 from agent_runtime.agent_runtime import RESOURCE_CONFIG_LOCK, has_active_runs
+from agent_runtime.context_usage import MODEL_CONTEXT_WINDOWS
+from memory.conversation_binding import build_conversation_binding, effective_resource_settings
 from security.workspace_access import (
     CurrentUser,
     current_user_from_request,
     public_user,
     require_permission,
+    require_workspace_resources,
 )
 
 
@@ -105,12 +112,14 @@ def empty_workspace_state(current_user: CurrentUser) -> dict:
         "password_saved": False,
         "duckdb_path": "",
         "knowledge_root": "",
+        "binding": None,
     }
     return {
         "active": empty_profile,
         "profiles": [empty_profile],
         "model": "deepseek-v4-pro",
         "models": list(ALLOWED_MODELS),
+        "model_context_windows": dict(MODEL_CONTEXT_WINDOWS),
         "knowledge": {"path": "", "card_count": 0, "types": {}},
         "model_configured": False,
         "workspace": public_user(current_user),
@@ -186,7 +195,11 @@ def _resolve_local_path(raw_path: str, default: Path | None = None) -> Path:
     return path.resolve()
 
 
-def _knowledge_summary(root: Path) -> dict:
+def _knowledge_summary(root: Path, *, runtime: bool = False) -> dict:
+    if runtime:
+        from knowledge_runtime.current_knowledge import get_loaded_knowledge_summary
+
+        return get_loaded_knowledge_summary(root)
     cards = load_knowledge_cards(root)
     counts = Counter(card.knowledge_type for card in cards.values())
     return {
@@ -242,9 +255,9 @@ def _profile_password(profile_id: str, backend: str) -> str:
 
 
 def _active_payload() -> dict:
-    settings = _read_env(SETTINGS_PATH)
+    settings = effective_resource_settings(_read_env(SETTINGS_PATH))
     secrets = _read_env(SECRETS_PATH)
-    backend = settings.get("DATA_AGENT_DATABASE_BACKEND", "postgresql").lower()
+    backend = settings.get("DATA_AGENT_DATABASE_BACKEND", "postgresql").strip().lower()
     if backend == "mysql":
         host_key, port_key, user_key, database_key = (
             "DATA_AGENT_MYSQL_HOST",
@@ -267,7 +280,7 @@ def _active_payload() -> dict:
         PROJECT_ROOT / "knowledge",
     )
     password_key = _password_key(backend)
-    return {
+    active = {
         "id": ACTIVE_PROFILE_PATH.read_text(encoding="utf-8").strip()
         if ACTIVE_PROFILE_PATH.is_file()
         else "current",
@@ -282,6 +295,12 @@ def _active_payload() -> dict:
         "knowledge_root": str(resolved_knowledge),
         "password_saved": bool(password_key and secrets.get(password_key)),
     }
+    try:
+        active["label"] = _load_profile(active["id"]).get("label") or active["database"]
+    except HTTPException:
+        active["label"] = active["database"] or "当前生效配置"
+    active["binding"] = build_conversation_binding(active)
+    return active
 
 
 def _public_profile(profile: dict) -> dict:
@@ -292,6 +311,7 @@ def _public_profile(profile: dict) -> dict:
     result["knowledge_root"] = str(
         _resolve_local_path(str(profile.get("knowledge_root", "")), PROJECT_ROOT / "knowledge")
     )
+    result["binding"] = build_conversation_binding(result)
     return result
 
 
@@ -583,6 +603,18 @@ def _refresh_knowledge_runtime(root: Path) -> None:
     reload_knowledge(root)
 
 
+def _prepare_knowledge_runtime(root: Path) -> dict:
+    from knowledge_runtime.current_knowledge import prepare_knowledge
+
+    return prepare_knowledge(root)
+
+
+def _activate_knowledge_runtime(bundle: dict) -> None:
+    from knowledge_runtime.current_knowledge import activate_knowledge
+
+    activate_knowledge(bundle)
+
+
 def _refresh_model_runtime() -> None:
     from graph.nodes.main_agent_llm_node import refresh_model_runtime
 
@@ -597,15 +629,16 @@ def get_page_configuration(request: Request):
     if not current_user.resources_ready:
         return empty_workspace_state(current_user)
 
-    active = _active_payload()
     settings = _read_env(SETTINGS_PATH)
-    try:
-        knowledge = _knowledge_summary(Path(active["knowledge_root"]))
-    except Exception as error:
-        knowledge = {
-            "path": active["knowledge_root"],
-            "error": _safe_error_text(error),
-        }
+    with RESOURCE_CONFIG_LOCK:
+        active = _active_payload()
+        try:
+            knowledge = _knowledge_summary(Path(active["knowledge_root"]), runtime=True)
+        except Exception as error:
+            knowledge = {
+                "path": active["knowledge_root"],
+                "error": _safe_error_text(error),
+            }
     model = settings.get("DATA_AGENT_MODEL", "deepseek-v4-pro")
     if model not in ALLOWED_MODELS:
         model = "deepseek-v4-pro"
@@ -614,6 +647,7 @@ def get_page_configuration(request: Request):
         "profiles": _list_profiles(),
         "model": model,
         "models": list(ALLOWED_MODELS),
+        "model_context_windows": dict(MODEL_CONTEXT_WINDOWS),
         "knowledge": knowledge,
         "model_configured": bool(_model_api_key()),
         "workspace": public_user(current_user),
@@ -630,15 +664,29 @@ def knowledge_graph(request: Request):
     """把 Runtime 已构建的 Knowledge 导航图提供给前端。"""
 
     if not request_user(request).resources_ready:
-        return {"nodes": [], "edges": []}
+        return {"nodes": [], "edges": [], "database_ids": []}
 
     from knowledge_runtime import current_knowledge
 
-    graph = current_knowledge.KNOWLEDGE_NAVIGATION_GRAPH
-    return {
-        "nodes": graph["nodes"],
-        "edges": graph["edges"],
-    }
+    with RESOURCE_CONFIG_LOCK:
+        graph = current_knowledge.KNOWLEDGE_NAVIGATION_GRAPH
+        cards = current_knowledge.KNOWLEDGE_CARDS
+        return {
+            "nodes": [
+                {
+                    **node,
+                    "database_id": cards[node["knowledge_id"]].content.get("database_id", ""),
+                    "summary": cards[node["knowledge_id"]].content.get("summary", ""),
+                    "status": cards[node["knowledge_id"]].content.get("status", "DRAFT"),
+                    "revision": cards[node["knowledge_id"]].content.get("revision", 1),
+                    "aliases": cards[node["knowledge_id"]].content.get("discovery", {}).get("aliases", []),
+                }
+                for node in graph["nodes"]
+            ],
+            "edges": graph["edges"],
+            "database_ids": sorted({card.content["database_id"] for card in cards.values()
+                                    if isinstance(card.content.get("database_id"), str) and card.content["database_id"]}),
+        }
 
 
 @app.get("/api/database-schema")
@@ -661,6 +709,44 @@ def database_schema(request: Request):
             status_code=400,
             detail=f"读取数据库结构失败：{_safe_error_text(error)}",
         ) from error
+
+
+def _edit_knowledge(request: Request, operation, *, write: bool = False) -> dict:
+    require_workspace_resources(request_user(request))
+    with RESOURCE_CONFIG_LOCK:
+        if write:
+            require_no_active_agent_runs()
+        try:
+            editor = KnowledgeEditor(Path(_active_payload()["knowledge_root"]), _refresh_knowledge_runtime)
+            return {"card": operation(editor)}
+        except KnowledgeEditError as error:
+            raise HTTPException(status_code=error.status_code, detail=str(error)) from error
+        except OSError as error:
+            raise HTTPException(status_code=500, detail="知识文件读写失败，请检查目录权限。") from error
+
+
+@app.get("/api/knowledge-cards/{knowledge_id:path}")
+def get_knowledge_card(knowledge_id: str, request: Request):
+    return _edit_knowledge(request, lambda editor: editor.read(knowledge_id))
+
+
+@app.post("/api/knowledge-cards", status_code=201)
+def create_knowledge_card(payload: KnowledgeCardCreate, request: Request):
+    result = _edit_knowledge(request, lambda editor: editor.create(payload.model_dump()), write=True)
+    return {**result, "message": "知识草稿已创建并加载。"}
+
+
+@app.patch("/api/knowledge-cards/{knowledge_id:path}")
+def patch_knowledge_card(knowledge_id: str, payload: KnowledgeCardPatch, request: Request):
+    changes = payload.model_dump(exclude={"expected_revision"}, exclude_unset=True)
+    result = _edit_knowledge(request, lambda editor: editor.patch(knowledge_id, changes, payload.expected_revision), write=True)
+    return {**result, "message": "知识卡已保存并重新加载。"}
+
+
+@app.post("/api/knowledge-relations")
+def create_knowledge_relation(payload: KnowledgeRelationCreate, request: Request):
+    result = _edit_knowledge(request, lambda editor: editor.add_relation(**payload.model_dump()), write=True)
+    return {**result, "message": "知识关联已保存并重新加载。"}
 
 
 
@@ -782,10 +868,10 @@ def save_and_apply(payload: ProfilePayload):
     try:
         _validate_required_connection_fields(payload)
         knowledge_root = _resolve_local_path(payload.knowledge_root, PROJECT_ROOT / "knowledge")
-        load_knowledge_cards(knowledge_root)
         password = _payload_password(payload)
         with RESOURCE_CONFIG_LOCK:
             require_no_active_agent_runs()
+            bundle = _prepare_knowledge_runtime(knowledge_root)
             _atomic_json(
                 PROFILES_ROOT / f"{payload.id}.json",
                 _profile_document(payload),
@@ -794,7 +880,7 @@ def save_and_apply(payload: ProfilePayload):
             if password_key and password:
                 _update_env(_profile_secret_path(payload.id), {password_key: password})
             _apply_payload(payload, password)
-            _refresh_knowledge_runtime(knowledge_root)
+            _activate_knowledge_runtime(bundle)
         return {
             "status": "success",
             "message": "数据库与 Knowledge 配置已保存并立即生效。",
@@ -851,11 +937,11 @@ def apply_profile(reference: ProfileReference):
             payload.knowledge_root,
             PROJECT_ROOT / "knowledge",
         )
-        load_knowledge_cards(knowledge_root)
         with RESOURCE_CONFIG_LOCK:
             require_no_active_agent_runs()
+            bundle = _prepare_knowledge_runtime(knowledge_root)
             _apply_payload(payload, password)
-            _refresh_knowledge_runtime(knowledge_root)
+            _activate_knowledge_runtime(bundle)
         return {
             "status": "success",
             "message": f"已切换到“{payload.label}”并立即生效。",

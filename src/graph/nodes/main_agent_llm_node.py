@@ -22,6 +22,7 @@ from model_clients.llm_api_clients import (
 from prompts.prompt_loader import build_model_input
 from prompts.runtime_database_context import inject_runtime_database_context
 from agent_runtime.agent_run_context import AgentRunContext, read_agent_run_context
+from agent_runtime.context_usage import context_usage_for_message
 from tools.tool_registry import TOOLS
 
 
@@ -81,7 +82,9 @@ def _invalid_tool_json_fallback(model_output: AIMessage) -> AIMessage | None:
             "validated or executed. No Tool action was performed. Please retry "
             "the request."
         ),
+        usage_metadata=model_output.usage_metadata,
         response_metadata={
+            **(model_output.response_metadata or {}),
             "termination_reason": "invalid_tool_json",
             "error_code": "INVALID_JSON",
             "graceful": True,
@@ -131,6 +134,16 @@ async def main_agent_llm_node(
     # 到这里才真正调用 LLM。模型返回一个 AIMessage：可能包含 Tool Call，
     # 也可能不调用工具、直接给出最终回答。
     model_output = await _model_with_tools(model_name).ainvoke(model_input)
+    model_output = model_output.model_copy(
+        update={
+            "response_metadata": {
+                **(model_output.response_metadata or {}),
+                "context_usage": context_usage_for_message(
+                    model_output, model_name=model_name,
+                ),
+            }
+        }
+    )
 
     # Provider 有时会返回无法解析的 Tool JSON。此时不执行工具，改成安全的终止回答。
     invalid_json_fallback = _invalid_tool_json_fallback(model_output)

@@ -19,7 +19,7 @@ def seed_conversation() -> None:
 def test_list_and_open_saved_conversation(client):
     seed_conversation()
 
-    list_response = client.get("/api/conversations")
+    list_response = client.get("/api/conversations?legacy=true")
     assert list_response.status_code == 200
     conversation_list = list_response.json()["conversations"]
     assert conversation_list == [
@@ -29,6 +29,8 @@ def test_list_and_open_saved_conversation(client):
             "created_by_user_id": "user-admin-a",
             "title": "第一行 第二行",
             "custom_title": False,
+            "binding": None,
+            "can_continue": False,
             "created_at": conversation_list[0]["created_at"],
             "updated_at": conversation_list[0]["updated_at"],
         }

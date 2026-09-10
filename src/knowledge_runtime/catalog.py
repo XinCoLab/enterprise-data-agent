@@ -10,6 +10,9 @@ from typing import Iterator
 
 import yaml
 
+# Both loaders use SafeConstructor; use the bundled C parser when available.
+KNOWLEDGE_YAML_LOADER = getattr(yaml, "CSafeLoader", yaml.SafeLoader)
+
 
 # 一份 YAML 字典同时包含这些字段时，才把它认作知识卡。
 # 这些是“知识卡格式”，不是任何具体数据库的业务规则。
@@ -143,7 +146,7 @@ def load_knowledge_cards(knowledge_root: Path) -> dict[str, KnowledgeCard]:
     for path in yaml_paths:
         try:
             with path.open("r", encoding="utf-8") as file:
-                document = yaml.safe_load(file)
+                document = yaml.load(file, Loader=KNOWLEDGE_YAML_LOADER)
         except yaml.YAMLError as error:
             raise ValueError(f"Invalid YAML file: {path}") from error
 

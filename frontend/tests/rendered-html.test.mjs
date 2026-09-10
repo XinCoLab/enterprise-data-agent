@@ -90,7 +90,7 @@ test("uses the product wordmark and supplied sidebar icons", async () => {
 test("loads and manages persistent conversation history", async () => {
   const source = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
 
-  assert.match(source, /api<ConversationListResponse>\("\/api\/conversations"/);
+  assert.match(source, /api<ConversationListResponse>\(conversationListPath\(scope\)/);
   assert.match(source, /api<ConversationDetailPayload>\(`\/api\/conversations\/\$\{encodeURIComponent/);
   assert.match(source, /method: "PATCH"/);
   assert.match(source, /method: "DELETE"/);
@@ -103,14 +103,44 @@ test("loads and manages persistent conversation history", async () => {
 test("renders the interactive Knowledge graph from runtime data", async () => {
   const pageSource = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
   const graphSource = await readFile(new URL("../app/KnowledgeGraph.tsx", import.meta.url), "utf8");
+  const workspaceSource = await readFile(new URL("../app/KnowledgeWorkspace.tsx", import.meta.url), "utf8");
 
-  assert.match(pageSource, /<KnowledgeGraph key=\{`knowledge-\$\{devUser\}`\} revision=\{runtimeRevision\} devUser=\{devUser\} \/>/);
+  assert.match(pageSource, /<KnowledgeWorkspace key=\{`knowledge-\$\{devUser\}`\}/);
+  assert.match(workspaceSource, /selectedKnowledgeId=\{selectedId\}/);
+  assert.match(workspaceSource, /onSelectNode=\{selectNode\}/);
+  assert.match(workspaceSource, /知识库设置/);
+  assert.doesNotMatch(pageSource, /className="knowledge-sidebar"/);
   assert.match(pageSource, /setRuntimeRevision/);
   assert.match(graphSource, /\/api\/knowledge-graph/);
   assert.match(graphSource, /cache: "no-store"/);
   assert.match(graphSource, /<canvas/);
   assert.match(graphSource, /pointerdown/);
   assert.match(graphSource, /wheel/);
+});
+
+test("edits persisted knowledge cards and explicit relations", async () => {
+  const source = await readFile(new URL("../app/KnowledgeWorkspace.tsx", import.meta.url), "utf8");
+  assert.match(source, /\/api\/knowledge-cards/);
+  assert.match(source, /\/api\/knowledge-relations/);
+  assert.match(source, /expected_revision/);
+  assert.match(source, /method: creating \? "POST" : "PATCH"/);
+  assert.match(source, /beforeunload/);
+  assert.match(source, /onDirtyChange/);
+  assert.match(source, /<option value="glossary_term">术语<\/option>/);
+  assert.match(source, /<option value="metric">指标<\/option>/);
+  assert.match(source, /graph\?\.database_ids/);
+  assert.doesNotMatch(source, /fetch\("\/api\/chat/);
+});
+
+test("opens new knowledge in a draggable dialog without replacing the inspector", async () => {
+  const source = await readFile(new URL("../app/KnowledgeWorkspace.tsx", import.meta.url), "utf8");
+  const styles = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(source, /creating && <NewKnowledgeDialog/);
+  assert.match(source, /setPointerCapture/);
+  assert.match(source, /ArrowLeft/);
+  assert.match(source, /const inspectorVisible = Boolean\(selectedId\)/);
+  assert.match(styles, /--blue:#2563eb/);
+  assert.doesNotMatch(styles, /filter:grayscale/);
 });
 
 test("shows Knowledge navigation only while runtime events request it", async () => {
@@ -166,7 +196,7 @@ test("switches simulated accounts through one workspace-aware request client", a
   assert.match(pageSource, /\/api\/accounts/);
   assert.match(pageSource, /switchDevAccount/);
   assert.match(pageSource, /setMessages\(\[\]\)/);
-  assert.match(pageSource, /loadConversations\(account\.login_id\)/);
+  assert.match(pageSource, /api<ConversationListResponse>\("\/api\/conversations", \{ cache: "no-store" \}, account\.login_id\)/);
   assert.match(pageSource, /fetchForUser\("\/api\/chat\/stream", devUser/);
   assert.match(pageSource, /fetchForUser\("\/api\/import-knowledge", devUser/);
   assert.match(explorerSource, /fetchJsonForUser<SchemaPayload>\("\/api\/database-schema", devUser/);
