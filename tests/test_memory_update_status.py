@@ -17,6 +17,7 @@ from memory import mem0_client
     ("PENDING", "pending"), ("RUNNING", "pending"),
     ("SUCCEEDED", "succeeded"), ("FAILED", "failed"),
     ("NO_CHANGE", "unchanged"),
+    ("NOT_FOUND", "failed"),
     ("error", "failed"), ("denied", "failed"), ("unexpected", "unknown"),
 ])
 def test_only_confirmed_success_displays_updated(status, expected):
@@ -40,8 +41,13 @@ def test_local_storage_failure_is_reported_to_the_ui(monkeypatch):
     assert memory_update_for_result("memory-1", result)["status"] == "failed"
 
 
-def test_allowed_tool_emits_live_status_and_result_survives_in_history_details():
-    call = {"name": "add_memory", "args": {"content": "后续分析使用中文表格。"}, "id": "memory-1"}
+@pytest.mark.parametrize("name, arguments", [
+    ("add_memory", {"content": "后续分析使用中文表格。"}),
+    ("update_memory", {"memory_id": "entry-1", "content": "后续分析使用中文表格。"}),
+    ("delete_memory", {"memory_id": "entry-1"}),
+])
+def test_allowed_tool_emits_live_status_and_result_survives_in_history_details(name, arguments):
+    call = {"name": name, "args": arguments, "id": "memory-1"}
     output = AIMessage(content="", tool_calls=[call])
     safe_output = tool_safety_node({"messages": [output]})
     start_events = list(translate_graph_progress_events(
@@ -51,7 +57,7 @@ def test_allowed_tool_emits_live_status_and_result_survives_in_history_details()
         "type": "memory_update", "request_id": "request-1",
         "update": {"tool_call_id": "memory-1", "status": "updating"},
     }]
-    result = ToolMessage(name="add_memory", tool_call_id="memory-1", content=json.dumps({"status": "SUCCEEDED"}))
+    result = ToolMessage(name=name, tool_call_id="memory-1", content=json.dumps({"status": "SUCCEEDED"}))
     end_events = list(translate_graph_progress_events(
         {"type": "updates", "data": {"Tool Execution": {"messages": [result]}}}, 1, "request-1"
     ))

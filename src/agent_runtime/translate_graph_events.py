@@ -6,6 +6,7 @@ import json
 from typing import Any, Iterator
 
 from agent_runtime.model_usage import context_usage_for_message
+from memory.memory_settings import MEMORY_WRITE_TOOLS
 
 
 NODE_ACTIVITY = {
@@ -70,7 +71,7 @@ def translate_graph_progress_events(
             for decision in message.additional_kwargs.get("tool_safety_decisions", []):
                 if decision.get("decision") == "ALLOW" and any(
                     call.get("id") == decision.get("tool_call_id")
-                    and call.get("name") == "add_memory"
+                    and call.get("name") in MEMORY_WRITE_TOOLS
                     for call in message.tool_calls
                 ):
                     yield {
@@ -100,7 +101,7 @@ def translate_tool_result_progress_event(message: Any) -> dict | None:
     if not isinstance(message, ToolMessage):
         return None
     tool_name = str(message.name or "")
-    if tool_name == "add_memory":
+    if tool_name in MEMORY_WRITE_TOOLS:
         try:
             payload = json.loads(str(message.content))
         except (TypeError, json.JSONDecodeError):
@@ -148,6 +149,7 @@ def memory_update_for_result(tool_call_id: str, payload: Any) -> dict:
         "ERROR": "failed",
         "DENIED": "failed",
         "REJECTED": "failed",
+        "NOT_FOUND": "failed",
     }.get(status, "unknown")
     return {"tool_call_id": tool_call_id, "status": display_status}
 

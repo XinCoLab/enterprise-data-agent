@@ -47,7 +47,7 @@ from starlette.concurrency import run_in_threadpool
 
 from api.schemas import ChatRequest
 from memory.mem0_client import search_memories
-from memory.memory_settings import MEMORY_ENABLED
+from memory.memory_settings import MEMORY_ENABLED, MEMORY_WRITE_TOOLS
 
 from memory.conversation_history_database import (
     DEFAULT_WORKSPACE_ID,
@@ -970,7 +970,7 @@ def build_turn_result(messages: list, *, model_name: str = "") -> dict:
         "memory_updates": [
             memory_update_for_result(call["id"], tool_results.get(call["id"]))
             for call in tool_calls
-            if call["name"] == "add_memory"
+            if call["name"] in MEMORY_WRITE_TOOLS
         ],
         "sql_queries": sql_queries,
         "result_preview": successful_results[-1] if successful_results else None,

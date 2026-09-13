@@ -113,6 +113,73 @@ def search_memories(query: str, *, user_id: str, workspace_id: str, thread_id: s
     return result["results"]
 
 
+def _get_scoped_memory(client, memory_id: str, filters: dict) -> dict | None:
+    """Mem0 的按 ID 接口不带过滤，写操作前必须检查记录归属。调用方持有锁。"""
+    record = client.get(memory_id)
+    if not record:
+        return None
+    metadata = record.get("metadata") or {}
+    if (
+        record.get("user_id") != filters["user_id"]
+        or record.get("run_id") != filters["run_id"]
+        or metadata.get("workspace_id") != filters["workspace_id"]
+    ):
+        return None
+    return record
+
+
+def update_memory_record(
+    memory_id: str, content: str, *, user_id: str, workspace_id: str, thread_id: str,
+) -> dict:
+    filters = memory_filters(user_id=user_id, workspace_id=workspace_id, thread_id=thread_id)
+    memory_id, content = memory_id.strip(), content.strip()
+    if not memory_id or not content:
+        raise ValueError("记忆 ID 和更新内容不能为空。")
+    with _memory_lock:
+        try:
+            client = get_mem0_client()
+            record = _get_scoped_memory(client, memory_id, filters)
+            if record is None:
+                return {"status": "NOT_FOUND", "message": "当前会话中未找到该记忆，未作修改。"}
+            if record["memory"] == content:
+                return {"status": "NO_CHANGE", "message": "记忆内容相同，无需修改。"}
+            # text 是整条替换；SDK 同步更新向量并保留原有身份和 metadata。
+            client.update(memory_id=memory_id, text=content)
+        except Exception:
+            logger.exception("本地记忆修改失败 thread_id=%s memory_id=%s", thread_id, memory_id)
+            return {"status": "FAILED", "message": "记忆修改失败，请查看服务日志。"}
+    logger.info("本地记忆修改完成 thread_id=%s memory_id=%s", thread_id, memory_id)
+    return {
+        "status": "SUCCEEDED",
+        "results": [{"id": memory_id, "event": "UPDATE", "memory": content}],
+        "message": "记忆已修改。",
+    }
+
+
+def delete_memory_record(
+    memory_id: str, *, user_id: str, workspace_id: str, thread_id: str,
+) -> dict:
+    filters = memory_filters(user_id=user_id, workspace_id=workspace_id, thread_id=thread_id)
+    memory_id = memory_id.strip()
+    if not memory_id:
+        raise ValueError("记忆 ID 不能为空。")
+    with _memory_lock:
+        try:
+            client = get_mem0_client()
+            if _get_scoped_memory(client, memory_id, filters) is None:
+                return {"status": "NOT_FOUND", "message": "当前会话中未找到该记忆，未作删除。"}
+            client.delete(memory_id=memory_id)
+        except Exception:
+            logger.exception("本地记忆删除失败 thread_id=%s memory_id=%s", thread_id, memory_id)
+            return {"status": "FAILED", "message": "记忆删除失败，请查看服务日志。"}
+    logger.info("本地记忆删除完成 thread_id=%s memory_id=%s", thread_id, memory_id)
+    return {
+        "status": "SUCCEEDED",
+        "results": [{"id": memory_id, "event": "DELETE"}],
+        "message": "该条记忆已删除。",
+    }
+
+
 def close_memory_client() -> None:
     with _memory_lock:
         if _create_client.cache_info().currsize:

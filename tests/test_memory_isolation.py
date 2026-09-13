@@ -29,8 +29,9 @@ from prompts.runtime_memory_context import build_memory_context_message
 from memory.mem0_client import get_mem0_client
 from agent_runtime.agent_runtime import MEMORY_ENABLED
 assert not MEMORY_ENABLED
-assert "add_memory" not in [tool.name for tool in TOOLS]
-assert "add_memory" not in get_agent_prompt().invoke({"messages": []}).to_messages()[0].content
+for name in ("add_memory", "update_memory", "delete_memory"):
+    assert name not in [tool.name for tool in TOOLS]
+    assert name not in get_agent_prompt().invoke({"messages": []}).to_messages()[0].content
 assert build_memory_context_message([{"memory": "stale cached memory"}]) is None
 try:
     get_mem0_client()

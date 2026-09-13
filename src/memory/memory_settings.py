@@ -9,3 +9,4 @@ _setting = os.getenv("DATA_AGENT_MEMORY_ENABLED", "1").strip()
 if _setting not in {"0", "1"}:
     raise ValueError("DATA_AGENT_MEMORY_ENABLED must be 0 or 1.")
 MEMORY_ENABLED = _setting == "1"
+MEMORY_WRITE_TOOLS = frozenset({"add_memory", "update_memory", "delete_memory"})

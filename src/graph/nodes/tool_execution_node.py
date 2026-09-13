@@ -39,6 +39,7 @@ async def tool_execution_node(
         for decision in message.additional_kwargs.get("tool_safety_decisions", [])
     }
     results = []
+    changed_memory_ids = set()
     for tool_call in message.tool_calls:
         decision = decisions.get(tool_call["id"])
         if decision is None or decision["decision"] != ALLOW:
@@ -80,6 +81,14 @@ async def tool_execution_node(
                     ensure_ascii=False,
                 )
 
+        if tool_call["name"] in {"update_memory", "delete_memory"}:
+            try:
+                payload = json.loads(str(content))
+            except (TypeError, ValueError):
+                payload = None
+            if isinstance(payload, dict) and payload.get("status") == "SUCCEEDED":
+                changed_memory_ids.update(item["id"] for item in payload.get("results", []))
+
         results.append(
             ToolMessage(
                 content=str(content),
@@ -88,4 +97,11 @@ async def tool_execution_node(
             )
         )
 
-    return {"messages": results}
+    update: dict = {"messages": results}
+    if changed_memory_ids:
+        # 同一请求后续模型调用不再注入旧条目；新值已在工具结果中，下轮正常重新检索。
+        update["retrieved_memories"] = [
+            item for item in state.get("retrieved_memories", [])
+            if item.get("id") not in changed_memory_ids
+        ]
+    return update
