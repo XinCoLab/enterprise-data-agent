@@ -5,7 +5,8 @@ from __future__ import annotations
 import json
 from typing import Any, Iterator
 
-from agent_runtime.context_usage import context_usage_for_message
+from agent_runtime.model_usage import context_usage_for_message
+from memory.memory_settings import MEMORY_WRITE_TOOLS
 
 
 NODE_ACTIVITY = {
@@ -39,12 +40,21 @@ def translate_graph_progress_events(
     """把一条已有图事件翻译为网页进度字典；不调用图、模型或工具。
 
     执行核心在读取一条图事件后迭代此同步生成器。
-    tasks 产出节点进度；updates 依次产出模型轮次、知识导航、工具结果进度。
+    tasks 产出节点进度；custom 标记实际开始压缩；updates 产出模型和工具进度。
     每条附上同一个 request_id。逐条生成以保留原先的事件顺序及暂停位置，
     不提前计算后续类别的事件。
     """
 
-    if part.get("type") == "tasks":
+    if part.get("type") == "custom":
+        data = part.get("data")
+        if isinstance(data, dict) and data.get("type") == "context_compaction_start":
+            yield {
+                "type": "progress",
+                "stage": "Context Compaction",
+                "message": "正在压缩上下文…",
+                "request_id": request_id,
+            }
+    elif part.get("type") == "tasks":
         event = translate_task_progress_event(part)
         if event is not None:
             event["request_id"] = request_id
@@ -57,6 +67,18 @@ def translate_graph_progress_events(
         for event in translate_knowledge_trace_events(part):
             event["request_id"] = request_id
             yield event
+        for message in (part.get("data", {}).get("Tool Safety") or {}).get("messages", []):
+            for decision in message.additional_kwargs.get("tool_safety_decisions", []):
+                if decision.get("decision") == "ALLOW" and any(
+                    call.get("id") == decision.get("tool_call_id")
+                    and call.get("name") in MEMORY_WRITE_TOOLS
+                    for call in message.tool_calls
+                ):
+                    yield {
+                        "type": "memory_update",
+                        "request_id": request_id,
+                        "update": {"tool_call_id": decision["tool_call_id"], "status": "updating"},
+                    }
         for event in translate_update_progress_events(part):
             event["request_id"] = request_id
             yield event
@@ -79,6 +101,15 @@ def translate_tool_result_progress_event(message: Any) -> dict | None:
     if not isinstance(message, ToolMessage):
         return None
     tool_name = str(message.name or "")
+    if tool_name in MEMORY_WRITE_TOOLS:
+        try:
+            payload = json.loads(str(message.content))
+        except (TypeError, json.JSONDecodeError):
+            payload = {}
+        return {
+            "type": "memory_update",
+            "update": memory_update_for_result(message.tool_call_id, payload),
+        }
     if tool_name != "execute_readonly_sql":
         return {
             "type": "progress",
@@ -104,6 +135,23 @@ def translate_tool_result_progress_event(message: Any) -> dict | None:
         "tool": tool_name,
         "message": text,
     }
+
+
+def memory_update_for_result(tool_call_id: str, payload: Any) -> dict:
+    """只根据工具的真实结果生成提示；HTTP 成功或未知状态不能当作保存成功。"""
+    status = str(payload.get("status", "")).upper() if isinstance(payload, dict) else ""
+    display_status = {
+        "SUCCEEDED": "succeeded",
+        "NO_CHANGE": "unchanged",
+        "PENDING": "pending",
+        "RUNNING": "pending",
+        "FAILED": "failed",
+        "ERROR": "failed",
+        "DENIED": "failed",
+        "REJECTED": "failed",
+        "NOT_FOUND": "failed",
+    }.get(status, "unknown")
+    return {"tool_call_id": tool_call_id, "status": display_status}
 
 
 def extract_visible_ai_content(content: Any) -> str:
@@ -283,6 +331,17 @@ def translate_update_progress_events(part: dict) -> list[dict]:
     if not isinstance(data, dict):
         return []
     events: list[dict] = []
+    compaction_update = data.get("Context Compaction")
+    if isinstance(compaction_update, dict) and compaction_update.get("compaction"):
+        compaction = compaction_update["compaction"]
+        events.append({
+            "type": "progress",
+            "stage": "Context Compaction",
+            "message": (
+                f"历史压缩完成：估算输入 {compaction['tokens_before']:,} → "
+                f"{compaction['tokens_after']:,} tokens。"
+            ),
+        })
     execution_update = data.get("Tool Execution")
     if isinstance(execution_update, dict):
         for message in execution_update.get("messages", []):

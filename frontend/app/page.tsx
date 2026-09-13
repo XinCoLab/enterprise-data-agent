@@ -6,6 +6,7 @@ import KnowledgeGraph, { type LiveKnowledgeTrace } from "./KnowledgeGraph";
 import KnowledgeWorkspace from "./KnowledgeWorkspace";
 import { fetchForUser, fetchJsonForUser } from "./api-client";
 import ContextWindowMeter, { type ContextUsage } from "./ContextWindowMeter";
+import MemoryUpdateStatus, { type MemoryUpdate } from "./MemoryUpdateStatus";
 import DatasourceConversationPicker, { LEGACY_SCOPE, conversationListPath, filterConversationScope, hasMultipleKnowledgeBases, knowledgeProfiles, mergeConversationSources, sameConversationBinding, type ConversationBinding, type ConversationSource } from "./DatasourceConversationPicker";
 
 type Backend = "postgresql" | "mysql" | "duckdb";
@@ -18,11 +19,11 @@ type ApiState = { active: Profile; profiles: Profile[]; model: Model; models: Mo
 type AccountsResponse = { demo_mode: boolean; current: Account; accounts: Account[] };
 type SqlResult = { columns?: string[]; rows?: Record<string, unknown>[]; returned_rows?: number; truncated?: boolean; status?: string; error_type?: string; message?: string };
 type ArtifactView = { id: string; kind: "report"; title: string; preview_url: string };
-type ChatResponse = { request_id: string; status: "success" | "paused" | "canceled"; thread_id: string; model: Model; latency_ms: number; answer: string; tool_counts: Record<string, number>; sql_queries: { tool_call_id: string; sql: string; result?: SqlResult }[]; result_preview?: SqlResult | null; knowledge_view?: { knowledge_view_mode?: string } | null; artifacts?: ArtifactView[]; context_usage?: ContextUsage | null };
+type ChatResponse = { request_id: string; status: "success" | "paused" | "canceled"; thread_id: string; model: Model; latency_ms: number; answer: string; tool_counts: Record<string, number>; sql_queries: { tool_call_id: string; sql: string; result?: SqlResult }[]; result_preview?: SqlResult | null; knowledge_view?: { knowledge_view_mode?: string } | null; artifacts?: ArtifactView[]; context_usage?: ContextUsage | null; memory_updates?: MemoryUpdate[] };
 type ToolCallView = { name: string; arguments: Record<string, unknown> };
 type LlmRoundView = { number: number; content: string; toolCalls: ToolCallView[] };
-type ChatStreamEvent = { type: "started" | "round" | "progress" | "knowledge_trace" | "final" | "error"; request_id: string; thread_id?: string; message?: string; round?: number; content?: string; tool_calls?: ToolCallView[]; response?: ChatResponse; action?: "open" | "close"; stage?: string; mode?: string; active_ids?: string[]; context_usage?: ContextUsage | null };
-type ChatItem = { id: string; role: "user" | "assistant"; content: string; details?: ChatResponse };
+type ChatStreamEvent = { type: "started" | "round" | "progress" | "knowledge_trace" | "memory_update" | "final" | "error"; request_id: string; thread_id?: string; message?: string; round?: number; content?: string; tool_calls?: ToolCallView[]; response?: ChatResponse; action?: "open" | "close"; stage?: string; mode?: string; active_ids?: string[]; context_usage?: ContextUsage | null; update?: MemoryUpdate };
+type ChatItem = { id: string; role: "user" | "assistant"; content: string; details?: ChatResponse; memoryUpdates?: MemoryUpdate[] };
 type ConversationSummaryPayload = { thread_id: string; title: string; custom_title: boolean; created_at: string; updated_at: string; binding: ConversationBinding | null };
 type ConversationMessagePayload = { id: number; role: "user" | "assistant"; content: string; details: ChatResponse | null; created_at: string };
 type ConversationDetailPayload = ConversationSummaryPayload & { messages: ConversationMessagePayload[]; can_continue: boolean };
@@ -163,6 +164,7 @@ export default function Home() {
   const [currentRound, setCurrentRound] = useState<LlmRoundView | null>(null);
   const [contextUsage, setContextUsage] = useState<ContextUsage | null>(null);
   const [roundStatus, setRoundStatus] = useState("");
+  const [memoryUpdates, setMemoryUpdates] = useState<MemoryUpdate[]>([]);
   const [stopRequested, setStopRequested] = useState(false);
   const [busy, setBusy] = useState("");
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -272,6 +274,7 @@ export default function Home() {
   const resetAnalysis = useCallback((binding: ConversationBinding | null) => {
     setThreadId(crypto.randomUUID());
     setMessages([]);
+    setMemoryUpdates([]);
     setThreadBinding(binding);
     setConversationCanContinue(Boolean(binding));
     setContextUsage(null);
@@ -295,6 +298,7 @@ export default function Home() {
   const showSavedConversation = (saved: ConversationDetailPayload) => {
     setThreadId(saved.thread_id);
     setMessages(conversationMessages(saved));
+    setMemoryUpdates([]);
     setThreadBinding(saved.binding);
     setConversationCanContinue(saved.can_continue);
     const latestAnswer = [...saved.messages].reverse().find((message) => message.role === "assistant");
@@ -345,6 +349,8 @@ export default function Home() {
     });
     setMessages((current) => [...current, { id: crypto.randomUUID(), role: "user", content: text }]);
     hideLiveKnowledge(true); setQuestion(""); setChatBusy(true); setStopRequested(false); setCurrentRound(null); setRoundStatus("正在分析现有信息并决定下一步…"); setActiveRequestId(null); activeRequestIdRef.current = null;
+    let turnMemoryUpdates: MemoryUpdate[] = [];
+    setMemoryUpdates([]);
     try {
       const response = await fetchForUser("/api/chat/stream", devUser, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question: text, thread_id: threadId, model, data_source_id: threadBinding.data_source_id, knowledge_base_id: threadBinding.knowledge_base_id }) });
       if (!response.ok) {
@@ -365,6 +371,9 @@ export default function Home() {
           setRoundStatus(event.message || "本轮模型输出已生成。");
         } else if (event.type === "progress" && event.message) {
           setRoundStatus(event.message);
+        } else if (event.type === "memory_update" && event.update) {
+          turnMemoryUpdates = [...turnMemoryUpdates.filter((update) => update.tool_call_id !== event.update!.tool_call_id), event.update];
+          setMemoryUpdates(turnMemoryUpdates);
         } else if (event.type === "knowledge_trace") {
           if (event.action === "open") {
             showLiveKnowledge({
@@ -389,9 +398,9 @@ export default function Home() {
       });
       if (!finalReceived) throw new Error("响应流已结束，但没有收到最终结果。");
     } catch (error) {
-      setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant", content: error instanceof Error ? error.message : "分析执行失败。" }]);
+      setMessages((current) => [...current, { id: crypto.randomUUID(), role: "assistant", content: error instanceof Error ? error.message : "分析执行失败。", memoryUpdates: turnMemoryUpdates.map((update) => update.status === "updating" ? { ...update, status: "unknown" } : update) }]);
     } finally {
-      hideLiveKnowledge(); activeRequestIdRef.current = null; setActiveRequestId(null); setStopRequested(false); setCurrentRound(null); setRoundStatus(""); setChatBusy(false);
+      hideLiveKnowledge(); activeRequestIdRef.current = null; setActiveRequestId(null); setStopRequested(false); setCurrentRound(null); setRoundStatus(""); setMemoryUpdates([]); setChatBusy(false);
       void loadConversations().catch((error) => console.error("会话列表刷新失败", error));
     }
   };
@@ -682,9 +691,9 @@ export default function Home() {
 
     {page === "analysis" && <section className="analysis-page"><div className="conversation">
       {messages.length === 0 ? <div className="empty-state">{chatUnavailableReason && <h2>{chatUnavailableReason}</h2>}</div> : messages.map((message) => <article className={`message ${message.role}`} key={message.id}>
-        {message.role === "assistant" ? <><AnswerBody content={message.content} />{message.details?.artifacts?.map((artifact) => <ArtifactPreview artifact={artifact} key={artifact.id} />)}</> : <p>{message.content}</p>}
+        {message.role === "assistant" ? <><MemoryUpdateStatus updates={message.details?.memory_updates ?? message.memoryUpdates} /><AnswerBody content={message.content} />{message.details?.artifacts?.map((artifact) => <ArtifactPreview artifact={artifact} key={artifact.id} />)}</> : <p>{message.content}</p>}
         {message.details && <details className="run-details"><summary>查看 SQL 与运行信息</summary><div className="metric-row"><span>{(message.details.latency_ms / 1000).toFixed(1)} 秒</span><span>{message.details.sql_queries.length} 次 SQL</span><span>{message.details.knowledge_view?.knowledge_view_mode || "-"} View</span>{message.details.status === "paused" && <span className="warning-text">已暂停</span>}</div>{message.details.sql_queries.map((query, queryIndex) => <div className="sql-card" key={query.tool_call_id || queryIndex}><div>SQL {queryIndex + 1}</div><pre><code>{query.sql}</code></pre><ResultTable result={query.result} /></div>)}</details>}
-      </article>)}{chatBusy && <article className="message assistant pending"><div className="round-status"><span className="round-status-dot" /><span className="round-status-text">{roundStatus || "正在分析现有信息并决定下一步…"}</span></div>{currentRound && <div className="current-round">{currentRound.content && <AnswerBody content={currentRound.content} />}{currentRound.toolCalls.length > 0 && <div className="round-tools">{currentRound.toolCalls.map((call, index) => <ToolCallCard call={call} key={`${call.name}-${index}`} />)}</div>}</div>}{stopRequested && <small>停止将在当前模型或工具调用结束后的安全位置生效。</small>}</article>}
+      </article>)}{chatBusy && <article className="message assistant pending"><MemoryUpdateStatus updates={memoryUpdates} /><div className="round-status"><span className="round-status-dot" /><span className="round-status-text">{roundStatus || "正在分析现有信息并决定下一步…"}</span></div>{currentRound && <div className="current-round">{currentRound.content && <AnswerBody content={currentRound.content} />}{currentRound.toolCalls.length > 0 && <div className="round-tools">{currentRound.toolCalls.map((call, index) => <ToolCallCard call={call} key={`${call.name}-${index}`} />)}</div>}</div>}{stopRequested && <small>停止将在当前模型或工具调用结束后的安全位置生效。</small>}</article>}
     </div>{liveKnowledgeTrace && !liveKnowledgeMinimized && <div className={`live-knowledge-overlay ${liveKnowledgeClosing ? "closing" : ""}`} aria-live="polite"><div className="live-knowledge-stage"><button className="live-knowledge-minimize" type="button" onClick={() => setLiveKnowledgeMinimized(true)} aria-label="收起知识库导航">×</button><KnowledgeGraph key={`live-knowledge-${devUser}`} revision={runtimeRevision} devUser={devUser} live liveTrace={liveKnowledgeTrace} /></div></div>}{liveKnowledgeTrace && liveKnowledgeMinimized && <button className="live-knowledge-reopen" type="button" onClick={() => setLiveKnowledgeMinimized(false)}><span />查看知识库导航</button>}
     {!canContinue && !chatBusy ? <div className="conversation-readonly" role="status"><span>{readOnlyReason}</span>{originalProfile && canConfigure && <button type="button" disabled={switchBusy} onClick={() => applyProfile(originalProfile, messages.length ? threadId : undefined)}>使用原配置</button>}</div> : <div className="composer" title={chatUnavailableReason}>
       <textarea value={question} disabled={conversationBusy || Boolean(busy) || !canChat || !resourcesReady || !canContinue} onChange={(event) => setQuestion(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); sendQuestion(); } }} placeholder={chatUnavailableReason || "询问 DataAgent"} />

@@ -46,6 +46,8 @@ from fastapi import HTTPException
 from starlette.concurrency import run_in_threadpool
 
 from api.schemas import ChatRequest
+from memory.mem0_client import search_memories
+from memory.memory_settings import MEMORY_ENABLED, MEMORY_WRITE_TOOLS
 
 from memory.conversation_history_database import (
     DEFAULT_WORKSPACE_ID,
@@ -60,11 +62,13 @@ from memory.conversation_binding import read_active_conversation_binding
 from config.project_paths import CONFIG_ROOT
 from security.workspace_access import CurrentUser
 from agent_runtime.agent_run_context import AgentRunContext
-from agent_runtime.context_usage import context_usage_for_message
+from agent_runtime.model_usage import context_usage_for_message
+from graph.nodes.context_compaction_node import build_context_messages
 from agent_runtime.translate_graph_events import (
     encode_event,
     extract_visible_ai_content,
     is_safe_cancel_boundary,
+    memory_update_for_result,
     translate_graph_progress_events,
 )
 
@@ -213,7 +217,7 @@ async def execute_agent_request(
             "thread_id": thread_id,
             "model": request.model,
         }
-        graph_input = {
+        graph_input: dict[str, Any] = {
             "messages": [HumanMessage(content=request.question.strip())]
         }
         final_answer_ready = False
@@ -248,7 +252,23 @@ async def execute_agent_request(
                 created_by_user_id=current_user.user_id,
                 binding=run_context.binding,
             )
+            # 每次用户请求检索一次；目前 query 使用用户原话，未做会话语境改写。
+            query = request.question.strip()
+            graph_input["retrieved_memories"] = []
+            if MEMORY_ENABLED:
+                graph_input["retrieved_memories"] = await run_in_threadpool(
+                    search_memories,
+                    query,
+                    user_id=run_context.user_id,
+                    workspace_id=run_context.workspace_id,
+                    thread_id=run_context.thread_id,
+                )
 
+            logger.info(
+                "记忆检索完成：%s 条，request_id=%s",
+                len(graph_input["retrieved_memories"]),
+                request_id,
+            )
             # 4. 每轮从这里开始：需要记录轮次日志时，放在取消判断后的图调用前。
             # Runtime 数的是模型决策轮次；recursion_limit 限制图内部的节点执行步数。
             for round_index in range(read_max_agent_rounds(run_config)):
@@ -264,7 +284,7 @@ async def execute_agent_request(
                 round_stream = single_round_graph.astream(
                     graph_input,
                     config=run_config,
-                    stream_mode=["tasks", "updates"],
+                    stream_mode=["tasks", "updates", "custom"],
                     version="v2",
                 )
                 # 新用户消息只传入第一轮，防止重复追加。同一 run_config 内部
@@ -334,9 +354,11 @@ async def execute_agent_request(
                     status = "canceled"
                     turn_result = build_turn_result(checkpoint_messages, model_name=request.model)
                 else:
+                    summary_state = await single_round_graph.aget_state(run_config)
                     round_limit_summary = await generate_round_limit_summary(
-                        checkpoint_messages,
+                        build_context_messages(summary_state.values),
                         model_name=request.model,
+                        retrieved_memories=summary_state.values.get("retrieved_memories", []),
                     )
                     await single_round_graph.aupdate_state(
                         run_config,
@@ -475,10 +497,10 @@ def build_agent_config(
             "max_recursions": max_recursions,
             "agent_run_context": run_context,
         },
-        # 单轮图只经过 LLM、Safety、Tool Execution；此项限制图内部节点步数，
+        # 单轮图经过 Compaction、LLM、Safety、Tool Execution；此项限制节点步数，
         # 外层模型轮次预算仍使用上面的 max_recursions（保留已有配置键）。
         "recursion_limit": max(
-            4,
+            5,
             int(settings.get("LANGGRAPH_DEFAULT_RECURSION_LIMIT", "6")),
         ),
     }
@@ -945,6 +967,11 @@ def build_turn_result(messages: list, *, model_name: str = "") -> dict:
     return {
         "answer": final_answer,
         "tool_counts": dict(sorted(tool_counts.items())),
+        "memory_updates": [
+            memory_update_for_result(call["id"], tool_results.get(call["id"]))
+            for call in tool_calls
+            if call["name"] in MEMORY_WRITE_TOOLS
+        ],
         "sql_queries": sql_queries,
         "result_preview": successful_results[-1] if successful_results else None,
         "knowledge_view": navigation_trace,
@@ -991,6 +1018,7 @@ async def generate_round_limit_summary(
     messages: list[Any],
     *,
     model_name: str,
+    retrieved_memories: list[dict] | None = None,
 ):
     """轮次预算用完后额外调用模型生成进度摘要，返回无工具调用的 AIMessage。
 
@@ -1013,6 +1041,7 @@ async def generate_round_limit_summary(
         model_output = await create_summary(
             messages,
             model_name=model_name,
+            retrieved_memories=retrieved_memories,
         )
         content = extract_visible_ai_content(model_output.content)
     except Exception:

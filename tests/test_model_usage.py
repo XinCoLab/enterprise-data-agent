@@ -4,7 +4,7 @@ from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 import pytest
 
 from agent_runtime import agent_runtime
-from agent_runtime.context_usage import MODEL_CONTEXT_WINDOWS, context_usage_for_message
+from agent_runtime.model_usage import MODEL_CONTEXT_WINDOWS, context_usage_for_message
 from agent_runtime.translate_graph_events import translate_llm_round_event
 from memory import conversation_history_database
 

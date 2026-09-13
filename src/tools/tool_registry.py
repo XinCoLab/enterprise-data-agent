@@ -8,6 +8,7 @@ from tools.execute_readonly_sql import execute_readonly_sql
 from tools.export_report import export_report
 from tools.read_knowledge import read_knowledge
 from tools.search_knowledge import search_knowledge
+from memory.memory_settings import MEMORY_ENABLED
 
 
 TOOLS = [
@@ -20,5 +21,12 @@ TOOLS = [
     compose_dashboard,
     export_report,
 ]
+
+if MEMORY_ENABLED:
+    from tools.add_memory import add_memory
+    from tools.update_memory import update_memory
+    from tools.delete_memory import delete_memory
+
+    TOOLS.extend([add_memory, update_memory, delete_memory])
 
 TOOLS_BY_NAME = {registered_tool.name: registered_tool for registered_tool in TOOLS}

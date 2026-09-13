@@ -123,6 +123,10 @@ select,input { height:38px; padding:0 10px; }
 .message.user p { font-size:16px; line-height:1.65; }
 .message+.message { margin-top:20px; }
 .message-label { margin-bottom:8px; color:var(--muted); font-size:12px; font-weight:600; }
+.memory-update-status { display:flex; align-items:center; gap:7px; margin-bottom:10px; color:#858b93; font-size:14px; font-weight:600; line-height:22px; }
+.memory-update-status.failed { color:var(--amber); }
+.memory-update-icon { flex:none; width:19px; height:19px; background:currentColor; mask:url("/icons/memory.svg") center / contain no-repeat; -webkit-mask:url("/icons/memory.svg") center / contain no-repeat; }
+.memory-update-status + .round-status { margin-top:0; }
 .message p { margin:0; }
 .pending { color:var(--muted); }
 .current-round { color:#222b3a; }

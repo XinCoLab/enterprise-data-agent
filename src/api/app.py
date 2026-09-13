@@ -31,6 +31,7 @@ from memory.conversation_checkpointer import (
     open_conversation_checkpoint_database,
 )
 from memory.conversation_history_database import create_chat_history_tables
+from memory.mem0_client import close_memory_client
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -45,6 +46,7 @@ async def lifespan(app: FastAPI):
         app.state.single_round_graph = create_single_round_graph(checkpointer)
         yield
     finally:
+        close_memory_client()
         await database_connection.close()
 
 

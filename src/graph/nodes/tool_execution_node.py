@@ -39,6 +39,7 @@ async def tool_execution_node(
         for decision in message.additional_kwargs.get("tool_safety_decisions", [])
     }
     results = []
+    changed_memory_ids = set()
     for tool_call in message.tool_calls:
         decision = decisions.get(tool_call["id"])
         if decision is None or decision["decision"] != ALLOW:
@@ -80,6 +81,17 @@ async def tool_execution_node(
                     ensure_ascii=False,
                 )
 
+        if tool_call["name"] in {"update_memory", "delete_memory"}:
+            try:
+                payload = json.loads(str(content))
+            except (TypeError, ValueError):
+                payload = None
+            if isinstance(payload, dict):
+                if payload.get("status") == "SUCCEEDED":
+                    changed_memory_ids.update(item["id"] for item in payload.get("results", []))
+                # 已通过归属校验的写操作即使报错，也可能已改变存储中的条目。
+                changed_memory_ids.update(payload.get("invalidate_memory_ids", []))
+
         results.append(
             ToolMessage(
                 content=str(content),
@@ -88,4 +100,11 @@ async def tool_execution_node(
             )
         )
 
-    return {"messages": results}
+    update: dict = {"messages": results}
+    if changed_memory_ids:
+        # 不再注入可能失效的旧条目；成功的新值在工具结果中，写入不确定时下轮重新检索。
+        update["retrieved_memories"] = [
+            item for item in state.get("retrieved_memories", [])
+            if item.get("id") not in changed_memory_ids
+        ]
+    return update

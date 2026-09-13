@@ -2,7 +2,7 @@
 
 from functools import lru_cache
 
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, AnyMessage
 from langchain_core.runnables import RunnableConfig
 
 from graph.graph_state import GraphState
@@ -21,8 +21,16 @@ from model_clients.llm_api_clients import (
 )
 from prompts.prompt_loader import build_model_input
 from prompts.runtime_database_context import inject_runtime_database_context
+from prompts.runtime_memory_context import build_memory_context_message
 from agent_runtime.agent_run_context import AgentRunContext, read_agent_run_context
-from agent_runtime.context_usage import context_usage_for_message
+from agent_runtime.model_usage import context_usage_for_message
+from graph.nodes.context_compaction_node import build_context_messages
+from agent_runtime.input_limit import (
+    INPUT_TOKEN_ESTIMATE_METHOD,
+    MAX_INPUT_TOKENS,
+    InputBudgetExceeded,
+    estimate_input_tokens,
+)
 from tools.tool_registry import TOOLS
 
 
@@ -93,14 +101,12 @@ def _invalid_tool_json_fallback(model_output: AIMessage) -> AIMessage | None:
     )
 
 
-async def main_agent_llm_node(
+def build_main_model_input(
     state: GraphState,
-    config: RunnableConfig | None = None,
-):
-    """为本轮模型组装上下文，然后让模型决定调用工具还是直接回答。"""
-
-    run_context = read_agent_run_context(config)
-    model_name = selected_model_name(run_context, config)
+    *,
+    context_messages: list[AnyMessage] | None = None,
+) -> tuple[list[AnyMessage], dict]:
+    """压缩检查和实际调用共用同一个组装入口；导航仍按原始状态计算。"""
 
     # 根目录只告诉模型当前有哪些 Knowledge 类型及可浏览路径，相当于知识库首页。
     runtime_directory = browse_catalog(current_knowledge.KNOWLEDGE_CATALOG, "/")
@@ -119,9 +125,13 @@ async def main_agent_llm_node(
     # Python 图结构不能直接作为聊天消息发送，因此渲染成紧凑的文本索引。
     subglobal_graph_text = render_subglobal_knowledge_graph(subglobal_graph)
 
-    # 组装：主 System Prompt + Knowledge 根目录 + 选中的导航图 + 对话历史。
+    # 原始历史继续留在 state；发送的是“最近摘要 + 边界之后的原文”。
+    if context_messages is None:
+        context_messages = build_context_messages(state)
+
+    # 组装：主 System Prompt + Knowledge 根目录 + 选中的导航图 + 当前上下文。
     model_input = build_model_input(
-        state["messages"],
+        context_messages,
         runtime_directory=runtime_directory,
         runtime_navigation_graph=current_knowledge.KNOWLEDGE_NAVIGATION_GRAPH_TEXT,
         knowledge_view_mode=knowledge_view_mode,
@@ -131,9 +141,67 @@ async def main_agent_llm_node(
     # 再补充当前数据库引擎、SQL 方言、数据库名和默认 schema，防止模型猜方言。
     model_input = inject_runtime_database_context(model_input)
 
+    # 复用本次请求已召回的记忆，放在系统上下文之后、对话之前。
+    # 压缩检查也走这个入口，因此记忆会计入压缩前后的输入预算。
+    memory_context = build_memory_context_message(
+        state.get("retrieved_memories", [])
+    )
+    if memory_context is not None:
+        context_start = len(model_input) - len(context_messages)
+        model_input.insert(context_start, memory_context)
+
+    global_graph_included = knowledge_view_mode in {"GLOBAL", "REGLOBAL"}
+    subglobal_graph_included = knowledge_view_mode in {"SUBGLOBAL", "REGLOBAL"}
+    navigation_context_chars = (
+        len(current_knowledge.KNOWLEDGE_NAVIGATION_GRAPH_TEXT)
+        if global_graph_included else 0
+    ) + (len(subglobal_graph_text) if subglobal_graph_included else 0)
+    knowledge_view_trace = {
+        "knowledge_view_mode": knowledge_view_mode,
+        "global_graph_included": global_graph_included,
+        "subglobal_node_count": len(subglobal_graph["read_nodes"]),
+        "frontier_node_count": len(subglobal_graph["frontier_nodes"]),
+        "subglobal_knowledge_ids": [
+            node["knowledge_id"] for node in subglobal_graph["read_nodes"]
+        ],
+        "navigation_context_chars": navigation_context_chars,
+        "navigation_context_token_estimate": round(navigation_context_chars / 4),
+    }
+    return model_input, knowledge_view_trace
+
+
+async def main_agent_llm_node(
+    state: GraphState,
+    config: RunnableConfig | None = None,
+):
+    """使用已落盘的压缩状态组装本轮输入，然后调用主模型。"""
+
+    run_context = read_agent_run_context(config)
+    model_name = selected_model_name(run_context, config)
+    model_input, knowledge_view_trace = build_main_model_input(state)
+
+    # 工具定义通过 bind_tools 单独绑定，不在 model_input 的消息列表里。
+    model_with_tools = _model_with_tools(model_name)
+    tool_definitions = getattr(model_with_tools, "kwargs", {}).get("tools") or []
+
+    input_tokens = estimate_input_tokens(
+        messages=model_input,
+        tool_definitions=tool_definitions,
+    )
+    print(
+        f"\n本地输入预算：估算 {input_tokens} / {MAX_INPUT_TOKENS} tokens "
+        f"({INPUT_TOKEN_ESTIMATE_METHOD})",
+        flush=True,
+    )
+    if input_tokens > MAX_INPUT_TOKENS:
+        raise InputBudgetExceeded(
+            estimated_input_tokens=input_tokens,
+            max_input_tokens=MAX_INPUT_TOKENS,
+        )
+
     # 到这里才真正调用 LLM。模型返回一个 AIMessage：可能包含 Tool Call，
     # 也可能不调用工具、直接给出最终回答。
-    model_output = await _model_with_tools(model_name).ainvoke(model_input)
+    model_output = await model_with_tools.ainvoke(model_input)
     model_output = model_output.model_copy(
         update={
             "response_metadata": {
@@ -150,26 +218,7 @@ async def main_agent_llm_node(
     if invalid_json_fallback is not None:
         return {"messages": [invalid_json_fallback]}
 
-    # 下面只计算本轮 Knowledge 上下文的可观测信息，方便测试和排查；
-    # 它不会改变模型刚才作出的回答或 Tool Call。
-    global_graph_included = knowledge_view_mode in {"GLOBAL", "REGLOBAL"}
-    subglobal_graph_included = knowledge_view_mode in {"SUBGLOBAL", "REGLOBAL"}
-    navigation_context_chars = (
-        len(current_knowledge.KNOWLEDGE_NAVIGATION_GRAPH_TEXT)
-        if global_graph_included
-        else 0
-    ) + (len(subglobal_graph_text) if subglobal_graph_included else 0)
-    knowledge_view_trace = {
-        "knowledge_view_mode": knowledge_view_mode,
-        "global_graph_included": global_graph_included,
-        "subglobal_node_count": len(subglobal_graph["read_nodes"]),
-        "frontier_node_count": len(subglobal_graph["frontier_nodes"]),
-        "subglobal_knowledge_ids": [
-            node["knowledge_id"] for node in subglobal_graph["read_nodes"]
-        ],
-        "navigation_context_chars": navigation_context_chars,
-        "navigation_context_token_estimate": round(navigation_context_chars / 4),
-    }
+    # 记录这次实际组装的 Knowledge 视野，不改变消息内容。
     model_output = model_output.model_copy(
         update={
             "response_metadata": {
