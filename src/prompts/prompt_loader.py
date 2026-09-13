@@ -2,11 +2,13 @@
 
 import json
 from functools import lru_cache
+from pathlib import Path
 
 from langchain_core.messages import AnyMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
 from config.project_paths import MAIN_PROMPT_PATH
+from memory.memory_settings import MEMORY_ENABLED
 
 
 @lru_cache(maxsize=1)
@@ -14,6 +16,9 @@ def get_agent_prompt() -> ChatPromptTemplate:
     """Load the current generic prompt once per application process."""
 
     system_text = MAIN_PROMPT_PATH.read_text(encoding="utf-8")
+    if MEMORY_ENABLED:
+        memory_instruction = Path(__file__).with_name("memory_instruction.md").read_text(encoding="utf-8")
+        system_text += "\n\n" + memory_instruction
     return ChatPromptTemplate.from_messages(
         [
             SystemMessage(content=system_text),

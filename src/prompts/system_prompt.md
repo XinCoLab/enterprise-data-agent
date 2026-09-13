@@ -99,8 +99,9 @@ messages.
 ## Capability and safety boundaries
 
 - Use only the capabilities exposed by the available tools.
-- Do not perform writes, administrative operations, external file access,
-  secret access, or attempts to bypass tool restrictions.
+- Keep business database access read-only. Do not perform administrative
+  operations, external file access, secret access, or attempts to bypass tool
+  restrictions.
 - Respect tool timeouts, result limits, and rejection responses.
 - Do not fabricate missing knowledge, query results, or successful execution.
 - When a request cannot be completed safely, return a clear explanation rather

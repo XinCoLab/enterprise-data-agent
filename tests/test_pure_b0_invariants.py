@@ -7,24 +7,26 @@ def test_graph_topology_and_state_have_no_audit_or_remaining_steps():
     node_names = set(studio_topology.nodes)
     assert node_names == {
         "__start__",
+        "Context Compaction",
         "Main Agent LLM",
         "Tool Safety",
         "Tool Execution",
         "__end__",
     }
-    assert set(GraphState.__annotations__) == {"messages"}
+    assert set(GraphState.__annotations__) == {"messages", "compaction"}
 
-    # Studio 图在工具执行完成后回到 Main Agent，形成图内循环。
+    # Studio 图在工具执行完成后检查压缩，再回到 Main Agent。
     studio_edges = {
         (edge.source, edge.target, edge.data, edge.conditional)
         for edge in studio_topology.edges
     }
     assert studio_edges == {
-        ("__start__", "Main Agent LLM", None, False),
+        ("__start__", "Context Compaction", None, False),
+        ("Context Compaction", "Main Agent LLM", None, False),
         ("Main Agent LLM", "Tool Safety", "tools", True),
         ("Main Agent LLM", "__end__", None, True),
         ("Tool Safety", "Tool Execution", None, False),
-        ("Tool Execution", "Main Agent LLM", None, False),
+        ("Tool Execution", "Context Compaction", None, False),
     }
 
     # Web Runtime 每次只执行一个完整工具轮次，因此工具执行后结束本轮。
@@ -33,7 +35,8 @@ def test_graph_topology_and_state_have_no_audit_or_remaining_steps():
         for edge in single_round_graph.get_graph().edges
     }
     assert round_edges == {
-        ("__start__", "Main Agent LLM", None, False),
+        ("__start__", "Context Compaction", None, False),
+        ("Context Compaction", "Main Agent LLM", None, False),
         ("Main Agent LLM", "Tool Safety", "tools", True),
         ("Main Agent LLM", "__end__", None, True),
         ("Tool Safety", "Tool Execution", None, False),

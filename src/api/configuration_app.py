@@ -36,7 +36,7 @@ from knowledge_runtime.catalog import load_knowledge_cards
 from knowledge_runtime.editor import KnowledgeEditError, KnowledgeEditor
 from config.project_paths import CONFIG_ROOT, KNOWLEDGE_IMPORT_ROOT, PROJECT_ROOT
 from agent_runtime.agent_runtime import RESOURCE_CONFIG_LOCK, has_active_runs
-from agent_runtime.context_usage import MODEL_CONTEXT_WINDOWS
+from agent_runtime.model_usage import MODEL_CONTEXT_WINDOWS
 from memory.conversation_binding import build_conversation_binding, effective_resource_settings
 from security.workspace_access import (
     CurrentUser,
@@ -224,6 +224,14 @@ def _model_api_key() -> str:
         os.getenv("DEEPSEEK_API_KEY", "").strip()
         or _read_env(SECRETS_PATH).get("DEEPSEEK_API_KEY", "").strip()
     )
+
+
+def _get_mem0_key()->str:
+    return (
+        os.getenv("MEM0_key","").strip()
+        or _read_env(SECRETS_PATH).get("MEM0_key","").strip()
+    )
+
 
 
 def _load_profile(profile_id: str) -> dict:

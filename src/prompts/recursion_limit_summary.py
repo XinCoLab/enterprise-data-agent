@@ -5,6 +5,8 @@ import json
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, ToolMessage, SystemMessage
 
 from model_clients.llm_api_clients import get_main_llm
+from agent_runtime.input_limit import MAX_INPUT_TOKENS, InputBudgetExceeded, estimate_input_tokens
+from prompts.runtime_memory_context import build_memory_context_message
 
 
 RECURSION_LIMIT_SUMMARY_PROMPT = """[Recursion limit reached]
@@ -30,6 +32,7 @@ async def generate_recursion_limit_summary(
     messages: list[AnyMessage],
     *,
     model_name: str,
+    retrieved_memories: list[dict] | None = None,
 ) -> AnyMessage:
     """Summarize completed work and the next step without calling Tools."""
 
@@ -59,12 +62,22 @@ async def generate_recursion_limit_summary(
         elif content.strip():
             transcript.append(f"Conversation message:\n{content}")
 
+    model_input: list[AnyMessage] = [
+        SystemMessage(content=RECURSION_LIMIT_SUMMARY_PROMPT),
+        HumanMessage(
+            content="[Existing run transcript]\n\n" + "\n\n".join(transcript)
+        ),
+    ]
+    memory_context = build_memory_context_message(retrieved_memories or [])
+    if memory_context is not None:
+        model_input.insert(1, memory_context)
+
+    input_tokens = estimate_input_tokens(messages=model_input, tool_definitions=[])
+    if input_tokens > MAX_INPUT_TOKENS:
+        raise InputBudgetExceeded(
+            estimated_input_tokens=input_tokens,
+            max_input_tokens=MAX_INPUT_TOKENS,
+        )
+
     model = get_main_llm(model_name)
-    return await model.ainvoke(
-        [
-            SystemMessage(content=RECURSION_LIMIT_SUMMARY_PROMPT),
-            HumanMessage(
-                content="[Existing run transcript]\n\n" + "\n\n".join(transcript)
-            ),
-        ]
-    )
+    return await model.ainvoke(model_input)

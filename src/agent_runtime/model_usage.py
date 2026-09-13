@@ -1,4 +1,4 @@
-"""Read one model call's provider-reported input usage without creating a client."""
+"""调用后读取模型服务返回的实际 token 用量，供展示使用，不执行输入限额检查。"""
 
 from typing import Any
 
