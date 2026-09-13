@@ -119,3 +119,16 @@ DATA_AGENT_SUMMARY_FOCUS = """Additional focus:
 Preserve exact data sources, SQL, knowledge IDs, user-confirmed denominators,
 deduplication rules, filters, and excluded query paths with their reasons.
 Preserve known result timestamps and limitations. Do not invent missing data."""
+
+SUMMARY_REFINEMENT_PROMPT = """Rewrite the summary below as a shorter, COMPLETE
+replacement. Keep its useful structure. Preserve current user requirements,
+business rules (including sorting and limits), revisions, unresolved work, and
+references needed to continue. Merge repetition and collapse completed query
+details into short outcomes. Never finish with an incomplete section or sentence.
+Output only the replacement summary."""
+
+SUMMARY_LENGTH_INSTRUCTION = """Length budget: aim for at most {target_tokens}
+tokens for the entire visible summary. Complete every required section within
+that budget. Prioritize current rules and unfinished work over completed-work
+details. Do not try to preserve every old result row.
+{feedback}"""

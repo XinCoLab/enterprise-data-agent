@@ -12,6 +12,7 @@
 from dataclasses import dataclass
 import json
 import logging
+from typing import Callable
 
 from langchain_core.messages import AIMessage, AnyMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
@@ -31,6 +32,8 @@ from prompts.context_compaction import (
     DATA_AGENT_SUMMARY_FOCUS,
     SUMMARIZATION_PROMPT,
     SUMMARIZATION_SYSTEM_PROMPT,
+    SUMMARY_LENGTH_INSTRUCTION,
+    SUMMARY_REFINEMENT_PROMPT,
     TURN_PREFIX_SUMMARIZATION_PROMPT,
     UPDATE_SUMMARIZATION_PROMPT,
 )
@@ -42,6 +45,13 @@ logger = logging.getLogger("Agent")
 COMPACTION_ENABLED = True
 KEEP_RECENT_TOKENS = 20_000
 TOOL_RESULT_MAX_CHARS = 2_000
+# 包含首次生成，历史摘要、半轮摘要及精简共享整次压缩的三次调用额度。
+SUMMARY_MAX_ATTEMPTS = 3
+
+
+@dataclass
+class SummaryCallBudget:
+    calls: int = 0
 
 
 async def context_compaction_node(
@@ -86,19 +96,50 @@ async def context_compaction_node(
     # 3. 调用摘要模型；具体的切分和摘要实现都在本文件下方。
     logger.info("上下文压缩开始：估算输入 %s tokens", tokens_before)
     get_stream_writer()({"type": "context_compaction_start"})
+    call_budget = SummaryCallBudget()
     summary = await generate_compaction_summary(
         history_split, model_name=model_name, max_input_tokens=MAX_INPUT_TOKENS,
-        reserve_tokens=RESERVE_TOKENS,
+        reserve_tokens=RESERVE_TOKENS, call_budget=call_budget,
     )
     # 4. 用候选摘要重新组装输入；只有缩短且未超限才接受。
-    compaction: CompactionState = {
-        "summary": summary,
-        "first_kept_message_id": state["messages"][history_split.cut_index].id,
-        "tokens_before": tokens_before,
-        "tokens_after": 0,
-    }
-    compacted_input, _ = main_node.build_main_model_input({**state, "compaction": compaction})
-    tokens_after = estimate_input_tokens(messages=compacted_input, tool_definitions=tool_definitions)
+    def measure_summary(candidate: str) -> CompactionState:
+        compaction: CompactionState = {
+            "summary": candidate,
+            "first_kept_message_id": state["messages"][history_split.cut_index].id,
+            "tokens_before": tokens_before,
+            "tokens_after": 0,
+        }
+        compacted_input, _ = main_node.build_main_model_input({**state, "compaction": compaction})
+        compaction["tokens_after"] = estimate_input_tokens(
+            messages=compacted_input, tool_definitions=tool_definitions,
+        )
+        return compaction
+
+    # 两段摘要合并后也要检查；能生成完整摘要，不代表最终主模型输入一定放得下。
+    summary_budget = int(0.8 * RESERVE_TOKENS)
+    input_target = min(MAX_INPUT_TOKENS, tokens_before - 1)
+
+    def fits(candidate: str) -> bool:
+        return (
+            summary_token_count(candidate) <= summary_budget
+            and measure_summary(candidate)["tokens_after"] <= input_target
+        )
+
+    compaction = measure_summary(summary)
+    if not fits(summary):
+        empty_tokens = measure_summary("")["tokens_after"]
+        available_tokens = min(summary_budget, input_target - empty_tokens)
+        if available_tokens <= 0:
+            raise InputBudgetExceeded(estimated_input_tokens=empty_tokens, max_input_tokens=input_target)
+        logger.info("合并摘要或最终输入超预算，继续精简摘要：目标 %s tokens", available_tokens)
+        summary = await generate_bounded_summary(
+            refinement_request(summary), model_name=model_name,
+            output_tokens=summary_budget, summary_budget_tokens=available_tokens,
+            max_input_tokens=MAX_INPUT_TOKENS - RESERVE_TOKENS,
+            accept_summary=fits, call_budget=call_budget,
+        )
+        compaction = measure_summary(summary)
+    tokens_after = compaction["tokens_after"]
     if tokens_after > MAX_INPUT_TOKENS:
         raise InputBudgetExceeded(estimated_input_tokens=tokens_after, max_input_tokens=MAX_INPUT_TOKENS)
     if tokens_after >= tokens_before:
@@ -160,8 +201,10 @@ def split_history(state: GraphState, keep_recent_tokens: int) -> HistorySplit | 
 async def generate_compaction_summary(
     history_split: HistorySplit, *, model_name: str, max_input_tokens: int,
     reserve_tokens: int = RESERVE_TOKENS,
+    call_budget: SummaryCallBudget | None = None,
 ) -> str:
     """同一个模型、无工具绑定；旧摘要 + 新退出上下文的原文，增量更新。"""
+    call_budget = call_budget if call_budget is not None else SummaryCallBudget()
 
     async def summarize(messages, instruction, output_tokens, previous_summary=""):
         text = f"<conversation>\n{serialize_conversation(messages)}\n</conversation>\n\n"
@@ -171,22 +214,12 @@ async def generate_compaction_summary(
             SystemMessage(content=SUMMARIZATION_SYSTEM_PROMPT),
             HumanMessage(content=text + instruction + "\n\n" + DATA_AGENT_SUMMARY_FOCUS),
         ]
-        input_tokens = estimate_input_tokens(messages=request, tool_definitions=[])
-        if input_tokens > max_input_tokens - reserve_tokens:
-            raise InputBudgetExceeded(
-                estimated_input_tokens=input_tokens,
-                max_input_tokens=max_input_tokens - reserve_tokens,
-            )
-        response = await get_main_llm(model_name).ainvoke(request, max_tokens=output_tokens)
-        if response.tool_calls or response.invalid_tool_calls:
-            raise RuntimeError("Context compaction attempted to call a tool")
-        finish_reason = (response.response_metadata or {}).get("finish_reason")
-        if finish_reason in {"length", "content_filter", "error", "abort", "aborted"}:
-            raise RuntimeError(f"Context compaction did not finish: {finish_reason}")
-        summary = extract_visible_ai_content(response.content)
-        if not summary:
-            raise RuntimeError("Context compaction returned an empty summary")
-        return summary
+        return await generate_bounded_summary(
+            request, model_name=model_name, output_tokens=output_tokens,
+            summary_budget_tokens=output_tokens,
+            max_input_tokens=max_input_tokens - reserve_tokens,
+            call_budget=call_budget,
+        )
 
     history_summary = history_split.previous_summary
     if history_split.history:
@@ -204,6 +237,75 @@ async def generate_compaction_summary(
             "\n\n---\n\n**Turn Context (split turn):**\n\n" + turn_summary
         )
     return history_summary
+
+
+def summary_token_count(summary: str) -> int:
+    """沿用项目的本地 token 估算口径；只计算最终可见摘要。"""
+    return estimate_input_tokens(messages=[HumanMessage(content=summary)], tool_definitions=[])
+
+
+def refinement_request(summary: str) -> list[AnyMessage]:
+    return [
+        SystemMessage(content=SUMMARIZATION_SYSTEM_PROMPT),
+        HumanMessage(content=f"<summary-to-shorten>\n{summary}\n</summary-to-shorten>\n\n{SUMMARY_REFINEMENT_PROMPT}"),
+    ]
+
+
+async def generate_bounded_summary(
+    request: list[AnyMessage], *, model_name: str, output_tokens: int,
+    summary_budget_tokens: int, max_input_tokens: int,
+    accept_summary: Callable[[str], bool] | None = None,
+    call_budget: SummaryCallBudget | None = None,
+) -> str:
+    """完整且预算合格才返回；截断重写原材料，过长完整稿继续精简。"""
+    target_tokens = summary_budget_tokens
+    feedback = ""
+    source_request = request
+    last_problem = "no model calls remain in this compaction"
+    max_attempts = SUMMARY_MAX_ATTEMPTS
+    call_budget = call_budget if call_budget is not None else SummaryCallBudget()
+    while call_budget.calls < max_attempts:
+        length_instruction = SUMMARY_LENGTH_INSTRUCTION.format(
+            target_tokens=target_tokens, feedback=feedback,
+        )
+        current_request = [*source_request, HumanMessage(content=length_instruction)]
+        input_tokens = estimate_input_tokens(messages=current_request, tool_definitions=[])
+        if input_tokens > max_input_tokens:
+            raise InputBudgetExceeded(estimated_input_tokens=input_tokens, max_input_tokens=max_input_tokens)
+        call_budget.calls += 1
+        logger.info(
+            "本次压缩模型调用 %s/%s：输出上限 %s tokens，摘要目标 %s tokens",
+            call_budget.calls, max_attempts, output_tokens, target_tokens,
+        )
+        response = await get_main_llm(model_name).ainvoke(current_request, max_tokens=output_tokens)
+        if response.tool_calls or response.invalid_tool_calls:
+            raise RuntimeError("Context compaction attempted to call a tool")
+        finish_reason = (response.response_metadata or {}).get("finish_reason")
+        if finish_reason not in {"stop", "length"}:
+            raise RuntimeError(f"Context compaction did not finish: {finish_reason}")
+        if finish_reason == "length":
+            # 不能把残缺草稿当成完整信息源，也不能将它持久化为新的摘要。
+            last_problem = "generation reached the output limit"
+            feedback = "The previous generation was cut off. Rewrite from the supplied source with fewer details; do not continue the cut-off draft."
+        else:
+            summary = extract_visible_ai_content(response.content)
+            if not summary:
+                raise RuntimeError("Context compaction returned an empty summary")
+            summary_tokens = summary_token_count(summary)
+            if summary_tokens <= summary_budget_tokens and (accept_summary is None or accept_summary(summary)):
+                return summary
+            last_problem = f"complete summary or assembled context exceeded budget (summary estimate: {summary_tokens})"
+            feedback = "The previous complete draft is still too long for the next model input. Condense it further without changing the current rules."
+            source_request = refinement_request(summary)
+        if call_budget.calls < max_attempts:
+            target_tokens = max(1, target_tokens // 2)
+            logger.warning(
+                "摘要需要继续精简：%s；第 %s/%s 次尝试，下一次目标 %s tokens",
+                last_problem, call_budget.calls, max_attempts, target_tokens,
+            )
+    raise RuntimeError(
+        f"Context compaction exhausted its {max_attempts}-call budget: {last_problem}; original context was not replaced"
+    )
 
 
 def build_context_messages(state: GraphState) -> list[AnyMessage]:
