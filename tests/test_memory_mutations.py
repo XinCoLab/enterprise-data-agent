@@ -128,6 +128,49 @@ def test_failed_mutation_keeps_retrieved_context(store, operation):
 
 
 @pytest.mark.parametrize("operation", ["update", "delete"])
+def test_partial_write_failure_invalidates_only_the_scoped_retrieved_memory(store, monkeypatch, operation):
+    write = getattr(store, operation)
+
+    def write_then_fail(**kwargs):
+        write(**kwargs)
+        raise RuntimeError("history write failed after vector storage changed")
+
+    monkeypatch.setattr(store, operation, write_then_fail)
+    args = {"memory_id": "entry-a"}
+    if operation == "update":
+        args["content"] = NEW
+    output = AIMessage(content="", tool_calls=[{"name": operation + "_memory", "args": args, "id": "call-a"}])
+    safe = tool_safety_node({"messages": [output]})
+    recalled = [store.get("entry-a"), {"id": "entry-other", "memory": "无关约定"}]
+
+    result = asyncio.run(tool_execution_node({**safe, "retrieved_memories": recalled}, config()))
+
+    payload = json.loads(result["messages"][0].content)
+    assert payload["status"] == "FAILED"
+    assert payload["invalidate_memory_ids"] == ["entry-a"]
+    assert result["retrieved_memories"] == [recalled[1]]
+    assert recalled[0]["memory"] == OLD
+    assert store.writes == [(operation, "entry-a")]
+    if operation == "update":
+        assert store.get("entry-a")["memory"] == NEW
+    else:
+        assert store.get("entry-a") is None
+
+
+@pytest.mark.parametrize("operation", ["update", "delete"])
+def test_failure_before_scope_check_does_not_invalidate_retrieved_memory(store, monkeypatch, operation):
+    def fail_read(_memory_id):
+        raise RuntimeError("scope lookup failed")
+
+    monkeypatch.setattr(store, "get", fail_read)
+    result = mutate(operation)
+
+    assert result["status"] == "FAILED"
+    assert "invalidate_memory_ids" not in result
+    assert not store.writes
+
+
+@pytest.mark.parametrize("operation", ["update", "delete"])
 def test_model_cannot_supply_scope_or_run_without_trusted_context(store, operation):
     name = operation + "_memory"
     args = {"memory_id": "entry-a"}

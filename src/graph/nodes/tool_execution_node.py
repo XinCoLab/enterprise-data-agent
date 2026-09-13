@@ -86,8 +86,11 @@ async def tool_execution_node(
                 payload = json.loads(str(content))
             except (TypeError, ValueError):
                 payload = None
-            if isinstance(payload, dict) and payload.get("status") == "SUCCEEDED":
-                changed_memory_ids.update(item["id"] for item in payload.get("results", []))
+            if isinstance(payload, dict):
+                if payload.get("status") == "SUCCEEDED":
+                    changed_memory_ids.update(item["id"] for item in payload.get("results", []))
+                # 已通过归属校验的写操作即使报错，也可能已改变存储中的条目。
+                changed_memory_ids.update(payload.get("invalidate_memory_ids", []))
 
         results.append(
             ToolMessage(
@@ -99,7 +102,7 @@ async def tool_execution_node(
 
     update: dict = {"messages": results}
     if changed_memory_ids:
-        # 同一请求后续模型调用不再注入旧条目；新值已在工具结果中，下轮正常重新检索。
+        # 不再注入可能失效的旧条目；成功的新值在工具结果中，写入不确定时下轮重新检索。
         update["retrieved_memories"] = [
             item for item in state.get("retrieved_memories", [])
             if item.get("id") not in changed_memory_ids
